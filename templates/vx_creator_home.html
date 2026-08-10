@@ -1,0 +1,129 @@
+{% extends 'vx_base.html' %}
+{% block title %}Creator Home — {{profile.name}}{% endblock %}
+{% block navbar %}
+<div class="navbar">
+  <div class="brand">Vault<span>X</span></div>
+  <nav>
+    <a href="/creator/home" class="active">Dashboard</a>
+    <a href="/creator/dm-inbox">DMs</a>
+    <a href="/creator/payout-methods">Payout</a>
+    <a href="/creator/withdraw">Withdraw</a>
+    <a href="/creator/withdrawal-history">History</a>
+    <a href="/creator/edit-profile">Edit Profile</a>
+    <a href="/creator/logout" style="color:var(--muted)">Logout</a>
+    <a href="/creator/dashboard" style="margin-left:1rem;color:var(--muted)">← Media Dashboard</a>
+  </nav>
+</div>
+{% endblock %}
+{% block content %}
+<div class="container">
+
+  {% if show_telegram and creator_channels %}
+  <div style="position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;display:flex;align-items:center;justify-content:center" id="tg-modal">
+    <div class="card" style="max-width:480px;width:90%;text-align:center">
+      <div style="font-size:2rem;margin-bottom:.5rem">🎉</div>
+      <h2 style="color:var(--gold);margin-bottom:.5rem">Welcome to VaultX!</h2>
+      <p style="color:var(--muted);margin-bottom:1.5rem">Please join these Telegram channels to connect with the team and subscribers.</p>
+      {% for ch in creator_channels %}
+      <a href="{{ch.channel_url}}" target="_blank" class="btn btn-rose" style="display:block;margin-bottom:.5rem">
+        📢 {{ch.name}}
+      </a>
+      {% endfor %}
+      <button onclick="document.getElementById('tg-modal').remove()" class="btn btn-outline" style="margin-top:.5rem">Continue to Dashboard</button>
+    </div>
+  </div>
+  {% endif %}
+
+  <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem">
+    <img src="{{profile.avatar_filename or '/static/default_avatar.png'}}" style="width:64px;height:64px;border-radius:50%;border:3px solid var(--rose);object-fit:cover"/>
+    <div>
+      <h1 style="font-size:1.5rem;font-weight:800">{{profile.name}}</h1>
+      <div style="color:var(--muted);font-size:.9rem">@{{profile.username}} &bull; {{subscriber_count}} active subscribers</div>
+    </div>
+    <div style="margin-left:auto">
+      {% if withdrawal_open %}
+      <a href="/creator/withdraw" class="btn btn-gold">💸 Request Withdrawal</a>
+      {% else %}
+      <div class="withdrawal-closed" style="padding:.6rem 1.2rem;font-size:.88rem">
+        🔒 Next withdrawal: <strong>{{next_window}}</strong>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card"><div class="val" style="color:var(--amber)">${{"%.2f"|format(pending)}}</div><div class="lbl">Pending Balance</div></div>
+    <div class="stat-card"><div class="val" style="color:var(--green)">${{"%.2f"|format(available)}}</div><div class="lbl">Available Balance</div></div>
+    <div class="stat-card"><div class="val">${{"%.2f"|format(lifetime)}}</div><div class="lbl">Lifetime Earnings</div></div>
+    <div class="stat-card"><div class="val" style="color:var(--rose-light)">${{"%.2f"|format(today_rev)}}</div><div class="lbl">Today</div></div>
+    <div class="stat-card"><div class="val">${{"%.2f"|format(weekly_rev)}}</div><div class="lbl">This Week</div></div>
+    <div class="stat-card"><div class="val">${{"%.2f"|format(monthly_rev)}}</div><div class="lbl">This Month</div></div>
+    <div class="stat-card"><div class="val">{{subscriber_count}}</div><div class="lbl">Subscribers</div></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+    <div class="card">
+      <div class="card-title">📊 Revenue by Source</div>
+      {% if breakdown %}
+      {% for type, amount in breakdown.items() %}
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem 0;border-bottom:1px solid #1e1e38">
+        <span style="color:var(--muted);font-size:.9rem">
+          {% if type=='photo' %}📷{% elif type=='video' %}🎬{% elif type=='subscription' %}💎{% elif type=='dm' %}💬{% elif type=='tip' %}💝{% else %}📦{% endif %}
+          {{type|title}}
+        </span>
+        <span style="font-weight:700;color:var(--gold)">${{"%.2f"|format(amount)}}</span>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div style="color:var(--muted);text-align:center;padding:2rem">No revenue yet.</div>
+      {% endif %}
+    </div>
+    <div class="card">
+      <div class="card-title">⚡ Quick Actions</div>
+      <div style="display:flex;flex-direction:column;gap:.6rem">
+        <a href="/creator/dm-inbox" class="btn btn-rose">💬 Check DMs</a>
+        <a href="/creator/payout-methods" class="btn btn-outline">🏦 Manage Payout Methods</a>
+        <a href="/creator/withdrawal-history" class="btn btn-outline">📋 Withdrawal History</a>
+        <a href="/creator/edit-profile" class="btn btn-outline">✏️ Edit My Profile</a>
+        <a href="/{{profile.username}}" class="btn btn-outline" target="_blank">👁 View Public Page</a>
+        <div style="border-top:1px solid #2e2e52;margin:.25rem 0"></div>
+        <a href="/creator/upload-photo" class="btn btn-outline" style="font-size:.82rem">📷 Upload Photo</a>
+        <a href="/creator/upload-video" class="btn btn-outline" style="font-size:.82rem">🎬 Upload Video</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Revenue split info card -->
+  <div class="card" style="margin-top:1.5rem">
+    <div class="card-title">💰 Your Revenue Split — <span style="color:var(--rose-light)">{{split_label}}</span></div>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem">For every sale on your profile, earnings are distributed as follows:</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.75rem">
+      <div style="background:#1e1e38;border-radius:10px;padding:.85rem;text-align:center;border:2px solid var(--rose)">
+        <div style="font-size:1.6rem;font-weight:800;color:var(--rose-light)">{{my_pct|int}}%</div>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:.25rem">YOU</div>
+        <div style="font-size:.7rem;color:#888;margin-top:.1rem">{{split_label}}</div>
+      </div>
+      <div style="background:#1e1e38;border-radius:10px;padding:.85rem;text-align:center">
+        <div style="font-size:1.6rem;font-weight:800;color:var(--amber)">{{split.ops_manager_pct|int}}%</div>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:.25rem">OPS</div>
+        <div style="font-size:.7rem;color:#888;margin-top:.1rem">Ops Manager</div>
+      </div>
+      <div style="background:#1e1e38;border-radius:10px;padding:.85rem;text-align:center">
+        <div style="font-size:1.6rem;font-weight:800;color:#60a5fa">15%</div>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:.25rem">ADMIN</div>
+        <div style="font-size:.7rem;color:#888;margin-top:.1rem">Platform Admin</div>
+      </div>
+      <div style="background:#1e1e38;border-radius:10px;padding:.85rem;text-align:center">
+        <div style="font-size:1.6rem;font-weight:800;color:#a78bfa">{{(100 - my_pct - split.ops_manager_pct - 15)|int}}%</div>
+        <div style="font-size:.72rem;color:var(--muted);margin-top:.25rem">PLATFORM</div>
+        <div style="font-size:.7rem;color:#888;margin-top:.1rem">VaultX</div>
+      </div>
+    </div>
+    {% if split_label == 'Manager Trial' %}
+    <div style="margin-top:1rem;padding:.75rem;background:rgba(201,168,76,.08);border-radius:8px;border:1px solid rgba(201,168,76,.2);font-size:.8rem;color:var(--amber)">
+      🌟 <strong>Upgrade available!</strong> Once you reach the sales graduation target, you'll become a Verified Creator and earn <strong>{{split.creator_pct|int}}%</strong> on every sale.
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

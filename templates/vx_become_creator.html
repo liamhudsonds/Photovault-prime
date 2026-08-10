@@ -1,0 +1,631 @@
+{% extends 'base.html' %}
+{% block title %}Become a Creator — VaultX{% endblock %}
+
+{% block head %}
+<style>
+:root {
+  --rose:#C9184A; --gold:#C9A84C; --dark:#1a1a2e; --card:#1e1e38;
+  --muted:#8888aa; --green:#22c55e; --amber:#f59e0b; --red:#ef4444;
+  --radius:14px;
+}
+.vx-wrap { background:var(--dark); min-height:100vh; padding:0; }
+.vx-hero {
+  background: radial-gradient(ellipse at 60% 0%, #2a0a1e 0%, #1a1a2e 50%, #0d0d1a 100%);
+  padding: 5rem 1.5rem 3rem;
+  text-align: center;
+  border-bottom: 1px solid #2e2e52;
+}
+.vx-hero h1 { font-size: 2.8rem; font-weight: 900; color: #fff; margin-bottom: .75rem; line-height:1.1; }
+.vx-hero h1 span { color: var(--rose); }
+.vx-hero p { color: #a0a0c0; font-size: 1.1rem; max-width: 560px; margin: 0 auto 2rem; line-height:1.6; }
+.benefits-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem; max-width: 900px; margin: 0 auto 2rem;
+}
+.benefit-card {
+  background: rgba(255,255,255,.04); border: 1px solid #2e2e52;
+  border-radius: 12px; padding: 1.2rem; text-align: center;
+}
+.benefit-card .icon { font-size: 1.8rem; margin-bottom: .5rem; }
+.benefit-card h3 { color: var(--gold); font-size: .95rem; margin-bottom: .3rem; }
+.benefit-card p { color: var(--muted); font-size: .82rem; line-height: 1.5; }
+
+.app-container { max-width: 780px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+.step-indicator {
+  display: flex; align-items: center; gap: 0; margin-bottom: 2.5rem;
+  counter-reset: step;
+}
+.step { display:flex; align-items:center; flex:1; }
+.step-num {
+  width: 32px; height: 32px; border-radius: 50%; background: #1e1e38;
+  border: 2px solid #3e3e5e; color: var(--muted); font-size: .82rem;
+  font-weight: 700; display:flex; align-items:center; justify-content:center;
+  flex-shrink:0; transition:.2s;
+}
+.step.active .step-num { background: var(--rose); border-color: var(--rose); color: #fff; }
+.step.done .step-num { background: var(--green); border-color: var(--green); color: #fff; }
+.step-label { font-size: .72rem; color: var(--muted); margin-left: .4rem; white-space:nowrap; }
+.step.active .step-label { color: #e8e8f0; }
+.step-line { flex:1; height:2px; background:#2e2e52; margin:0 .25rem; }
+
+.section-card {
+  background: var(--card); border: 1px solid #2e2e52; border-radius: var(--radius);
+  padding: 1.75rem; margin-bottom: 1.25rem;
+}
+.section-title {
+  font-size: 1rem; font-weight: 700; color: var(--rose); margin-bottom: 1.25rem;
+  display: flex; align-items: center; gap: .5rem; padding-bottom: .75rem;
+  border-bottom: 1px solid #2e2e52;
+}
+.form-group { margin-bottom: 1rem; }
+.form-group label {
+  display: block; font-size: .8rem; color: var(--muted); margin-bottom: .3rem;
+  text-transform: uppercase; letter-spacing: .05em; font-weight: 600;
+}
+.form-group label .req { color: var(--rose); margin-left: .1rem; }
+.form-group input, .form-group select, .form-group textarea {
+  width: 100%; background: #12122a; border: 1px solid #3a3a5a; color: #e8e8f0;
+  border-radius: 9px; padding: .65rem 1rem; font-size: .9rem; transition: .2s;
+  font-family: inherit;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+  outline: none; border-color: var(--rose); box-shadow: 0 0 0 2px rgba(201,24,74,.15);
+}
+.form-group textarea { resize: vertical; min-height: 90px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@media(max-width:580px) { .form-row { grid-template-columns: 1fr; } }
+
+.upload-zone {
+  border: 2px dashed #3a3a5a; border-radius: 10px; padding: 1.5rem;
+  text-align: center; cursor: pointer; transition: .2s; background: #12122a;
+  position: relative;
+}
+.upload-zone:hover { border-color: var(--rose); background: rgba(201,24,74,.04); }
+.upload-zone input[type=file] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer; width:100%; height:100%;
+}
+.upload-zone .uz-icon { font-size: 2rem; margin-bottom: .4rem; }
+.upload-zone .uz-label { color: var(--muted); font-size: .85rem; }
+.upload-zone .uz-name { color: var(--green); font-size: .82rem; margin-top: .4rem; font-weight:600; }
+.upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@media(max-width:580px) { .upload-grid { grid-template-columns: 1fr; } }
+
+.terms-box {
+  background: #12122a; border: 1px solid #3a3a5a; border-radius: 10px;
+  padding: 1.2rem; max-height: 200px; overflow-y: auto;
+  font-size: .83rem; color: #b0b0cc; line-height: 1.7; margin-bottom: 1.25rem;
+}
+.checkbox-row {
+  display: flex; align-items: flex-start; gap: .75rem;
+  background: #12122a; border: 1px solid #2e2e52; border-radius: 9px;
+  padding: .85rem 1rem; margin-bottom: .6rem; cursor: pointer; transition: .2s;
+}
+.checkbox-row:hover { border-color: var(--rose); }
+.checkbox-row input[type=checkbox] { width:18px; height:18px; accent-color:var(--rose); flex-shrink:0; margin-top:.1rem; }
+.checkbox-row label { font-size: .86rem; color: #c0c0d8; cursor: pointer; line-height:1.5; }
+.checkbox-row.checked { border-color: var(--green); background: rgba(34,197,94,.04); }
+
+.submit-btn {
+  width: 100%; padding: 1rem; background: linear-gradient(135deg, var(--rose), #a0102a);
+  color: #fff; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700;
+  cursor: pointer; transition: .2s; letter-spacing: .03em;
+}
+.submit-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(201,24,74,.4); }
+.submit-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+.status-banner {
+  border-radius: 12px; padding: 1.5rem; text-align: center; margin-bottom: 2rem;
+}
+.status-pending { background: rgba(245,158,11,.08); border: 2px solid var(--amber); }
+.status-review  { background: rgba(96,165,250,.08); border: 2px solid #60a5fa; }
+.status-approved { background: rgba(34,197,94,.08); border: 2px solid var(--green); }
+.status-rejected { background: rgba(239,68,68,.08); border: 2px solid var(--red); }
+.status-more-info { background: rgba(201,168,76,.08); border: 2px solid var(--gold); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="vx-wrap">
+
+  <!-- Hero -->
+  <div class="vx-hero">
+    <div style="font-size:1.8rem;font-weight:900;color:var(--rose);margin-bottom:.5rem;">
+      Vault<span style="color:var(--gold)">X</span>
+    </div>
+    <h1>Become a <span>Creator</span></h1>
+    <p>Join the VaultX creator program and earn revenue from your content. Apply in minutes.</p>
+
+    <div class="benefits-grid">
+      <div class="benefit-card">
+        <div class="icon">💸</div>
+        <h3>Earn Revenue</h3>
+        <p>Up to 70% revenue split on subscriptions, DMs, and content unlocks.</p>
+      </div>
+      <div class="benefit-card">
+        <div class="icon">📊</div>
+        <h3>Full Analytics</h3>
+        <p>Track your earnings, subscribers, and content performance in real time.</p>
+      </div>
+      <div class="benefit-card">
+        <div class="icon">💬</div>
+        <h3>DM Memberships</h3>
+        <p>Charge for DM access and build direct relationships with your fans.</p>
+      </div>
+      <div class="benefit-card">
+        <div class="icon">📢</div>
+        <h3>Creator Community</h3>
+        <p>Join our private Telegram group for training, support and guidance.</p>
+      </div>
+    </div>
+
+    {% if existing_application %}
+    <!-- Already applied - show status -->
+    {% set app = existing_application %}
+    <div style="max-width:520px;margin:0 auto">
+      {% if app.status == 'pending' %}
+      <div class="status-banner status-pending">
+        <div style="font-size:1.6rem">⏳</div>
+        <div style="font-size:1.1rem;font-weight:700;color:var(--amber);margin:.4rem 0">Application Submitted</div>
+        <p style="color:#ccc;font-size:.9rem">Your application is in the queue. We'll review it shortly and notify you by email.</p>
+        <div style="font-size:.8rem;color:var(--muted);margin-top:.5rem">Submitted: {{app.submitted_at.strftime('%B %d, %Y')}}</div>
+      </div>
+      {% elif app.status == 'under_review' %}
+      <div class="status-banner status-review">
+        <div style="font-size:1.6rem">🔍</div>
+        <div style="font-size:1.1rem;font-weight:700;color:#60a5fa;margin:.4rem 0">Under Review</div>
+        <p style="color:#ccc;font-size:.9rem">Our team is reviewing your application. This usually takes 1–3 business days.</p>
+      </div>
+      {% elif app.status == 'approved' %}
+      <div class="status-banner status-approved">
+        <div style="font-size:1.6rem">🎉</div>
+        <div style="font-size:1.1rem;font-weight:700;color:var(--green);margin:.4rem 0">Application Approved!</div>
+        <p style="color:#ccc;font-size:.9rem">Congratulations! Check your email for your creator login credentials.</p>
+        <a href="/creator/login" class="submit-btn" style="display:inline-block;width:auto;padding:.6rem 2rem;margin-top:1rem;text-decoration:none">Login to Creator Portal →</a>
+      </div>
+      {% elif app.status == 'rejected' %}
+      <div class="status-banner status-rejected">
+        <div style="font-size:1.6rem">❌</div>
+        <div style="font-size:1.1rem;font-weight:700;color:var(--red);margin:.4rem 0">Application Not Approved</div>
+        <p style="color:#ccc;font-size:.9rem">Unfortunately your application was not approved at this time.
+          {% if app.rejection_reason %}<br><em style="color:var(--muted)">Reason: {{app.rejection_reason}}</em>{% endif %}
+        </p>
+        {% if app.can_reapply %}
+        <button onclick="document.getElementById('reapply-section').style.display='block';this.closest('.status-banner').style.display='none'" class="submit-btn" style="display:inline-block;width:auto;padding:.6rem 2rem;margin-top:1rem">Reapply Now</button>
+        {% else %}
+        <div style="font-size:.82rem;color:var(--muted);margin-top:.75rem">You may reapply after {{app.reapply_date.strftime('%B %d, %Y') if app.reapply_date else '30 days'}}.</div>
+        {% endif %}
+      </div>
+      {% elif app.status == 'more_info' %}
+      <div class="status-banner status-more-info">
+        <div style="font-size:1.6rem">📋</div>
+        <div style="font-size:1.1rem;font-weight:700;color:var(--gold);margin:.4rem 0">More Information Required</div>
+        <p style="color:#ccc;font-size:.9rem">Our team needs additional information from you. Please check your email.</p>
+        {% if app.admin_note %}<div style="font-size:.88rem;color:var(--gold);margin-top:.5rem;padding:.5rem;background:#12122a;border-radius:8px">📝 {{app.admin_note}}</div>{% endif %}
+      </div>
+      {% endif %}
+    </div>
+    {% else %}
+
+    <a href="#apply-form" onclick="document.getElementById('apply-form').scrollIntoView({behavior:'smooth'})" 
+       class="submit-btn" style="display:inline-block;width:auto;padding:.9rem 2.5rem;font-size:1.05rem;text-decoration:none;margin-top:.5rem">
+      ✨ Apply To Become A Creator
+    </a>
+    {% endif %}
+  </div>
+
+  <!-- Application Form -->
+  {% if not existing_application or existing_application.status == 'rejected' %}
+  <div class="app-container" id="apply-form" {% if existing_application and existing_application.status == 'rejected' and not existing_application.can_reapply %}style="display:none"{% endif %}>
+
+    {% if existing_application and existing_application.status == 'rejected' %}
+    <div id="reapply-section" style="display:none">
+    {% endif %}
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+        <div style="padding:.85rem 1.2rem;border-radius:9px;margin-bottom:1rem;font-size:.9rem;
+          {% if cat == 'success' %}background:#16803315;border:1px solid var(--green);color:var(--green);
+          {% elif cat == 'error' %}background:#7f1d1d15;border:1px solid var(--red);color:var(--red);
+          {% else %}background:#1e3a5f15;border:1px solid #60a5fa;color:#93c5fd;{% endif %}">
+          {{msg}}
+        </div>
+      {% endfor %}
+    {% endwith %}
+
+    <!-- Step indicator -->
+    <div class="step-indicator">
+      <div class="step active" id="step-ind-1">
+        <div class="step-num">1</div>
+        <div class="step-label">Personal</div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step" id="step-ind-2">
+        <div class="step-num">2</div>
+        <div class="step-label">Profile</div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step" id="step-ind-3">
+        <div class="step-num">3</div>
+        <div class="step-label">Documents</div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step" id="step-ind-4">
+        <div class="step-num">4</div>
+        <div class="step-label">Terms</div>
+      </div>
+    </div>
+
+    <form method="POST" action="/become-a-creator" enctype="multipart/form-data" id="creator-app-form">
+
+      <!-- STEP 1: Personal Information -->
+      <div id="step-1">
+        <div class="section-card">
+          <div class="section-title">👤 Personal Information</div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Full Legal Name <span class="req">*</span></label>
+              <input type="text" name="full_name" placeholder="As on your ID" required value="{{form_data.get('full_name','') if form_data}}"/>
+            </div>
+            <div class="form-group">
+              <label>Creator Display Name <span class="req">*</span></label>
+              <input type="text" name="display_name" placeholder="What fans will see" required value="{{form_data.get('display_name','') if form_data}}"/>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Email Address <span class="req">*</span></label>
+              <input type="email" name="email" placeholder="your@email.com" required value="{{form_data.get('email','') if form_data else (current_user_email or '')}}"/>
+            </div>
+            <div class="form-group">
+              <label>Phone Number <span class="req">*</span></label>
+              <input type="tel" name="phone" placeholder="+1 555 000 0000" required value="{{form_data.get('phone','') if form_data}}"/>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Country <span class="req">*</span></label>
+              <select name="country" required>
+                <option value="">— Select Country —</option>
+                <option value="KE" {{'selected' if form_data and form_data.get('country')=='KE'}}>Kenya</option>
+                <option value="NG" {{'selected' if form_data and form_data.get('country')=='NG'}}>Nigeria</option>
+                <option value="ZA" {{'selected' if form_data and form_data.get('country')=='ZA'}}>South Africa</option>
+                <option value="GH" {{'selected' if form_data and form_data.get('country')=='GH'}}>Ghana</option>
+                <option value="UG" {{'selected' if form_data and form_data.get('country')=='UG'}}>Uganda</option>
+                <option value="TZ" {{'selected' if form_data and form_data.get('country')=='TZ'}}>Tanzania</option>
+                <option value="US" {{'selected' if form_data and form_data.get('country')=='US'}}>United States</option>
+                <option value="GB" {{'selected' if form_data and form_data.get('country')=='GB'}}>United Kingdom</option>
+                <option value="CA" {{'selected' if form_data and form_data.get('country')=='CA'}}>Canada</option>
+                <option value="AU" {{'selected' if form_data and form_data.get('country')=='AU'}}>Australia</option>
+                <option value="IN" {{'selected' if form_data and form_data.get('country')=='IN'}}>India</option>
+                <option value="BR" {{'selected' if form_data and form_data.get('country')=='BR'}}>Brazil</option>
+                <option value="MX" {{'selected' if form_data and form_data.get('country')=='MX'}}>Mexico</option>
+                <option value="PH" {{'selected' if form_data and form_data.get('country')=='PH'}}>Philippines</option>
+                <option value="OTHER" {{'selected' if form_data and form_data.get('country')=='OTHER'}}>Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Date of Birth <span class="req">*</span></label>
+              <input type="date" name="date_of_birth" required value="{{form_data.get('date_of_birth','') if form_data}}" max="{{max_dob}}"/>
+              <div style="font-size:.73rem;color:var(--muted);margin-top:.2rem">Must be 18 or older</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end">
+          <button type="button" onclick="goStep(2)" class="submit-btn" style="width:auto;padding:.7rem 2rem">
+            Next: Profile Info →
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 2: Profile Information -->
+      <div id="step-2" style="display:none">
+        <div class="section-card">
+          <div class="section-title">🎨 Creator Profile</div>
+
+          <div class="form-group">
+            <label>Creator Bio <span class="req">*</span></label>
+            <textarea name="bio" placeholder="Tell us about yourself and your content style…" required maxlength="1000">{{form_data.get('bio','') if form_data}}</textarea>
+            <div style="font-size:.72rem;color:var(--muted);margin-top:.2rem">Max 1000 characters</div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Content Category <span class="req">*</span></label>
+              <select name="content_category" required>
+                <option value="">— Select Category —</option>
+                <option value="fitness">Fitness & Wellness</option>
+                <option value="lifestyle">Lifestyle</option>
+                <option value="fashion">Fashion & Beauty</option>
+                <option value="art">Art & Photography</option>
+                <option value="cosplay">Cosplay & Gaming</option>
+                <option value="cooking">Cooking & Food</option>
+                <option value="travel">Travel</option>
+                <option value="music">Music & Entertainment</option>
+                <option value="adult">Adult Content (18+)</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Languages Spoken <span class="req">*</span></label>
+              <input type="text" name="languages" placeholder="English, Swahili, French…" required value="{{form_data.get('languages','') if form_data}}"/>
+            </div>
+          </div>
+
+          <div class="section-title" style="margin-top:1.25rem;font-size:.88rem;color:var(--muted)">🔗 Social Media (Optional)</div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Instagram</label>
+              <input type="url" name="instagram" placeholder="https://instagram.com/yourhandle" value="{{form_data.get('instagram','') if form_data}}"/>
+            </div>
+            <div class="form-group">
+              <label>TikTok</label>
+              <input type="url" name="tiktok" placeholder="https://tiktok.com/@yourhandle" value="{{form_data.get('tiktok','') if form_data}}"/>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>X (Twitter)</label>
+              <input type="url" name="twitter" placeholder="https://x.com/yourhandle" value="{{form_data.get('twitter','') if form_data}}"/>
+            </div>
+            <div class="form-group">
+              <label>Telegram Username</label>
+              <input type="text" name="telegram" placeholder="@yourusername" value="{{form_data.get('telegram','') if form_data}}"/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Personal Website</label>
+            <input type="url" name="website" placeholder="https://yourwebsite.com" value="{{form_data.get('website','') if form_data}}"/>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between">
+          <button type="button" onclick="goStep(1)" class="submit-btn" style="width:auto;padding:.7rem 2rem;background:transparent;border:1px solid #3e3e5e;color:#ccc">
+            ← Back
+          </button>
+          <button type="button" onclick="goStep(3)" class="submit-btn" style="width:auto;padding:.7rem 2rem">
+            Next: Documents →
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 3: Verification Documents -->
+      <div id="step-3" style="display:none">
+        <div class="section-card">
+          <div class="section-title">🪪 Verification Documents</div>
+          <p style="color:var(--muted);font-size:.85rem;margin-bottom:1.25rem;line-height:1.6">
+            All documents are encrypted and stored securely. They are only viewed by our verification team and never shared publicly.
+            Accepted formats: JPG, PNG, PDF (max 10MB each).
+          </p>
+
+          <div class="upload-grid">
+            <div class="form-group">
+              <label>Government ID — Front <span class="req">*</span></label>
+              <div class="upload-zone" id="uz-id-front">
+                <input type="file" name="id_front" accept="image/*,.pdf" required onchange="showFileName(this,'uz-id-front')"/>
+                <div class="uz-icon">🪪</div>
+                <div class="uz-label">Click to uploFad<br><small>Passport, National ID, Driver's License</small></div>
+                <div class="uz-name" id="uz-id-front-name"></div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Government ID — Back <span class="req">*</span></label>
+              <div class="upload-zone" id="uz-id-back">
+                <input type="file" name="id_back" accept="image/*,.pdf" required onchange="showFileName(this,'uz-id-back')"/>
+                <div class="uz-icon">🪪</div>
+                <div class="uz-label">Click to upload<br><small>Back side of the same document</small></div>
+                <div class="uz-name" id="uz-id-back-name"></div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Selfie Holding ID <span class="req">*</span></label>
+              <div class="upload-zone" id="uz-selfie">
+                <input type="file" name="selfie_with_id" accept="image/*" required onchange="showFileName(this,'uz-selfie')"/>
+                <div class="uz-icon">🤳</div>
+                <div class="uz-label">Click to upload<br><small>Hold your ID next to your face clearly</small></div>
+                <div class="uz-name" id="uz-selfie-name"></div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Profile Photo <span class="req">*</span></label>
+              <div class="upload-zone" id="uz-profile">
+                <input type="file" name="profile_photo" accept="image/*" required onchange="showFileName(this,'uz-profile')"/>
+                <div class="uz-icon">📸</div>
+                <div class="uz-label">Click to upload<br><small>Clear photo of your face for your creator profile</small></div>
+                <div class="uz-name" id="uz-profile-name"></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:1.25rem;border-top:1px solid #2e2e52;padding-top:1.25rem">
+            <div class="section-title" style="font-size:.88rem;color:var(--muted)">📁 Additional Documents (Optional)</div>
+            <div class="upload-grid">
+              <div class="form-group">
+                <label>Extra Verification Doc</label>
+                <div class="upload-zone" id="uz-extra">
+                  <input type="file" name="extra_doc" accept="image/*,.pdf" onchange="showFileName(this,'uz-extra')"/>
+                  <div class="uz-icon">📄</div>
+                  <div class="uz-label">Click to upload</div>
+                  <div class="uz-name" id="uz-extra-name"></div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Portfolio Sample</label>
+                <div class="upload-zone" id="uz-portfolio">
+                  <input type="file" name="portfolio_sample" accept="image/*,video/*" onchange="showFileName(this,'uz-portfolio')"/>
+                  <div class="uz-icon">🎨</div>
+                  <div class="uz-label">Click to upload<br><small>Sample of your content</small></div>
+                  <div class="uz-name" id="uz-portfolio-name"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between">
+          <button type="button" onclick="goStep(2)" class="submit-btn" style="width:auto;padding:.7rem 2rem;background:transparent;border:1px solid #3e3e5e;color:#ccc">
+            ← Back
+          </button>
+          <button type="button" onclick="goStep(4)" class="submit-btn" style="width:auto;padding:.7rem 2rem">
+            Next: Terms & Submit →
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 4: Terms & Submit -->
+      <div id="step-4" style="display:none">
+        <div class="section-card">
+          <div class="section-title">📋 Terms & Conditions</div>
+
+          <div class="terms-box">
+            <strong style="color:var(--rose)">VaultX Creator Agreement</strong><br/><br/>
+            By applying and using your VaultX creator account, you agree to the following:<br/><br/>
+            <strong>Age Requirement:</strong> You confirm you are 18 years of age or older. All content featuring real people requires documented consent from all parties involved.<br/><br/>
+            <strong>Content Guidelines:</strong> All content must comply with platform guidelines. No illegal, harmful, non-consensual, or abusive content is permitted. You are solely responsible for all content you upload.<br/><br/>
+            <strong>Revenue Sharing Policy:</strong> All subscriber payments flow through VaultX first. Revenue is split automatically per the current platform split rates (typically 70% Creator, 30% Platform for subscriptions). You cannot accept direct payments outside the platform for content featured here.<br/><br/>
+            <strong>Payout & Withdrawal Policy:</strong> Withdrawals are only processed on <strong>Wednesdays and Saturdays</strong>. Minimum processing time is 24–72 hours after admin approval. You must maintain a valid payout method to request withdrawals. Minimum withdrawal amount may apply.<br/><br/>
+            <strong>Privacy & Data Rules:</strong> Subscriber data is confidential. You may not contact subscribers outside the platform DM system for commercial purposes. All applicable data protection laws apply.<br/><br/>
+            <strong>Platform Moderation:</strong> VaultX admin reserves the right to suspend, restrict, or remove any creator account that violates these terms without prior notice. Revenue held in your balance during suspension is subject to review.<br/><br/>
+            <strong>Identity Verification:</strong> You consent to identity verification using the documents submitted. Providing false documents is grounds for immediate permanent ban and may be reported to authorities.
+          </div>
+
+          <div id="terms-checkboxes">
+            <div class="checkbox-row" id="cb-row-age">
+              <input type="checkbox" name="agree_age" id="cb-age" required onchange="updateCheckbox(this)"/>
+              <label for="cb-age">☑ I confirm I am at least <strong>18 years old</strong> and I have the legal right to create and distribute the content I plan to upload.</label>
+            </div>
+            <div class="checkbox-row" id="cb-row-terms">
+              <input type="checkbox" name="agree_terms" id="cb-terms" required onchange="updateCheckbox(this)"/>
+              <label for="cb-terms">☑ I agree to the <strong>VaultX Terms and Conditions</strong> as stated above.</label>
+            </div>
+            <div class="checkbox-row" id="cb-row-revenue">
+              <input type="checkbox" name="agree_revenue" id="cb-revenue" required onchange="updateCheckbox(this)"/>
+              <label for="cb-revenue">☑ I agree to the <strong>Revenue Sharing Policy</strong> and understand how platform earnings are split.</label>
+            </div>
+            <div class="checkbox-row" id="cb-row-content">
+              <input type="checkbox" name="agree_content" id="cb-content" required onchange="updateCheckbox(this)"/>
+              <label for="cb-content">☑ I agree to the <strong>Creator Content Guidelines</strong> and will only upload lawful, consensual content.</label>
+            </div>
+            <div class="checkbox-row" id="cb-row-payout">
+              <input type="checkbox" name="agree_payout" id="cb-payout" required onchange="updateCheckbox(this)"/>
+              <label for="cb-payout">☑ I agree to the <strong>Payout and Withdrawal Policy</strong> including the Wednesday/Saturday withdrawal schedule.</label>
+            </div>
+            <div class="checkbox-row" id="cb-row-moderation">
+              <input type="checkbox" name="agree_moderation" id="cb-moderation" required onchange="updateCheckbox(this)"/>
+              <label for="cb-moderation">☑ I agree to <strong>Platform Moderation Rules</strong> and accept that violations may result in account suspension.</label>
+            </div>
+          </div>
+
+          <div id="terms-warning" style="display:none;margin-top:.75rem;padding:.7rem 1rem;background:rgba(239,68,68,.1);border:1px solid var(--red);border-radius:8px;font-size:.83rem;color:var(--red)">
+            ⚠️ Please accept all required terms and conditions before submitting.
+          </div>
+        </div>
+
+        <div style="background:var(--card);border:1px solid #2e2e52;border-radius:var(--radius);padding:1.25rem;margin-bottom:1.25rem">
+          <div style="font-size:.82rem;color:var(--muted);line-height:1.7">
+            🔒 <strong style="color:#e8e8f0">Your application is secure.</strong> All documents are encrypted. 
+            We record your IP address (<code style="color:var(--gold)">{{applicant_ip or 'detected at submission'}}</code>), 
+            acceptance timestamp, and terms version for legal compliance. 
+            You will receive a confirmation email after submission.
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <button type="button" onclick="goStep(3)" class="submit-btn" style="width:auto;padding:.7rem 2rem;background:transparent;border:1px solid #3e3e5e;color:#ccc">
+            ← Back
+          </button>
+          <button type="submit" id="submit-btn" class="submit-btn" style="width:auto;padding:.9rem 2.5rem;font-size:1rem" disabled>
+            ✨ Submit Application
+          </button>
+        </div>
+      </div>
+
+    </form>
+
+    {% if existing_application and existing_application.status == 'rejected' %}
+    </div><!-- end reapply-section -->
+    {% endif %}
+
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentStep = 1;
+
+function goStep(n) {
+  // Hide all steps
+  [1,2,3,4].forEach(i => {
+    document.getElementById('step-' + i).style.display = 'none';
+    const ind = document.getElementById('step-ind-' + i);
+    if (ind) { ind.classList.remove('active', 'done'); }
+  });
+  // Mark previous steps as done
+  for (let i = 1; i < n; i++) {
+    const ind = document.getElementById('step-ind-' + i);
+    if (ind) ind.classList.add('done');
+  }
+  // Show current
+  document.getElementById('step-' + n).style.display = 'block';
+  const activeInd = document.getElementById('step-ind-' + n);
+  if (activeInd) activeInd.classList.add('active');
+  currentStep = n;
+  window.scrollTo({top: document.getElementById('apply-form').offsetTop - 20, behavior:'smooth'});
+}
+
+function showFileName(input, zoneId) {
+  if (input.files && input.files[0]) {
+    const nameEl = document.getElementById(zoneId + '-name');
+    if (nameEl) nameEl.textContent = '✓ ' + input.files[0].name;
+    document.getElementById(zoneId).style.borderColor = 'var(--green)';
+  }
+}
+
+function updateCheckbox(cb) {
+  const row = cb.closest('.checkbox-row');
+  if (cb.checked) {
+    row.classList.add('checked');
+  } else {
+    row.classList.remove('checked');
+  }
+  checkAllTerms();
+}
+
+function checkAllTerms() {
+  const required = ['cb-age', 'cb-terms', 'cb-revenue', 'cb-content', 'cb-payout', 'cb-moderation'];
+  const allChecked = required.every(id => document.getElementById(id).checked);
+  document.getElementById('submit-btn').disabled = !allChecked;
+  if (allChecked) {
+    document.getElementById('terms-warning').style.display = 'none';
+  }
+}
+
+// Validate age before moving to step 2
+const origGoStep2 = window.goStep;
+document.addEventListener('DOMContentLoaded', function() {
+  // Validate step 1 before going to step 2
+  const nextBtn1 = document.querySelector('#step-1 button[onclick="goStep(2)"]');
+  if (nextBtn1) {
+    nextBtn1.onclick = function() {
+      const dob = document.querySelector('input[name="date_of_birth"]').value;
+      if (dob) {
+        const age = (new Date() - new Date(dob)) / (365.25 * 24 * 3600 * 1000);
+        if (age < 18) {
+          alert('You must be at least 18 years old to apply.');
+          return;
+        }
+      }
+      goStep(2);
+    };
+  }
+});
+</script>
+{% endblock %}

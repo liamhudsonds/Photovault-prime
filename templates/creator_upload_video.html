@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+{% block title %}Upload Video — Creator Dashboard{% endblock %}
+
+{% block head %}
+<style>
+:root { --mgr:#a78bfa; --mgr-dim:rgba(167,139,250,0.15); --mgr-glow:rgba(167,139,250,0.07); }
+.mgr-layout { display:grid;grid-template-columns:240px 1fr;gap:0;min-height:calc(100vh - 60px); }
+@media(max-width:800px){ .mgr-layout{grid-template-columns:1fr;} }
+.mgr-sidebar {
+  background:var(--surface);border-right:1px solid var(--border);
+  padding:1.5rem 0;position:sticky;top:60px;height:calc(100vh - 60px);overflow-y:auto;
+}
+.mgr-sidebar-header { padding:0 1.25rem 1.25rem;border-bottom:1px solid var(--border);margin-bottom:.75rem; }
+.mgr-creator-avatar { width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid var(--mgr);margin-bottom:.5rem; }
+.mgr-creator-avatar-ph {
+  width:48px;height:48px;border-radius:50%;background:var(--mgr-dim);
+  display:flex;align-items:center;justify-content:center;font-size:1.4rem;
+  border:2px solid var(--mgr);margin-bottom:.5rem;
+}
+.mgr-nav-item {
+  display:flex;align-items:center;gap:.65rem;padding:.65rem 1.25rem;
+  color:var(--text2);text-decoration:none;font-size:.88rem;
+  transition:all .15s;border-left:3px solid transparent;
+}
+.mgr-nav-item:hover { color:var(--mgr);background:var(--mgr-glow); }
+.mgr-nav-item.active { color:var(--mgr);border-left-color:var(--mgr);background:var(--mgr-glow);font-weight:600; }
+.mgr-main { padding:2rem;background:var(--bg); }
+@media(max-width:800px){ .mgr-main{padding:1rem;} }
+
+.upload-form-card {
+  max-width:680px;background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;overflow:hidden;
+}
+.ufc-head {
+  padding:.85rem 1.25rem;background:var(--bg2);border-bottom:1px solid var(--border);
+  font-family:var(--font-head);font-size:1rem;color:var(--text);
+}
+.ufc-body { padding:1.5rem; }
+.form-group { margin-bottom:1.25rem; }
+.form-group label { display:block;font-size:.78rem;color:var(--text2);margin-bottom:.4rem;font-weight:500; }
+.form-control {
+  width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;
+  padding:.6rem .85rem;color:var(--text);font-size:.88rem;font-family:var(--font-body);
+  transition:border-color .15s;outline:none;
+}
+.form-control:focus { border-color:var(--mgr); }
+textarea.form-control { resize:vertical;min-height:80px; }
+.form-row-2 { display:grid;grid-template-columns:1fr 1fr;gap:1rem; }
+@media(max-width:560px){ .form-row-2{grid-template-columns:1fr;} }
+
+.upload-zone {
+  border:2px dashed rgba(167,139,250,.3);border-radius:10px;padding:1.5rem;
+  text-align:center;cursor:pointer;transition:all .2s;background:var(--mgr-glow);
+  position:relative;overflow:hidden;
+}
+.upload-zone:hover { border-color:var(--mgr); }
+.upload-zone input[type=file] { position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%; }
+.upload-zone .uz-icon { font-size:2rem;margin-bottom:.5rem; }
+.upload-zone .uz-label { font-size:.82rem;color:var(--text3); }
+
+.btn-mgr {
+  background:var(--mgr);color:#fff;border:none;border-radius:8px;
+  padding:.65rem 1.5rem;font-size:.88rem;cursor:pointer;font-family:var(--font-body);
+  display:inline-flex;align-items:center;gap:.4rem;transition:opacity .15s;
+}
+.btn-mgr:hover { opacity:.85; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mgr-layout">
+  <aside class="mgr-sidebar">
+    <div class="mgr-sidebar-header">
+      {% if profile.avatar_filename %}
+        <img src="{{ url_for('serve_profile_media', filename=profile.avatar_filename) }}"
+             class="mgr-creator-avatar" alt="{{ profile.name }}">
+      {% else %}
+        <div class="mgr-creator-avatar-ph">{{ profile.name[0]|upper }}</div>
+      {% endif %}
+      <div style="font-family:var(--font-head);font-size:1rem;color:var(--text);">{{ profile.name }}</div>
+      <div style="font-size:.72rem;color:var(--text3);">@{{ profile.username }}</div>
+    </div>
+    <nav>
+      {% set active = 'upload_video' %}
+      {% include 'includes/creator_dashboard_nav.html' with context %}
+      <a href="{{ url_for('logout') }}" class="mgr-nav-item" style="color:var(--text3);">
+        <span style="font-size:1rem;width:20px;text-align:center;">🚪</span> Logout
+      </a>
+    </nav>
+  </aside>
+
+  <main class="mgr-main">
+    {% include 'includes/creator_admin_banner.html' %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat,msg in messages %}
+        <div style="background:{% if cat=='error' %}rgba(239,68,68,.15){% else %}rgba(167,139,250,.15){% endif %};
+             color:{% if cat=='error' %}#ef4444{% else %}var(--mgr){% endif %};
+             border:1px solid {% if cat=='error' %}rgba(239,68,68,.3){% else %}var(--mgr-dim){% endif %};
+             border-radius:10px;padding:.75rem 1rem;margin-bottom:1rem;font-size:.88rem;">
+          {{ msg }}
+        </div>
+      {% endfor %}
+    {% endwith %}
+
+    <h1 style="font-family:var(--font-head);font-size:1.4rem;color:var(--text);margin-bottom:1.5rem;">
+      ⬆️ Upload Video for {{ profile.name }}
+    </h1>
+
+    <div class="upload-form-card">
+      <div class="ufc-head">Video Details</div>
+      <div class="ufc-body">
+        <form method="POST" enctype="multipart/form-data">
+          <div class="form-group">
+            <label>Video File *</label>
+            <div class="upload-zone" id="video-zone">
+              <input type="file" name="video_file" accept="video/mp4,video/mov,video/webm,video/avi" required>
+              <div class="uz-icon">🎬</div>
+              <div class="uz-label" id="video-label">Click to select video (MP4, MOV, WEBM, AVI)</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Thumbnail Image</label>
+            <div class="upload-zone" id="thumb-zone">
+              <input type="file" name="thumbnail" accept="image/jpeg,image/png,image/webp">
+              <div class="uz-icon">🖼</div>
+              <div class="uz-label" id="thumb-label">Click to select thumbnail (optional)</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Title *</label>
+            <input type="text" name="title" class="form-control" placeholder="Video title" required>
+          </div>
+
+          <div class="form-group">
+            <label>Description</label>
+            <textarea name="description" class="form-control" placeholder="Describe your video…"></textarea>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label>Category</label>
+              <select name="category" class="form-control">
+                <option value="">— None —</option>
+                {% for cat in categories %}
+                  <option value="{{ cat.name }}">{{ cat.icon }} {{ cat.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Tier</label>
+              <select name="tier" class="form-control">
+                <option value="basic">Basic</option>
+                <option value="standard">Standard</option>
+                <option value="premium">Premium</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Unlock Price (USD)</label>
+            <input type="number" name="unlock_price" class="form-control" value="5.00"
+                   min="0" step="0.01" placeholder="5.00">
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;gap:.75rem;margin-top:.5rem;">
+            <a href="{{ upload_url('creator_dashboard_videos', profile.id) }}"
+               style="background:none;border:1px solid var(--border);border-radius:8px;
+                      padding:.6rem 1.25rem;color:var(--text2);text-decoration:none;font-size:.85rem;">
+              Cancel
+            </a>
+            <button type="submit" class="btn-mgr">⬆️ Upload Video</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+// Show selected filename in upload zones
+document.querySelectorAll('.upload-zone input[type=file]').forEach(input => {
+  input.addEventListener('change', function() {
+    const label = this.parentElement.querySelector('.uz-label');
+    if (this.files.length > 0) {
+      label.textContent = '✅ ' + this.files[0].name;
+      label.style.color = 'var(--mgr)';
+    }
+  });
+});
+</script>
+{% endblock %}

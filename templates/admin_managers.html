@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+{% block title %}Legacy Managers — Admin{% endblock %}
+
+{% block head %}
+<style>
+:root { --rose:#e8547a; --rose-dim:rgba(232,84,122,0.15); --rose-glow:rgba(232,84,122,0.07); }
+.page-header { display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem; }
+.section-card { background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:1.5rem; }
+.section-card-head {
+  padding:.85rem 1.25rem;background:var(--bg2);border-bottom:1px solid var(--border);
+  font-family:var(--font-head);font-size:1rem;color:var(--text);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.section-card-body { padding:1.25rem; }
+
+.mgr-table { width:100%;border-collapse:collapse; }
+.mgr-table th { padding:.6rem 1rem;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--text3);border-bottom:1px solid var(--border);text-align:left; }
+.mgr-table td { padding:.75rem 1rem;border-bottom:1px solid var(--border);font-size:.85rem;color:var(--text2); }
+.mgr-table tr:last-child td { border-bottom:none; }
+.mgr-table tr:hover td { background:var(--bg2); }
+
+.badge { display:inline-block;padding:.2rem .6rem;border-radius:20px;font-size:.7rem;font-weight:600; }
+.badge-mgr { background:rgba(167,139,250,.15);color:#a78bfa; }
+.badge-none { background:var(--bg3);color:var(--text3); }
+
+.form-row-2 { display:grid;grid-template-columns:1fr 1fr;gap:1rem; }
+@media(max-width:640px){ .form-row-2{grid-template-columns:1fr;} }
+.form-group { margin-bottom:1rem; }
+.form-group label { display:block;font-size:.78rem;color:var(--text2);margin-bottom:.4rem;font-weight:500; }
+.form-control {
+  width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;
+  padding:.6rem .85rem;color:var(--text);font-size:.88rem;font-family:var(--font-body);
+  transition:border-color .15s;outline:none;
+}
+.form-control:focus { border-color:var(--rose); }
+
+.btn-rose { background:var(--rose);color:#fff;border:none;border-radius:8px;
+  padding:.55rem 1.25rem;font-size:.85rem;cursor:pointer;font-family:var(--font-body);
+  display:inline-flex;align-items:center;gap:.4rem;transition:opacity .15s; }
+.btn-rose:hover { opacity:.85; }
+.btn-ghost-sm { background:none;border:1px solid var(--border);border-radius:7px;
+  padding:.35rem .75rem;color:var(--text2);font-size:.78rem;cursor:pointer;text-decoration:none;
+  display:inline-flex;align-items:center;gap:.3rem; }
+.btn-ghost-sm:hover { border-color:var(--text2); }
+.btn-danger-sm { background:rgba(239,68,68,.12);color:#ef4444;border:1px solid rgba(239,68,68,.25);
+  border-radius:7px;padding:.35rem .75rem;font-size:.78rem;cursor:pointer; }
+.btn-danger-sm:hover { background:rgba(239,68,68,.22); }
+
+.assign-inline { display:flex;gap:.5rem;align-items:center; }
+.assign-inline select { flex:1; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:1100px;margin:0 auto;padding:1.5rem 1rem;">
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat,msg in messages %}
+      <div style="background:{% if cat=='error' %}rgba(239,68,68,.15){% else %}rgba(232,84,122,.12){% endif %};
+           color:{% if cat=='error' %}#ef4444{% else %}var(--rose){% endif %};
+           border:1px solid {% if cat=='error' %}rgba(239,68,68,.3){% else %}var(--rose-dim){% endif %};
+           border-radius:10px;padding:.75rem 1rem;margin-bottom:1rem;font-size:.88rem;">
+        {{ msg }}
+      </div>
+    {% endfor %}
+  {% endwith %}
+
+  <div class="page-header">
+    <div>
+      <h1 style="font-family:var(--font-head);font-size:1.6rem;color:var(--text);margin-bottom:.15rem;">
+        👥 Legacy Managers
+      </h1>
+      <p style="color:var(--text3);font-size:.85rem;">
+        Manage accounts that operate individual creator profiles.
+      </p>
+    </div>
+    <a href="{{ url_for('admin_dashboard') }}" class="btn-ghost-sm">← Admin Dashboard</a>
+  </div>
+
+  <!-- Create new manager -->
+  <div class="section-card">
+    <div class="section-card-head">
+      <span>➕ Create New Manager Account</span>
+    </div>
+    <div class="section-card-body">
+      <form method="POST" action="{{ url_for('admin_create_manager') }}">
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>Email Address *</label>
+            <input type="email" name="email" class="form-control" placeholder="manager@example.com" required>
+          </div>
+          <div class="form-group">
+            <label>Password *</label>
+            <input type="password" name="password" class="form-control" placeholder="Secure password" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Assign to Creator (optional)</label>
+          <select name="profile_id" class="form-control">
+            <option value="">— Assign later —</option>
+            {% for p in profiles %}
+              <option value="{{ p.id }}">
+                {{ p.name }} (@{{ p.username }})
+                {% if p.manager_id %} [already has a manager]{% endif %}
+              </option>
+            {% endfor %}
+          </select>
+          <div style="font-size:.72rem;color:var(--text3);margin-top:.3rem;">
+            Only one manager can be assigned to each creator at a time.
+          </div>
+        </div>
+        <button type="submit" class="btn-rose">➕ Create Manager</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Manager list -->
+  <div class="section-card">
+    <div class="section-card-head">
+      <span>📋 All Managers ({{ managers|length }})</span>
+    </div>
+    {% if managers %}
+      <table class="mgr-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Assigned Creator</th>
+            <th>Created</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in managers %}
+          {% set assigned = namespace(profile=None) %}
+          {% for p in profiles %}
+            {% if p.manager_id == m.id %}{% set assigned.profile = p %}{% endif %}
+          {% endfor %}
+          <tr>
+            <td style="color:var(--text3);">{{ loop.index }}</td>
+            <td style="color:var(--text);font-weight:500;">{{ m.email }}</td>
+            <td><span class="badge badge-mgr">Manager (Legacy)</span></td>
+            <td>
+              {% if assigned.profile %}
+                <a href="{{ url_for('profile_page', username=assigned.profile.username) }}"
+                   target="_blank" style="color:var(--rose);text-decoration:none;">
+                  {{ assigned.profile.name }} (@{{ assigned.profile.username }})
+                </a>
+              {% else %}
+                <span class="badge badge-none">Unassigned</span>
+              {% endif %}
+            </td>
+            <td style="font-size:.75rem;color:var(--text3);">{{ m.created_at.strftime('%b %d, %Y') }}</td>
+            <td>
+              <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;">
+                <!-- Re-assign form -->
+                <form method="POST" action="{{ url_for('admin_assign_manager', manager_id=m.id) }}"
+                      style="display:flex;gap:.4rem;align-items:center;">
+                  <select name="profile_id" class="form-control" style="width:auto;font-size:.78rem;padding:.3rem .6rem;">
+                    <option value="">— Unassign —</option>
+                    {% for p in profiles %}
+                      <option value="{{ p.id }}" {% if assigned.profile and assigned.profile.id == p.id %}selected{% endif %}>
+                        {{ p.name }}
+                      </option>
+                    {% endfor %}
+                  </select>
+                  <button type="submit" class="btn-ghost-sm">💾 Save</button>
+                </form>
+                <!-- Delete -->
+                <form method="POST" action="{{ url_for('admin_delete_manager', manager_id=m.id) }}"
+                      onsubmit="return confirm('Delete this manager account?');">
+                  <button type="submit" class="btn-danger-sm">🗑</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <div style="text-align:center;padding:3rem 1rem;">
+        <div style="font-size:2.5rem;margin-bottom:.75rem;">👥</div>
+        <p style="color:var(--text3);">No manager accounts yet. Create one above.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Permission reference -->
+  <div class="section-card">
+    <div class="section-card-head">ℹ️ Permission Reference</div>
+    <div class="section-card-body">
+      <table style="width:100%;border-collapse:collapse;font-size:.82rem;">
+        <thead>
+          <tr>
+            <th style="text-align:left;padding:.5rem .75rem;color:var(--text3);border-bottom:1px solid var(--border);">Action</th>
+            <th style="text-align:center;padding:.5rem .75rem;color:var(--text3);border-bottom:1px solid var(--border);">Admin</th>
+            <th style="text-align:center;padding:.5rem .75rem;color:var(--text3);border-bottom:1px solid var(--border);">Role</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for action, admin_ok, mgr_ok in [
+            ('View all creators', True, False),
+            ('Upload videos for assigned creator', True, True),
+            ('Delete own creator videos', True, True),
+            ('View assigned creator dashboard', True, True),
+            ('View admin dashboard', True, False),
+            ('Create / delete creators', True, False),
+            ('View all users', True, False),
+            ('Manage other creators', True, False),
+            ('Create manager accounts', True, False),
+            ('View platform earnings', True, False),
+          ] %}
+          <tr>
+            <td style="padding:.5rem .75rem;color:var(--text2);border-bottom:1px solid var(--border);">{{ action }}</td>
+            <td style="text-align:center;padding:.5rem .75rem;border-bottom:1px solid var(--border);">
+              {% if admin_ok %}<span style="color:#4ade80;">✅</span>{% else %}<span style="color:#ef4444;">❌</span>{% endif %}
+            </td>
+            <td style="text-align:center;padding:.5rem .75rem;border-bottom:1px solid var(--border);">
+              {% if mgr_ok %}<span style="color:#4ade80;">✅</span>{% else %}<span style="color:#ef4444;">❌</span>{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% block title %}Application Status — VoultX{% endblock %}
+
+{% block head %}
+<style>
+.status-wrap { max-width: 580px; margin: 3rem auto; padding: 0 1rem 4rem; }
+.status-card { background: var(--surface); border: 1px solid var(--border); border-radius: 18px; padding: 2rem; margin-bottom: 1.5rem; }
+.status-header { text-align: center; margin-bottom: 2rem; }
+.status-header h1 { font-family: var(--font-head); font-size: 1.6rem; color: var(--text); margin-bottom: .35rem; }
+.status-id { font-size: .75rem; color: var(--text3); }
+
+.status-badge {
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .4rem 1rem; border-radius: 99px; font-size: .82rem; font-weight: 700;
+  margin-bottom: 1rem;
+}
+.status-pending { background: rgba(251,191,36,.12); color: #f59e0b; border: 1px solid rgba(251,191,36,.25); }
+.status-under_review { background: rgba(99,102,241,.12); color: #818cf8; border: 1px solid rgba(99,102,241,.25); }
+.status-approved { background: rgba(34,197,94,.12); color: #22c55e; border: 1px solid rgba(34,197,94,.25); }
+.status-rejected { background: rgba(239,68,68,.12); color: #ef4444; border: 1px solid rgba(239,68,68,.25); }
+
+.progress-track { display: flex; flex-direction: column; gap: 0; }
+.progress-step { display: flex; gap: 1rem; align-items: flex-start; padding: .9rem 0; position: relative; }
+.progress-step::before { content: ''; position: absolute; left: 15px; top: 44px; width: 2px; bottom: -8px; background: var(--border); }
+.progress-step:last-child::before { display: none; }
+.step-dot { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .9rem; flex-shrink: 0; border: 2px solid var(--border); background: var(--bg2); color: var(--text3); }
+.step-dot.done { background: #22c55e; border-color: #22c55e; color: #fff; }
+.step-dot.active { background: #C9A84C; border-color: #C9A84C; color: #1a1a00; }
+.step-info { flex: 1; padding-top: .25rem; }
+.step-name { font-size: .9rem; color: var(--text); font-weight: 500; }
+.step-desc { font-size: .75rem; color: var(--text3); margin-top: .15rem; }
+
+.type-pill { display: inline-block; padding: .2rem .65rem; border-radius: 7px; font-size: .72rem; font-weight: 700; }
+.type-manager { background: rgba(167,139,250,.15); color: #a78bfa; }
+.type-creator { background: rgba(201,168,76,.15); color: #C9A84C; }
+
+.info-row { display: flex; justify-content: space-between; padding: .6rem 0; border-bottom: 1px solid var(--border); font-size: .85rem; }
+.info-row:last-child { border-bottom: none; }
+.info-row span:first-child { color: var(--text3); }
+.info-row span:last-child { color: var(--text); font-weight: 500; }
+
+.rejection-box { background: rgba(239,68,68,.07); border: 1px solid rgba(239,68,68,.2); border-radius: 10px; padding: 1rem; margin-top: 1rem; }
+.rejection-box h4 { color: #ef4444; font-size: .85rem; margin-bottom: .35rem; }
+.rejection-box p { color: var(--text2); font-size: .82rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="status-wrap">
+  <div class="status-card">
+    <div class="status-header">
+      <div class="status-id">Application #{{ app_record.id }}</div>
+      <h1>Application Status</h1>
+      <div class="status-badge status-{{ app_record.status }}">
+        {% if app_record.status == 'pending' %}⏳{% elif app_record.status == 'under_review' %}🔍{% elif app_record.status == 'approved' %}✅{% else %}❌{% endif %}
+        {{ app_record.status|replace('_', ' ')|title }}
+      </div>
+      <div>
+        <span class="type-pill {% if app_record.application_type in ('creator_manager','junior_creator') %}type-manager{% else %}type-creator{% endif %}">
+          {{ 'Junior Creator' if app_record.application_type in ('creator_manager','junior_creator') else 'Verified Creator' }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Stage progress -->
+    <div class="progress-track">
+      {% for i, label in enumerate(stage_labels) %}
+      <div class="progress-step">
+        <div class="step-dot {% if (i+1) < app_record.stage %}done{% elif (i+1) == app_record.stage %}active{% endif %}">
+          {% if (i+1) < app_record.stage %}✓{% else %}{{ i+1 }}{% endif %}
+        </div>
+        <div class="step-info">
+          <div class="step-name">{{ label }}</div>
+          <div class="step-desc">
+            {% if i == 0 %}Your application has been received.
+            {% elif i == 1 %}Required documents have been submitted.
+            {% elif i == 2 %}Our OPS team is reviewing your application.
+            {% elif i == 3 %}A Junior Creator account is being set up for you.
+            {% elif i == 4 %}Your performance is being evaluated over 1–2 weeks.
+            {% elif i == 5 %}Your account has been approved for verification.
+            {% elif i == 6 %}Your verified creator account has been issued!
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Application details -->
+  <div class="status-card">
+    <h3 style="font-family:var(--font-head);font-size:1rem;color:var(--text);margin-bottom:1rem;">Application Details</h3>
+    <div class="info-row">
+      <span>Name</span><span>{{ app_record.applicant_name }}</span>
+    </div>
+    <div class="info-row">
+      <span>Email</span><span>{{ app_record.applicant_email }}</span>
+    </div>
+    <div class="info-row">
+      <span>Content Type</span><span>{{ app_record.content_type or '—' }}</span>
+    </div>
+    <div class="info-row">
+      <span>Applied</span><span>{{ app_record.created_at.strftime('%b %d, %Y') }}</span>
+    </div>
+    <div class="info-row">
+      <span>Last Updated</span><span>{{ app_record.updated_at.strftime('%b %d, %Y') if app_record.updated_at else '—' }}</span>
+    </div>
+
+    {% if app_record.status == 'rejected' and app_record.rejection_reason %}
+    <div class="rejection-box">
+      <h4>❌ Reason for Rejection</h4>
+      <p>{{ app_record.rejection_reason }}</p>
+      <p style="margin-top:.5rem;"><a href="{{ url_for('apply_to_be_creator') }}" style="color:#C9A84C;text-decoration:none;font-weight:600;">Re-apply →</a></p>
+    </div>
+    {% endif %}
+
+    {% if app_record.status == 'approved' %}
+    <div style="background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.2);border-radius:10px;padding:1rem;margin-top:1rem;">
+      <h4 style="color:#22c55e;font-size:.9rem;margin-bottom:.35rem;">🎉 Application Approved!</h4>
+      <p style="color:var(--text2);font-size:.82rem;">Check your email for account details. You can now log in to your creator dashboard.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <div style="text-align:center;margin-top:1rem;">
+    <a href="{{ url_for('index') }}" style="color:var(--text3);font-size:.82rem;text-decoration:none;">← Back to Home</a>
+  </div>
+</div>
+{% endblock %}

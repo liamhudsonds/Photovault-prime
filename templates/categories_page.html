@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Categories — PhotoVault{% endblock %}
+
+{% block content %}
+<div class="container" style="padding:3rem 1rem;">
+
+  <div style="margin-bottom:2.5rem;">
+    <h1 style="font-size:2.2rem;font-weight:700;font-family:var(--font-head);">Browse Categories</h1>
+    <p style="opacity:.7;">Explore premium photos and videos by category.</p>
+  </div>
+
+  {% if categories %}
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1.25rem;">
+
+    {% for cat in categories %}
+    <a href="{{ url_for('category_detail', slug=cat.slug) }}"
+       style="text-decoration:none;color:inherit;">
+
+      <div style="background:#111;border:1px solid #222;border-radius:18px;padding:1.75rem 1.5rem;transition:all .25s;position:relative;overflow:hidden;"
+           onmouseover="this.style.borderColor='#444';this.style.transform='translateY(-3px)'"
+           onmouseout="this.style.borderColor='#222';this.style.transform='translateY(0)'">
+
+        <!-- Icon -->
+        <div style="font-size:2.5rem;margin-bottom:1rem;">{{ cat.icon }}</div>
+
+        <h2 style="margin:0 0 .35rem;font-size:1.15rem;font-family:var(--font-head);">{{ cat.name }}</h2>
+
+        {% if cat.description %}
+        <p style="font-size:.83rem;opacity:.65;line-height:1.55;margin-bottom:1rem;">{{ cat.description }}</p>
+        {% endif %}
+
+        <!-- Counts row -->
+        <div style="display:flex;gap:1rem;font-size:.75rem;opacity:.55;">
+          {% if cat.photo_count %}
+          <span>📷 {{ cat.photo_count }} photo{% if cat.photo_count != 1 %}s{% endif %}</span>
+          {% endif %}
+          {% if cat.video_count %}
+          <span>🎬 {{ cat.video_count }} video{% if cat.video_count != 1 %}s{% endif %}</span>
+          {% endif %}
+          {% if not cat.photo_count and not cat.video_count %}
+          <span>No content yet</span>
+          {% endif %}
+        </div>
+
+      </div>
+    </a>
+    {% endfor %}
+
+  </div>
+
+  {% else %}
+  <div style="text-align:center;padding:4rem 2rem;opacity:.5;">
+    <div style="font-size:4rem;margin-bottom:1rem;">🗂</div>
+    <h2>No categories yet</h2>
+    <p>Categories will appear here once created by the admin.</p>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

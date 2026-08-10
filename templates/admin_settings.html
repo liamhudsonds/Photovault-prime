@@ -1,0 +1,513 @@
+{% extends 'base.html' %}
+{% block title %}Settings — Admin{% endblock %}
+
+{% block head %}
+<style>
+/* ── Settings page styles ─────────────────────────────────────────────────── */
+.settings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  max-width: 1100px;
+}
+@media(max-width:900px){ .settings-grid { grid-template-columns: 1fr; } }
+
+.settings-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.settings-card-head {
+  padding: 1.1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  background: var(--bg2);
+}
+.settings-card-head .card-icon { font-size: 1.1rem; }
+.settings-card-head h3 {
+  font-family: var(--font-head);
+  font-size: 1rem;
+  color: var(--text);
+  margin: 0;
+}
+.settings-card-body { padding: 1.5rem; }
+
+/* Blur slider */
+.blur-row {
+  margin-bottom: 1.5rem;
+}
+.blur-row:last-child { margin-bottom: 0; }
+.blur-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: .5rem;
+}
+.blur-label {
+  font-size: .85rem;
+  color: var(--text2);
+  font-weight: 500;
+}
+.blur-value-badge {
+  background: var(--gold-dim);
+  color: var(--gold);
+  font-family: 'DM Mono', monospace, var(--font-body);
+  font-size: .75rem;
+  padding: 2px 10px;
+  border-radius: 100px;
+  min-width: 52px;
+  text-align: center;
+  transition: background .2s;
+}
+.blur-desc {
+  font-size: .75rem;
+  color: var(--text3);
+  margin-top: .25rem;
+}
+
+/* Range slider custom styling */
+input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+  outline: none;
+  cursor: pointer;
+  position: relative;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--gold);
+  cursor: pointer;
+  border: 2px solid var(--bg);
+  box-shadow: 0 0 8px rgba(201,168,76,0.4);
+  transition: box-shadow .2s, transform .2s;
+}
+input[type="range"]::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 18px rgba(201,168,76,0.6);
+  transform: scale(1.15);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--gold);
+  cursor: pointer;
+  border: 2px solid var(--bg);
+}
+
+/* Live preview box */
+.blur-preview-box {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  aspect-ratio: 16/9;
+  background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+  margin-top: 1rem;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.blur-preview-img {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg,
+    rgba(201,168,76,0.3) 0%,
+    rgba(80,40,160,0.3) 50%,
+    rgba(0,210,200,0.2) 100%
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  transition: filter .3s;
+}
+.blur-preview-label {
+  position: absolute;
+  bottom: .75rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: .72rem;
+  color: rgba(255,255,255,0.5);
+  font-family: var(--font-body);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* Tint color picker */
+.tint-options {
+  display: flex;
+  gap: .75rem;
+  flex-wrap: wrap;
+  margin-top: .5rem;
+}
+.tint-opt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .35rem;
+  cursor: pointer;
+}
+.tint-opt input[type="radio"] { display: none; }
+.tint-swatch {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  transition: border-color .2s, transform .2s;
+  cursor: pointer;
+}
+.tint-opt input[type="radio"]:checked + .tint-swatch {
+  border-color: var(--gold);
+  transform: scale(1.1);
+  box-shadow: 0 0 14px rgba(201,168,76,0.4);
+}
+.tint-swatch.purple-gold { background: linear-gradient(135deg, rgba(80,40,160,0.8), rgba(201,168,76,0.6)); }
+.tint-swatch.blue-teal   { background: linear-gradient(135deg, rgba(30,60,180,0.8), rgba(0,210,200,0.6)); }
+.tint-swatch.red-dark    { background: linear-gradient(135deg, rgba(180,30,30,0.8), rgba(60,10,10,0.9)); }
+.tint-swatch.green-dark  { background: linear-gradient(135deg, rgba(20,100,60,0.8), rgba(10,30,20,0.9)); }
+.tint-swatch.monochrome  { background: linear-gradient(135deg, rgba(50,50,60,0.9), rgba(20,20,25,0.95)); }
+.tint-swatch.none        { background: transparent; border: 1.5px dashed var(--border); }
+.tint-opt-label { font-size: .65rem; color: var(--text3); }
+
+/* Toggle switch */
+.toggle-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: .75rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.toggle-row:last-child { border-bottom: none; }
+.toggle-info h4 { font-size: .9rem; color: var(--text); margin-bottom: .1rem; }
+.toggle-info p  { font-size: .75rem; color: var(--text3); }
+
+/* Toggle switch UI */
+.switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.switch-slider {
+  position: absolute; inset: 0;
+  background: var(--border);
+  border-radius: 24px;
+  cursor: pointer;
+  transition: background .2s;
+}
+.switch-slider::before {
+  content: '';
+  position: absolute;
+  height: 18px; width: 18px;
+  left: 3px; bottom: 3px;
+  background: var(--text3);
+  border-radius: 50%;
+  transition: transform .2s, background .2s;
+}
+.switch input:checked + .switch-slider { background: var(--gold-dim); }
+.switch input:checked + .switch-slider::before {
+  transform: translateX(20px);
+  background: var(--gold);
+}
+
+/* Save button */
+.settings-save-btn {
+  background: var(--gold);
+  color: #0a0a0c;
+  font-family: var(--font-body);
+  font-size: .88rem;
+  font-weight: 500;
+  letter-spacing: .04em;
+  padding: 12px 2rem;
+  border-radius: 100px;
+  border: none;
+  cursor: pointer;
+  transition: background .2s, transform .2s;
+  margin-top: 1.5rem;
+}
+.settings-save-btn:hover { background: #e0b85a; transform: scale(1.02); }
+
+.settings-section-title {
+  font-family: var(--font-head);
+  font-size: 1.25rem;
+  color: var(--text);
+  margin: 2rem 0 1rem;
+  padding-bottom: .5rem;
+  border-bottom: 1px solid var(--border);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+  <!-- Sidebar -->
+  <aside class="admin-sidebar">
+    <div class="admin-sidebar-brand">⬡ PhotoVault<br>
+      <small style="font-family:var(--font-body);font-size:.75rem;color:var(--text3);">Admin Panel</small>
+    </div>
+    <nav class="admin-nav">
+      <a href="{{ url_for('admin_dashboard') }}">📊 Dashboard</a>
+      <div class="admin-nav-section">Creators</div>
+      <div class="admin-nav-section">Content</div>
+      <a href="{{ url_for('admin_categories') }}">🗂 Categories</a>
+      <div class="admin-nav-section">Engagement</div>
+      <a href="{{ url_for('admin_comments') }}">💬 Comments</a>
+      <a href="{{ url_for('admin_revenue') }}">💰 Revenue</a>
+      <div class="admin-nav-section">Site</div>
+      <a href="{{ url_for('admin_settings') }}" class="active">
+        ⚙️ Settings
+      </a>
+      <a href="{{ url_for('index') }}" target="_blank">
+        🌐 View Site
+      </a>
+      <a href="{{ url_for('logout') }}" style="color:var(--red);">
+        🚪 Logout
+      </a>
+
+    </nav>
+  </aside>
+
+  <div class="admin-content">
+    <div class="admin-header">
+      <h1>Site Settings</h1>
+      <p>Control blur strength, tint style, and engagement features across your entire vault.</p>
+    </div>
+
+    <form method="POST" id="settings-form">
+      <div class="settings-grid">
+
+        <!-- ── BLUR CONTROL CARD ──────────────────────────────────────────────── -->
+        <div class="settings-card">
+          <div class="settings-card-head">
+            <span class="card-icon">🌫</span>
+            <h3>Blur Strength</h3>
+          </div>
+          <div class="settings-card-body">
+
+            <!-- Gallery photo blur -->
+            <div class="blur-row">
+              <div class="blur-label-row">
+                <span class="blur-label">📷 Gallery Photos</span>
+                <span class="blur-value-badge" id="blur-photo-val">{{ settings.blur_photo }}px</span>
+              </div>
+              <input type="range" name="blur_photo" id="blur-photo"
+                     min="0" max="30" value="{{ settings.blur_photo }}"
+                     oninput="updateBlur('photo', this.value)">
+              <div class="blur-desc">Blur applied to locked photos in the gallery grid</div>
+            </div>
+
+            <!-- Video blur -->
+            <div class="blur-row">
+              <div class="blur-label-row">
+                <span class="blur-label">🎬 Video Thumbnails</span>
+                <span class="blur-value-badge" id="blur-video-val">{{ settings.blur_video }}px</span>
+              </div>
+              <input type="range" name="blur_video" id="blur-video"
+                     min="0" max="30" value="{{ settings.blur_video }}"
+                     oninput="updateBlur('video', this.value)">
+              <div class="blur-desc">Blur on locked video thumbnails (also controls tint intensity)</div>
+            </div>
+
+            <!-- Detail page blur -->
+            <div class="blur-row">
+              <div class="blur-label-row">
+                <span class="blur-label">🔍 Detail Page Photos</span>
+                <span class="blur-value-badge" id="blur-detail-val">{{ settings.blur_detail }}px</span>
+              </div>
+              <input type="range" name="blur_detail" id="blur-detail"
+                     min="0" max="30" value="{{ settings.blur_detail }}"
+                     oninput="updateBlur('detail', this.value)">
+              <div class="blur-desc">Blur on the large image on the photo detail page</div>
+            </div>
+
+            <!-- Checkout blur -->
+            <div class="blur-row">
+              <div class="blur-label-row">
+                <span class="blur-label">💳 Checkout Preview</span>
+                <span class="blur-value-badge" id="blur-checkout-val">{{ settings.blur_checkout }}px</span>
+              </div>
+              <input type="range" name="blur_checkout" id="blur-checkout"
+                     min="0" max="20" value="{{ settings.blur_checkout }}"
+                     oninput="updateBlur('checkout', this.value)">
+              <div class="blur-desc">Blur on the photo thumbnail shown during checkout</div>
+            </div>
+
+            <!-- Live preview -->
+            <div>
+              <div class="blur-label" style="margin-bottom:.5rem;">Live Preview</div>
+              <div class="blur-preview-box">
+                <div class="blur-preview-img" id="preview-img">🖼</div>
+                <div class="blur-preview-label">Gallery card preview</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ── TINT STYLE CARD ─────────────────────────────────────────────────── -->
+        <div class="settings-card">
+          <div class="settings-card-head">
+            <span class="card-icon">🎨</span>
+            <h3>Video Tint Style</h3>
+          </div>
+          <div class="settings-card-body">
+            <p style="font-size:.82rem;color:var(--text3);margin-bottom:1rem;">
+              Choose the colour tint overlaid on locked video thumbnails. Applied on top of the blur.
+            </p>
+            <div class="tint-options">
+              {% set tints = [
+                ('purple-gold',  'purple-gold',  'Purple Gold'),
+                ('blue-teal',    'blue-teal',    'Blue Teal'),
+                ('red-dark',     'red-dark',     'Red Dark'),
+                ('green-dark',   'green-dark',   'Forest'),
+                ('monochrome',   'monochrome',   'Monochrome'),
+                ('none',         'none',         'No Tint'),
+              ] %}
+              {% for val, cls, label in tints %}
+              <label class="tint-opt">
+                <input type="radio" name="blur_tint_color" value="{{ val }}"
+                       {% if settings.blur_tint_color == val %}checked{% endif %}
+                       onchange="updateTintPreview('{{ val }}')">
+                <div class="tint-swatch {{ cls }}"></div>
+                <span class="tint-opt-label">{{ label }}</span>
+              </label>
+              {% endfor %}
+            </div>
+
+            <!-- Video tint preview -->
+            <div class="blur-preview-box" style="margin-top:1.5rem;background:#0a0a0e;">
+              <div id="tint-preview-layer" style="position:absolute;inset:0;transition:background .4s;border-radius:12px;"></div>
+              <span style="font-size:3rem;z-index:2;position:relative;">🎬</span>
+              <div class="blur-preview-label">Video card tint preview</div>
+            </div>
+
+            <!-- Engagement toggles -->
+            <div style="margin-top:1.75rem;">
+              <div class="blur-label" style="margin-bottom:.75rem;">Engagement Features</div>
+
+              <div class="toggle-row">
+                <div class="toggle-info">
+                  <h4>❤️ Likes</h4>
+                  <p>Allow buyers to like photos and videos</p>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" name="allow_likes" value="1"
+                         {% if settings.allow_likes == '1' %}checked{% endif %}>
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+
+              <div class="toggle-row">
+                <div class="toggle-info">
+                  <h4>💬 Comments</h4>
+                  <p>Allow buyers to leave comments</p>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" name="allow_comments" value="1"
+                         {% if settings.allow_comments == '1' %}checked{% endif %}>
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+
+              <div class="toggle-row">
+                <div class="toggle-info">
+                  <h4>👁 View Counts</h4>
+                  <p>Show how many times each item was viewed</p>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" name="show_view_counts" value="1"
+                         {% if settings.show_view_counts == '1' %}checked{% endif %}>
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SITE CONFIG CARD ───────────────────────────────────────────────── -->
+        <div class="settings-card" style="grid-column:1/-1;">
+          <div class="settings-card-head">
+            <span class="card-icon">🌐</span>
+            <h3>Site Configuration</h3>
+          </div>
+          <div class="settings-card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+            <div class="form-group" style="margin:0;">
+              <label>Site Name</label>
+              <input type="text" name="site_name" value="{{ settings.site_name }}" placeholder="PhotoVault">
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label>Hero Tagline</label>
+              <input type="text" name="site_tagline" value="{{ settings.site_tagline }}"
+                     placeholder="Premium visual content, securely delivered.">
+            </div>
+          </div>
+        </div>
+
+      </div><!-- end settings-grid -->
+
+      <button type="submit" class="settings-save-btn">💾 Save All Settings</button>
+    </form>
+
+    <!-- Current values summary -->
+    <div style="margin-top:2.5rem;padding:1.25rem 1.5rem;background:var(--surface);border:1px solid var(--border);border-radius:12px;max-width:600px;">
+      <div style="font-size:.82rem;color:var(--text3);margin-bottom:.75rem;font-weight:500;">CURRENT BLUR LEVELS</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;font-size:.82rem;">
+        <span style="color:var(--text2);">Gallery photos:</span> <span style="color:var(--gold);" id="summary-photo">{{ settings.blur_photo }}px</span>
+        <span style="color:var(--text2);">Video thumbnails:</span> <span style="color:var(--gold);" id="summary-video">{{ settings.blur_video }}px</span>
+        <span style="color:var(--text2);">Detail page:</span> <span style="color:var(--gold);" id="summary-detail">{{ settings.blur_detail }}px</span>
+        <span style="color:var(--text2);">Checkout:</span> <span style="color:var(--gold);" id="summary-checkout">{{ settings.blur_checkout }}px</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── Tint gradient map ─────────────────────────────────────────────────────────
+const tintGradients = {
+  'purple-gold': 'linear-gradient(135deg, rgba(80,40,160,0.55) 0%, rgba(20,10,40,0.3) 40%, rgba(201,168,76,0.35) 100%)',
+  'blue-teal':   'linear-gradient(135deg, rgba(30,60,180,0.55) 0%, rgba(0,210,200,0.4) 100%)',
+  'red-dark':    'linear-gradient(135deg, rgba(180,30,30,0.6) 0%, rgba(60,10,10,0.8) 100%)',
+  'green-dark':  'linear-gradient(135deg, rgba(20,100,60,0.6) 0%, rgba(10,30,20,0.85) 100%)',
+  'monochrome':  'linear-gradient(135deg, rgba(50,50,60,0.75) 0%, rgba(20,20,25,0.9) 100%)',
+  'none':        'none',
+};
+
+function updateBlur(type, val) {
+  const badge   = document.getElementById('blur-' + type + '-val');
+  const summary = document.getElementById('summary-' + type);
+  if (badge)   badge.textContent   = val + 'px';
+  if (summary) summary.textContent = val + 'px';
+
+  // Update live preview for 'photo'
+  if (type === 'photo') {
+    const img = document.getElementById('preview-img');
+    if (img) img.style.filter = 'blur(' + val + 'px) brightness(0.75)';
+  }
+}
+
+function updateTintPreview(val) {
+  const layer = document.getElementById('tint-preview-layer');
+  if (layer) layer.style.background = tintGradients[val] || 'none';
+}
+
+// Init previews on load
+document.addEventListener('DOMContentLoaded', function() {
+  updateBlur('photo', document.getElementById('blur-photo').value);
+  const checkedTint = document.querySelector('input[name="blur_tint_color"]:checked');
+  if (checkedTint) updateTintPreview(checkedTint.value);
+});
+
+// Saved confirmation
+document.getElementById('settings-form').addEventListener('submit', function() {
+  const btn = document.querySelector('.settings-save-btn');
+  btn.textContent = '✓ Saving…';
+  btn.style.background = 'var(--green)';
+});
+</script>
+{% endblock %}

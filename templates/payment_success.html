@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}Payment Status — PhotoVault{% endblock %}
+
+{% block content %}
+<div class="success-wrap fade-up">
+
+  {% if has_paid %}
+
+    <div class="success-icon">🎉</div>
+
+    <h1>Access Unlocked!</h1>
+
+    <p>
+      You now have access to
+      <strong>{{ photo.title }}</strong>
+      for {{ photo.unlock_duration }} hours.
+    </p>
+
+    <div style="display:flex;flex-direction:column;gap:.75rem;max-width:280px;margin:0 auto 2rem;">
+
+      {% if download_link %}
+        <a href="{{ download_link }}"
+           class="btn btn-success btn-lg">
+          ⬇ Download Full Resolution
+        </a>
+      {% endif %}
+
+      <a href="{{ url_for('photo_detail', photo_id=photo.id) }}"
+         class="btn btn-ghost">
+        View Photo Page
+      </a>
+
+    </div>
+
+  {% else %}
+
+    <div class="success-icon">⏳</div>
+
+    <h1>Payment Pending</h1>
+
+    <p>
+      Your payment was received but access is not yet verified.
+      Please wait a few seconds or refresh.
+    </p>
+
+  {% endif %}
+
+  <a href="{{ url_for('gallery') }}"
+     class="btn btn-ghost">
+    ← Back to Gallery
+  </a>
+
+</div>
+{% endblock %}

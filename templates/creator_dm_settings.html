@@ -1,0 +1,113 @@
+{% extends 'creator_base.html' %}
+{% block title %}DM Settings — {{ profile.name }}{% endblock %}
+{% block content %}
+<div class="mgr-wrap">
+
+  <!-- Header -->
+  <div style="margin-bottom:1.5rem;">
+    <a href="{{ url_for('creator_dashboard') }}" style="font-size:.82rem;color:var(--text3);text-decoration:none;">← Back to Dashboard</a>
+    <h1 style="font-size:1.5rem;font-weight:700;margin:.5rem 0 .25rem;">💬 DM Inbox Settings</h1>
+    <p style="color:var(--text3);font-size:.88rem;">Control how subscribers can message you and whether to charge for DMs.</p>
+  </div>
+
+  {% with msgs = get_flashed_messages(with_categories=true) %}
+  {% if msgs %}{% for cat, msg in msgs %}
+  <div style="padding:.7rem 1rem;border-radius:10px;margin-bottom:1rem;font-size:.85rem;
+    background:{% if cat=='success' %}rgba(34,197,94,.12){% else %}rgba(239,68,68,.12){% endif %};
+    color:{% if cat=='success' %}#4ade80{% else %}#f87171{% endif %};">
+    {{ msg }}
+  </div>
+  {% endfor %}{% endif %}{% endwith %}
+
+  <form method="POST" action="{{ url_for('creator_dm_settings') }}">
+    <div class="mgr-card" style="margin-bottom:1rem;">
+      <div style="font-size:.92rem;font-weight:700;color:var(--mgr);margin-bottom:1.25rem;">⚙️ Inbox Controls</div>
+
+      <!-- DM Enabled toggle -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:.85rem 0;border-bottom:1px solid var(--border);">
+        <div>
+          <div style="font-weight:600;font-size:.9rem;">Enable DM Inbox</div>
+          <div style="color:var(--text3);font-size:.78rem;margin-top:.2rem;">Allow subscribers to send you messages</div>
+        </div>
+        <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;">
+          <input type="checkbox" name="dm_enabled" {% if not settings or settings.dm_enabled %}checked{% endif %}
+                 style="width:18px;height:18px;accent-color:#C9184A;">
+          <span style="font-size:.82rem;color:var(--text2);">Enabled</span>
+        </label>
+      </div>
+
+      <!-- Charge per message -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:.85rem 0;border-bottom:1px solid var(--border);">
+        <div>
+          <div style="font-weight:600;font-size:.9rem;">Charge Per Message</div>
+          <div style="color:var(--text3);font-size:.78rem;margin-top:.2rem;">Subscribers pay to send you each message</div>
+        </div>
+        <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;">
+          <input type="checkbox" name="charge_per_msg" id="charge_per_msg_cb"
+                 {% if settings and settings.charge_per_msg %}checked{% endif %}
+                 style="width:18px;height:18px;accent-color:#C9184A;"
+                 onchange="document.getElementById('price-row').style.display=this.checked?'flex':'none'">
+          <span style="font-size:.82rem;color:var(--text2);">Charge</span>
+        </label>
+      </div>
+
+      <!-- Message price -->
+      <div id="price-row" style="display:{% if settings and settings.charge_per_msg %}flex{% else %}none{% endif %};
+           align-items:center;justify-content:space-between;padding:.85rem 0;border-bottom:1px solid var(--border);">
+        <div>
+          <div style="font-weight:600;font-size:.9rem;">Price Per Message (USD)</div>
+          <div style="color:var(--text3);font-size:.78rem;margin-top:.2rem;">How much each inbound message costs the subscriber</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:.5rem;">
+          <span style="color:var(--text3);">$</span>
+          <input type="number" name="msg_price" value="{{ settings.msg_price if settings else 1.0 }}"
+                 min="0.50" max="50" step="0.50"
+                 style="width:80px;background:var(--surface);border:1px solid var(--border);
+                        border-radius:8px;color:var(--text);padding:.45rem .65rem;font-size:.9rem;text-align:right;">
+        </div>
+      </div>
+
+      <!-- Auto-reply -->
+      <div style="padding:.85rem 0;">
+        <div style="font-weight:600;font-size:.9rem;margin-bottom:.4rem;">Auto-Reply When Offline</div>
+        <div style="color:var(--text3);font-size:.78rem;margin-bottom:.6rem;">Sent automatically when a subscriber messages you while you're offline</div>
+        <textarea name="auto_reply_text" rows="3" placeholder="e.g. Thanks for your message! I'll reply soon 💖"
+          style="width:100%;background:var(--surface);border:1px solid var(--border);
+                 border-radius:10px;color:var(--text);padding:.7rem .9rem;
+                 font-size:.88rem;resize:vertical;box-sizing:border-box;">{{ settings.auto_reply_text if settings else '' }}</textarea>
+      </div>
+    </div>
+
+    <!-- Revenue share reminder -->
+    <div style="background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.25);border-radius:12px;
+                padding:1rem 1.25rem;margin-bottom:1.25rem;font-size:.82rem;color:var(--text2);">
+      💡 <strong style="color:#C9A84C;">Revenue reminder:</strong>
+      DM charges are split the same way as content — you keep <strong style="color:#4ade80;">{{ creator_pct if creator_pct is defined else 55 }}%</strong> of every paid message.
+    </div>
+
+    <div style="display:flex;gap:.75rem;">
+      <a href="{{ url_for('creator_dashboard') }}"
+         style="background:none;border:1px solid var(--border);border-radius:10px;
+                padding:.65rem 1.25rem;color:var(--text2);text-decoration:none;font-size:.85rem;">
+        Cancel
+      </a>
+      <button type="submit"
+              style="background:#C9184A;color:#fff;border:none;border-radius:10px;
+                     padding:.65rem 1.5rem;font-size:.88rem;font-weight:700;cursor:pointer;">
+        💾 Save DM Settings
+      </button>
+    </div>
+  </form>
+
+  <!-- Link to DM inbox -->
+  <div style="margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--border);">
+    <a href="{{ url_for('creator_dm_inbox') }}"
+       style="display:inline-flex;align-items:center;gap:.5rem;background:rgba(199,24,74,.08);
+              border:1px solid rgba(199,24,74,.3);border-radius:10px;padding:.65rem 1.25rem;
+              color:#ff6b97;text-decoration:none;font-size:.85rem;font-weight:600;">
+      💬 Go to DM Inbox →
+    </a>
+  </div>
+
+</div>
+{% endblock %}

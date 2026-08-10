@@ -1,0 +1,486 @@
+{% extends 'base.html' %}
+{% block title %}Add Creator — Admin{% endblock %}
+
+{% block head %}
+<style>
+/* ── Romantic Rose Theme for Add Creator ─────────────────────────────────── */
+:root {
+  --rose:      #e8547a;
+  --rose-dim:  rgba(232,84,122,0.15);
+  --rose-glow: rgba(232,84,122,0.08);
+  --blush:     #f9a8c9;
+  --crimson:   #c2185b;
+  --petal:     #fce4ec;
+}
+
+.creator-form-wrap {
+  max-width: 780px;
+}
+
+/* Form section cards */
+.form-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+.form-section-head {
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, rgba(232,84,122,0.08), rgba(232,84,122,0.03));
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+}
+.form-section-head .fs-icon { font-size: 1.15rem; }
+.form-section-head h3 {
+  font-family: var(--font-head);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+  font-style: italic;
+}
+.form-section-body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+.form-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+@media(max-width:600px){ .form-row-2{grid-template-columns:1fr;} }
+
+/* Upload preview zones */
+.media-upload-zone {
+  border: 2px dashed rgba(232,84,122,0.3);
+  border-radius: 14px;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+  background: rgba(232,84,122,0.03);
+  position: relative;
+  overflow: hidden;
+}
+.media-upload-zone:hover {
+  border-color: var(--rose);
+  background: var(--rose-glow);
+}
+.media-upload-zone input[type=file] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+.muz-icon  { font-size: 2rem; margin-bottom: .5rem; }
+.muz-label { font-size: .88rem; color: var(--text2); }
+.muz-hint  { font-size: .75rem; color: var(--text3); margin-top: .25rem; }
+.muz-preview {
+  width: 100%; max-height: 160px; object-fit: cover;
+  border-radius: 10px; margin-top: .75rem; display: none;
+}
+
+/* Color swatches */
+.color-swatches {
+  display: flex;
+  gap: .6rem;
+  flex-wrap: wrap;
+  margin-top: .4rem;
+}
+.color-swatch {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform .18s, border-color .18s;
+  flex-shrink: 0;
+}
+.color-swatch:hover, .color-swatch.active {
+  transform: scale(1.2);
+  border-color: var(--text);
+}
+
+/* Country select */
+.country-select-wrap {
+  position: relative;
+}
+.country-flag-preview {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.2rem;
+  pointer-events: none;
+  z-index: 2;
+}
+.country-select-wrap select {
+  padding-left: 2.8rem !important;
+}
+
+/* Membership badge preview */
+.membership-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: .75rem;
+}
+.membership-opt {
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem .75rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+}
+.membership-opt input[type=radio] { display: none; }
+.membership-opt:has(input:checked),
+.membership-opt.selected {
+  border-color: var(--rose);
+  background: var(--rose-glow);
+}
+.membership-opt .mo-icon { font-size: 1.5rem; margin-bottom: .4rem; }
+.membership-opt .mo-name { font-size: .82rem; font-weight: 600; color: var(--text); }
+.membership-opt .mo-desc { font-size: .7rem; color: var(--text3); margin-top: .15rem; }
+
+/* Submit button */
+.creator-submit-btn {
+  background: linear-gradient(135deg, var(--rose), #c2185b);
+  color: #fff;
+  border: none;
+  border-radius: 100px;
+  padding: 14px 3rem;
+  font-size: .95rem;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: .04em;
+  transition: all .25s;
+  box-shadow: 0 8px 28px rgba(232,84,122,0.3);
+  display: inline-flex;
+  align-items: center;
+  gap: .6rem;
+}
+.creator-submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 36px rgba(232,84,122,0.4);
+}
+
+/* Page header */
+.page-header-romantic {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.page-header-romantic .breadcrumb {
+  font-size: .78rem;
+  color: var(--text3);
+  font-family: var(--font-mono);
+  letter-spacing: .05em;
+  margin-bottom: .75rem;
+}
+.page-header-romantic .breadcrumb a { color: var(--rose); }
+.page-header-romantic h1 {
+  font-family: var(--font-head);
+  font-size: 2rem;
+  font-style: italic;
+  color: var(--text);
+  line-height: 1.15;
+}
+.page-header-romantic h1 span { color: var(--rose); }
+.page-header-romantic p { color: var(--text2); font-size: .9rem; margin-top: .35rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+
+  <!-- ── Sidebar ─────────────────────────────────────────────────────────── -->
+  <aside class="admin-sidebar">
+    <div class="admin-sidebar-brand">
+      💕 Velvet Vault<br>
+      <small style="font-family:var(--font-body);font-size:.72rem;color:var(--text3);">Admin Panel</small>
+    </div>
+    <nav class="admin-nav">
+      <a href="{{ url_for('admin_dashboard') }}">📊 Dashboard</a>
+      <a href="{{ url_for('admin_profiles') }}" class="active" style="color:var(--rose);border-color:rgba(232,84,122,0.3);background:rgba(232,84,122,0.06);">👤 Creators</a>
+      <a href="{{ url_for('admin_comments') }}">💬 Comments</a>
+      <a href="{{ url_for('admin_analytics') }}">📈 Analytics</a>
+      <a href="{{ url_for('admin_revenue') }}">💰 Revenue</a>
+      <a href="{{ url_for('admin_settings') }}">⚙️ Settings</a>
+      <a href="{{ url_for('index') }}" target="_blank">🌐 View Site</a>
+      <a href="{{ url_for('logout') }}" style="color:var(--red);">🚪 Logout</a>
+    </nav>
+  </aside>
+
+  <!-- ── Main ──────────────────────────────────────────────────────────────── -->
+  <div class="admin-content">
+
+    <div class="page-header-romantic">
+      <div class="breadcrumb">
+        <a href="{{ url_for('admin_dashboard') }}">Dashboard</a> /
+        <a href="{{ url_for('admin_profiles') }}">Creators</a> /
+        <span style="color:var(--text2);">Add New</span>
+      </div>
+      <h1>Add <span>Creator</span></h1>
+      <p>Create a new creator profile. Fill in their details, upload photos, and set their tier.</p>
+    </div>
+
+    <div class="creator-form-wrap">
+      <form method="POST" action="{{ url_for('admin_create_profile') }}"
+            enctype="multipart/form-data" id="creator-form">
+
+        <!-- ── Identity ──────────────────────────────────────────────────── -->
+        <div class="form-section">
+          <div class="form-section-head">
+            <span class="fs-icon">✨</span>
+            <h3>Creator Identity</h3>
+          </div>
+          <div class="form-section-body">
+            <div class="form-row-2">
+              <div class="form-group" style="margin:0;">
+                <label>Display Name *</label>
+                <input type="text" name="name" placeholder="e.g. Amara Rose" required>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Username * <span style="font-size:.72rem;color:var(--text3);">(no spaces)</span></label>
+                <input type="text" name="username" placeholder="amara_rose" required
+                       oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9_]/g,'')">
+              </div>
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label>Tagline</label>
+              <input type="text" name="tagline" placeholder="A short romantic description that appears on their card…" maxlength="220">
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label>Full Bio</label>
+              <textarea name="bio" placeholder="Tell the story of this creator — their passion, their work, what makes them unique…" rows="4" style="resize:vertical;"></textarea>
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label>Category / Niche</label>
+              <select name="category">
+                <option value="">— Select Category —</option>
+                {% for cat in categories %}
+                <option value="{{ cat.name }}">{{ cat.icon }} {{ cat.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Location ──────────────────────────────────────────────────── -->
+        <div class="form-section">
+          <div class="form-section-head">
+            <span class="fs-icon">🌍</span>
+            <h3>Location &amp; Flag</h3>
+          </div>
+          <div class="form-section-body">
+            <div class="form-row-2">
+              <div class="form-group" style="margin:0;">
+                <label>Country</label>
+                <div class="country-select-wrap">
+                  <span class="country-flag-preview" id="flag-preview">🌍</span>
+                  <select name="country_code" onchange="updateFlag(this)">
+                    <option value="">— Select Country —</option>
+                    {% set countries = [
+                      ('KE','🇰🇪','Kenya'),('NG','🇳🇬','Nigeria'),('ZA','🇿🇦','South Africa'),
+                      ('GH','🇬🇭','Ghana'),('ET','🇪🇹','Ethiopia'),('TZ','🇹🇿','Tanzania'),
+                      ('UG','🇺🇬','Uganda'),('RW','🇷🇼','Rwanda'),('US','🇺🇸','United States'),
+                      ('GB','🇬🇧','United Kingdom'),('FR','🇫🇷','France'),('DE','🇩🇪','Germany'),
+                      ('IT','🇮🇹','Italy'),('ES','🇪🇸','Spain'),('BR','🇧🇷','Brazil'),
+                      ('MX','🇲🇽','Mexico'),('IN','🇮🇳','India'),('CN','🇨🇳','China'),
+                      ('JP','🇯🇵','Japan'),('AU','🇦🇺','Australia'),('CA','🇨🇦','Canada'),
+                      ('AE','🇦🇪','UAE'),('SA','🇸🇦','Saudi Arabia'),('EG','🇪🇬','Egypt'),
+                      ('MA','🇲🇦','Morocco'),('SN','🇸🇳','Senegal'),('CI','🇨🇮','Ivory Coast'),
+                      ('CM','🇨🇲','Cameroon'),('ZW','🇿🇼','Zimbabwe'),('ZM','🇿🇲','Zambia')
+                    ] %}
+                    {% for code, flag, name in countries %}
+                    <option value="{{ code }}" data-flag="{{ flag }}">{{ flag }} {{ name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div style="font-size:.75rem;color:var(--text3);margin-top:.35rem;">
+                  The flag will appear on their profile and posts.
+                </div>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Sort Order</label>
+                <input type="number" name="sort_order" value="0" min="0"
+                       placeholder="Lower = appears first">
+                <div style="font-size:.75rem;color:var(--text3);margin-top:.35rem;">
+                  Controls order on the creators page.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Profile Media ──────────────────────────────────────────────── -->
+        <div class="form-section">
+          <div class="form-section-head">
+            <span class="fs-icon">📸</span>
+            <h3>Profile Photos</h3>
+          </div>
+          <div class="form-section-body">
+            <div class="form-row-2">
+              <!-- Avatar -->
+              <div>
+                <label style="display:block;font-size:.82rem;color:var(--text2);margin-bottom:.5rem;">
+                  Avatar Photo
+                </label>
+                <div class="media-upload-zone" id="avatar-zone">
+                  <input type="file" name="avatar" accept=".jpg,.jpeg,.png,.webp"
+                         onchange="previewImage(this, 'avatar-preview', 'avatar-zone')">
+                  <div class="muz-icon">🤳</div>
+                  <div class="muz-label">Upload Avatar</div>
+                  <div class="muz-hint">JPG, PNG, WEBP • Square recommended</div>
+                  <img id="avatar-preview" class="muz-preview" alt="">
+                </div>
+              </div>
+              <!-- Cover -->
+              <div>
+                <label style="display:block;font-size:.82rem;color:var(--text2);margin-bottom:.5rem;">
+                  Cover / Banner Photo
+                </label>
+                <div class="media-upload-zone" id="cover-zone">
+                  <input type="file" name="cover" accept=".jpg,.jpeg,.png,.webp"
+                         onchange="previewImage(this, 'cover-preview', 'cover-zone')">
+                  <div class="muz-icon">🖼</div>
+                  <div class="muz-label">Upload Cover Banner</div>
+                  <div class="muz-hint">JPG, PNG, WEBP • 16:9 recommended</div>
+                  <img id="cover-preview" class="muz-preview" alt="">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Accent Color ───────────────────────────────────────────────── -->
+        <div class="form-section">
+          <div class="form-section-head">
+            <span class="fs-icon">🎨</span>
+            <h3>Accent Color</h3>
+          </div>
+          <div class="form-section-body">
+            <p style="font-size:.84rem;color:var(--text2);">
+              Choose a signature color for this creator's profile, card ring, and CTA buttons.
+            </p>
+            <div class="color-swatches" id="color-swatches">
+              {% for color in ['#e8547a','#f48fb1','#e91e63','#c2185b','#ad1457',
+                                '#ff6b9d','#ff4081','#9c27b0','#673ab7','#3f51b5',
+                                '#c9a84c','#ff9800','#4caf50','#00bcd4','#795548'] %}
+              <div class="color-swatch {% if loop.first %}active{% endif %}"
+                   style="background:{{ color }};"
+                   onclick="pickColor('{{ color }}', this)"
+                   title="{{ color }}"></div>
+              {% endfor %}
+            </div>
+            <div style="display:flex;align-items:center;gap:.75rem;margin-top:.5rem;">
+              <input type="color" name="accent_color" id="accent-input" value="#e8547a"
+                     style="width:44px;height:36px;border:none;background:none;cursor:pointer;border-radius:8px;"
+                     oninput="document.getElementById('accent-hex').textContent=this.value;">
+              <code id="accent-hex" style="font-size:.82rem;color:var(--text3);">#e8547a</code>
+              <span style="font-size:.8rem;color:var(--text3);">or pick custom</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Membership Tier ────────────────────────────────────────────── -->
+        <div class="form-section">
+          <div class="form-section-head">
+            <span class="fs-icon">👑</span>
+            <h3>Creator Membership Tier</h3>
+          </div>
+          <div class="form-section-body">
+            <p style="font-size:.84rem;color:var(--text2);">
+              Set the creator's verification and visibility tier on the platform.
+            </p>
+            <div class="membership-options">
+              <label class="membership-opt selected" onclick="selectMembership(this)">
+                <input type="radio" name="membership_tier" value="standard" checked>
+                <div class="mo-icon">🌸</div>
+                <div class="mo-name">Standard</div>
+                <div class="mo-desc">New creator, building audience</div>
+              </label>
+              <label class="membership-opt" onclick="selectMembership(this)">
+                <input type="radio" name="membership_tier" value="verified">
+                <div class="mo-icon">✅</div>
+                <div class="mo-name">Verified</div>
+                <div class="mo-desc">Verified badge on profile</div>
+              </label>
+              <label class="membership-opt" onclick="selectMembership(this)">
+                <input type="radio" name="membership_tier" value="elite">
+                <div class="mo-icon">💎</div>
+                <div class="mo-name">Elite</div>
+                <div class="mo-desc">Top creator, featured placement</div>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Submit ─────────────────────────────────────────────────────── -->
+        <div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap;">
+          <button type="submit" class="creator-submit-btn">
+            💕 Create Creator Profile
+          </button>
+          <a href="{{ url_for('admin_profiles') }}" class="btn btn-ghost">Cancel</a>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── Flag preview update ────────────────────────────────────────────────────
+function updateFlag(select) {
+  const opt = select.options[select.selectedIndex];
+  const flag = opt.dataset.flag || '🌍';
+  document.getElementById('flag-preview').textContent = flag;
+}
+
+// ── Color swatch picker ────────────────────────────────────────────────────
+function pickColor(hex, el) {
+  document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('accent-input').value = hex;
+  document.getElementById('accent-hex').textContent = hex;
+}
+
+// ── Image previews ─────────────────────────────────────────────────────────
+function previewImage(input, previewId, zoneId) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const preview = document.getElementById(previewId);
+    preview.src = e.target.result;
+    preview.style.display = 'block';
+    // Update zone border
+    document.getElementById(zoneId).style.borderColor = 'var(--rose)';
+    document.getElementById(zoneId).style.background  = 'var(--rose-glow)';
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── Membership selection ───────────────────────────────────────────────────
+function selectMembership(label) {
+  document.querySelectorAll('.membership-opt').forEach(l => l.classList.remove('selected'));
+  label.classList.add('selected');
+  label.querySelector('input').checked = true;
+}
+
+// ── Submit animation ──────────────────────────────────────────────────────
+document.getElementById('creator-form').addEventListener('submit', function() {
+  const btn = document.querySelector('.creator-submit-btn');
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Creating profile…';
+});
+</script>
+{% endblock %}

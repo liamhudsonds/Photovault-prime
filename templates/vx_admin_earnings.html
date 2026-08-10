@@ -1,0 +1,50 @@
+{% extends 'vx_base.html' %}
+{% block title %}Earnings Breakdown{% endblock %}
+{% block navbar %}
+<div class="navbar">
+  <div class="brand">Vault<span>X</span></div>
+  <nav>
+    <a href="/admin/vaultx">← Dashboard</a>
+    <a href="/admin/vaultx/withdrawals">Withdrawals</a>
+  </nav>
+</div>
+{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header"><h1>💰 Earnings Breakdown</h1><p>Per-creator earnings and platform total.</p></div>
+
+  <div class="stat-grid" style="grid-template-columns:1fr;max-width:260px;margin-bottom:1.5rem">
+    <div class="stat-card">
+      <div class="val">${{"%.2f"|format(platform_total)}}</div>
+      <div class="lbl">Platform Total Earnings</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">👑 Creator Earnings</div>
+    <table class="table">
+      <thead><tr><th>Creator</th><th>Username</th><th>Lifetime Earned</th><th>Available</th><th>Action</th></tr></thead>
+      <tbody>
+      {% for name, username, total, available in creator_earnings %}
+      <tr>
+        <td style="font-weight:600">{{name}}</td>
+        <td style="color:var(--muted)">@{{username}}</td>
+        <td style="color:var(--gold);font-weight:700">${{"%.2f"|format(total)}}</td>
+        <td style="color:var(--green);font-weight:700">${{"%.2f"|format(available)}}</td>
+        <td>
+          {% set ca = namespace(uid=none) %}
+          {% for cca in [] %}{% endfor %}
+          <form method="POST" action="/admin/vaultx/mark-available" style="display:inline">
+            <input type="hidden" name="user_id" value="0"/>
+            <button class="btn btn-outline btn-sm" type="submit">🔓 Release Earnings</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem">No creator earnings yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

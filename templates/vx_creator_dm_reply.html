@@ -1,0 +1,76 @@
+{% extends 'vx_base.html' %}
+{% block title %}Reply to {{thread.subscriber.email}}{% endblock %}
+{% block navbar %}
+<div class="navbar">
+  <div class="brand">Vault<span>X</span></div>
+  <nav>
+    <a href="/creator/dm-inbox">← Inbox</a>
+  </nav>
+</div>
+{% endblock %}
+{% block content %}
+<div class="container" style="max-width:700px">
+  <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem">
+    <div style="width:44px;height:44px;border-radius:50%;background:var(--rose)22;border:2px solid var(--rose);display:flex;align-items:center;justify-content:center;font-size:1.2rem">👤</div>
+    <div>
+      <div style="font-weight:700">{{thread.subscriber.email}}</div>
+      <div style="font-size:.82rem;color:var(--muted)">Subscriber DM Thread</div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:1rem">
+    <div class="dm-container" id="dm-box">
+      {% for msg in messages %}
+        {% if msg.is_admin_notice %}
+        <div class="admin-notice">
+          <div class="header">━━━━━━━━━━━━━━━━━<br/>ADMIN NOTICE<br/>━━━━━━━━━━━━━━━━━</div>
+          <div class="divider"></div>
+          <div>{{msg.body}}</div>
+        </div>
+        {% elif msg.sender_type == 'subscriber' %}
+        <div style="display:flex;align-items:flex-start;gap:.5rem">
+          <div class="dm-bubble from-sub">{{msg.body}}</div>
+        </div>
+        {% else %}
+        <div style="display:flex;justify-content:flex-end">
+          <div class="dm-bubble from-creator">
+            {% if msg.lock_price > 0 %}<div style="font-size:.78rem;opacity:.8;margin-bottom:.25rem">🔒 Locked — ${{msg.lock_price}}</div>{% endif %}
+            {% if msg.media_url %}<div style="font-size:.78rem;opacity:.8">📎 {{msg.media_type}}</div>{% endif %}
+            {% if msg.body %}{{msg.body}}{% endif %}
+          </div>
+        </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Send Message</div>
+    <form method="POST">
+      <div class="form-group"><label>Message</label><textarea name="body" rows="3" placeholder="Type reply…"></textarea></div>
+      <div style="display:flex;gap:.75rem;align-items:flex-end">
+        <div class="form-group" style="flex:1;margin:0">
+          <label>Attach Media URL <span style="color:var(--muted)">(optional — paste CDN/S3/Cloudinary URL)</span></label>
+          <input type="url" name="media_url" placeholder="https://…"/>
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>Type</label>
+          <select name="media_type">
+            <option value="">None</option>
+            <option value="photo">📷 Photo</option>
+            <option value="video">🎬 Video</option>
+            <option value="voice">🎵 Voice Note</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin:0;width:130px">
+          <label>Lock Price $</label>
+          <input type="number" name="lock_price" value="0" min="0" step="0.5" placeholder="0 = free"/>
+        </div>
+      </div>
+      <button class="btn btn-rose" type="submit">💬 Send</button>
+    </form>
+  </div>
+</div>
+<script>
+const box = document.getElementById('dm-box');
+if(box) box.scrollTop = box.scrollHeight;
+</script>
+{% endblock %}

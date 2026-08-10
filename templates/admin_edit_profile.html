@@ -1,0 +1,372 @@
+{% extends 'base.html' %}
+{% block title %}Edit Creator — Admin{% endblock %}
+
+{% block head %}
+<style>
+:root { --rose:#e8547a; --rose-dim:rgba(232,84,122,0.15); --rose-glow:rgba(232,84,122,0.07); }
+
+.edit-layout { display:grid; grid-template-columns:340px 1fr; gap:2rem; align-items:start; }
+@media(max-width:900px){ .edit-layout{grid-template-columns:1fr;} }
+
+/* Profile card preview */
+.profile-preview-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:16px; overflow:hidden; position:sticky; top:1.5rem;
+}
+.ppc-cover { height:100px; overflow:hidden; }
+.ppc-cover img { width:100%; height:100%; object-fit:cover; }
+.ppc-cover-ph { width:100%; height:100%; }
+.ppc-avatar-wrap { display:flex; justify-content:center; margin-top:-28px; position:relative; z-index:2; }
+.ppc-avatar {
+  width:56px; height:56px; border-radius:50%;
+  object-fit:cover; border:3px solid var(--surface);
+}
+.ppc-avatar-ph {
+  width:56px; height:56px; border-radius:50%;
+  border:3px solid var(--surface);
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-head); font-size:1.3rem;
+}
+.ppc-body { padding:.75rem 1.25rem 1.25rem; text-align:center; }
+.ppc-name { font-family:var(--font-head); font-size:1.05rem; color:var(--text); }
+.ppc-handle { font-size:.72rem; color:var(--text3); margin-bottom:.4rem; }
+
+/* Section cards */
+.section-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:16px; overflow:hidden; margin-bottom:1.5rem;
+}
+.section-card-head {
+  padding:.85rem 1.25rem; background:var(--bg2);
+  border-bottom:1px solid var(--border);
+  font-family:var(--font-head); font-size:1rem; color:var(--text);
+  font-style:italic; display:flex; align-items:center; gap:.5rem;
+  justify-content:space-between;
+}
+.section-card-body { padding:1.25rem; }
+.form-row-2 { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+@media(max-width:640px){ .form-row-2{grid-template-columns:1fr;} }
+
+/* Post list */
+.post-list { display:flex; flex-direction:column; gap:.75rem; }
+.post-item {
+  display:flex; gap:.75rem; align-items:flex-start;
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:12px; padding:.75rem 1rem; transition:border-color .2s;
+}
+.post-item:hover { border-color:var(--rose-dim); }
+.post-thumb {
+  width:64px; height:52px; border-radius:8px; object-fit:cover;
+  flex-shrink:0; background:var(--bg3);
+}
+.post-thumb-ph {
+  width:64px; height:52px; border-radius:8px; background:var(--bg3);
+  display:flex; align-items:center; justify-content:center; font-size:1.4rem;
+  flex-shrink:0;
+}
+.post-info { flex:1; min-width:0; }
+.post-info-title { font-size:.88rem; color:var(--text); font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.post-info-meta  { font-size:.72rem; color:var(--text3); margin-top:.15rem; }
+.post-actions { display:flex; gap:.35rem; align-items:center; }
+
+/* Upload zone */
+.upload-zone-sm {
+  border:2px dashed rgba(232,84,122,0.3); border-radius:10px; padding:1rem;
+  text-align:center; cursor:pointer; transition:all .2s;
+  background:var(--rose-glow); position:relative; overflow:hidden;
+}
+.upload-zone-sm:hover { border-color:var(--rose); }
+.upload-zone-sm input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+.upload-zone-sm .prev-img { max-height:80px; object-fit:cover; border-radius:6px; margin-top:.4rem; display:none; }
+
+/* Color swatches */
+.color-swatches { display:flex; gap:.35rem; flex-wrap:wrap; margin-top:.35rem; }
+.color-swatch { width:26px; height:26px; border-radius:50%; cursor:pointer; border:2px solid transparent; transition:transform .15s; }
+.color-swatch:hover, .color-swatch.active { transform:scale(1.2); border-color:var(--text); }
+
+/* Post type toggle */
+.post-type-tabs { display:flex; gap:.4rem; margin-bottom:1rem; }
+.ptt-btn {
+  flex:1; padding:.5rem; border-radius:8px; border:1px solid var(--border);
+  background:none; color:var(--text2); font-size:.82rem; cursor:pointer;
+  transition:all .18s; font-family:var(--font-body);
+}
+.ptt-btn.active { border-color:var(--rose); color:var(--rose); background:var(--rose-glow); }
+
+/* Blur slider */
+.blur-slider-wrap { margin-top:.35rem; }
+.blur-slider-wrap input[type=range] {
+  width:100%; height:4px; border-radius:2px;
+  background:var(--border); appearance:none; cursor:pointer; outline:none;
+}
+.blur-slider-wrap input[type=range]::-webkit-slider-thumb {
+  appearance:none; width:16px; height:16px;
+  border-radius:50%; background:var(--rose); cursor:pointer;
+}
+
+/* Page breadcrumb */
+.breadcrumb { font-size:.78rem; color:var(--text3); font-family:var(--font-mono); margin-bottom:1.25rem; }
+.breadcrumb a { color:var(--rose); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="admin-sidebar">
+    <div class="admin-sidebar-brand">💕 Velvet Vault<br>
+      <small style="font-size:.72rem;color:var(--text3);">Admin Panel</small>
+    </div>
+    <nav class="admin-nav">
+      <a href="{{ url_for('admin_dashboard') }}">📊 Dashboard</a>
+      <a href="{{ url_for('admin_profiles') }}" class="active" style="color:var(--rose);background:var(--rose-glow);">👤 Creators</a>
+      <a href="{{ url_for('admin_inbox') }}">✉️ DM Inbox</a>
+      <a href="{{ url_for('admin_categories') }}">🗂 Categories</a>
+      <a href="{{ url_for('admin_comments') }}">💬 Comments</a>
+      <a href="{{ url_for('admin_analytics') }}">📈 Analytics</a>
+      <a href="{{ url_for('admin_revenue') }}">💰 Revenue</a>
+      <a href="{{ url_for('admin_settings') }}">⚙️ Settings</a>
+      <a href="{{ url_for('index') }}" target="_blank">🌐 View Site</a>
+      <a href="{{ url_for('logout') }}" style="color:var(--red);">🚪 Logout</a>
+    </nav>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="admin-content">
+
+    <div class="breadcrumb">
+      <a href="{{ url_for('admin_profiles') }}">Creators</a> / Edit: {{ profile.name }}
+    </div>
+
+    <div class="edit-layout">
+
+      <!-- LEFT: PROFILE PREVIEW + EDIT FORM -->
+      <div>
+        <!-- Preview card -->
+        <div class="profile-preview-card" style="margin-bottom:1.5rem;">
+          <div class="ppc-cover">
+            {% if profile.cover_filename %}
+            <img src="{{ url_for('serve_profile_media', filename=profile.cover_filename) }}" alt="">
+            {% else %}
+            <div class="ppc-cover-ph" style="background:linear-gradient(135deg,{{ profile.accent_color }}33,#111118);"></div>
+            {% endif %}
+          </div>
+          <div class="ppc-avatar-wrap">
+            {% if profile.avatar_filename %}
+            <img class="ppc-avatar" src="{{ url_for('serve_profile_media', filename=profile.avatar_filename) }}" alt="" style="box-shadow:0 0 0 3px {{ profile.accent_color }};">
+            {% else %}
+            <div class="ppc-avatar-ph" style="background:{{ profile.accent_color }};color:#07070a;">{{ profile.name[0].upper() }}</div>
+            {% endif %}
+          </div>
+          <div class="ppc-body">
+            <div class="ppc-name">{{ profile.name }}</div>
+            <div class="ppc-handle">@{{ profile.username }}</div>
+            <a href="{{ url_for('profile_page', username=profile.username) }}" target="_blank"
+               class="btn btn-ghost btn-sm" style="margin-top:.5rem;">👁 View Live Profile</a>
+            <a href="{{ url_for('admin_creator_inbox', profile_id=profile.id) }}" class="btn btn-ghost btn-sm" style="margin-top:.35rem;color:#e8547a;">✉️ DM Inbox</a>
+          </div>
+        </div>
+
+        <!-- Edit form -->
+        <div class="section-card">
+          <div class="section-card-head">✏️ Edit Profile Details</div>
+          <div class="section-card-body">
+            <form method="POST" action="{{ url_for('admin_edit_profile', profile_id=profile.id) }}" enctype="multipart/form-data">
+
+              <div class="form-group">
+                <label>Display Name</label>
+                <input type="text" name="name" value="{{ profile.name }}" required>
+              </div>
+              <div class="form-group">
+                <label>Tagline</label>
+                <input type="text" name="tagline" value="{{ profile.tagline or '' }}" maxlength="200">
+              </div>
+              <div class="form-group">
+                <label>Bio</label>
+                <textarea name="bio" rows="3">{{ profile.bio or '' }}</textarea>
+              </div>
+              <div class="form-row-2">
+                <div class="form-group" style="margin:0;">
+                  <label>Category</label>
+                  <input type="text" name="category" value="{{ profile.category or '' }}">
+                </div>
+                <div class="form-group" style="margin:0;">
+                  <label>Tier</label>
+                  <select name="membership_tier">
+                    <option value="standard" {% if profile.membership_tier=='standard' %}selected{% endif %}>🌸 Standard</option>
+                    <option value="verified" {% if profile.membership_tier=='verified' %}selected{% endif %}>✅ Verified</option>
+                    <option value="elite"    {% if profile.membership_tier=='elite' %}selected{% endif %}>💎 Elite</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Country</label>
+                <select name="country_code">
+                  <option value="">— None —</option>
+                  {% for code,flag,cname in [('KE','🇰🇪','Kenya'),('NG','🇳🇬','Nigeria'),('ZA','🇿🇦','South Africa'),('GH','🇬🇭','Ghana'),('ET','🇪🇹','Ethiopia'),('TZ','🇹🇿','Tanzania'),('UG','🇺🇬','Uganda'),('RW','🇷🇼','Rwanda'),('US','🇺🇸','United States'),('GB','🇬🇧','United Kingdom'),('FR','🇫🇷','France'),('DE','🇩🇪','Germany'),('IT','🇮🇹','Italy'),('ES','🇪🇸','Spain'),('BR','🇧🇷','Brazil'),('IN','🇮🇳','India'),('JP','🇯🇵','Japan'),('AU','🇦🇺','Australia'),('CA','🇨🇦','Canada'),('AE','🇦🇪','UAE'),('EG','🇪🇬','Egypt'),('MA','🇲🇦','Morocco'),('SN','🇸🇳','Senegal'),('CM','🇨🇲','Cameroon'),('ZW','🇿🇼','Zimbabwe')] %}
+                  <option value="{{ code }}" {% if profile.country_code==code %}selected{% endif %}>{{ flag }} {{ cname }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <!-- Avatar upload -->
+              <div class="form-group">
+                <label>New Avatar</label>
+                <div class="upload-zone-sm">
+                  <input type="file" name="avatar" accept=".jpg,.jpeg,.png,.webp" onchange="previewZone(this,'edit-av')">
+                  <div style="font-size:.82rem;color:var(--text2);">📷 Upload new avatar</div>
+                  <img id="edit-av" class="prev-img" alt="">
+                </div>
+              </div>
+
+              <!-- Cover upload -->
+              <div class="form-group">
+                <label>New Cover</label>
+                <div class="upload-zone-sm">
+                  <input type="file" name="cover" accept=".jpg,.jpeg,.png,.webp" onchange="previewZone(this,'edit-cv')">
+                  <div style="font-size:.82rem;color:var(--text2);">🖼 Upload new cover</div>
+                  <img id="edit-cv" class="prev-img" alt="">
+                </div>
+              </div>
+
+              <!-- Accent color -->
+              <div class="form-group">
+                <label>Accent Colour</label>
+                <div class="color-swatches" id="edit-swatches">
+                  {% for c in ['#e8547a','#f48fb1','#e91e63','#c2185b','#ff6b9d','#ff4081','#9c27b0','#673ab7','#c9a84c','#ff9800','#4caf50','#00bcd4'] %}
+                  <div class="color-swatch {% if profile.accent_color==c %}active{% endif %}"
+                       style="background:{{ c }};" onclick="editPickColor('{{ c }}',this)"></div>
+                  {% endfor %}
+                </div>
+                <input type="color" name="accent_color" id="edit-accent" value="{{ profile.accent_color }}"
+                       style="width:38px;height:30px;border:none;background:none;cursor:pointer;border-radius:6px;margin-top:.4rem;">
+              </div>
+
+              <div class="form-row-2">
+                <div class="form-group" style="margin:0;">
+                  <label>Sort Order</label>
+                  <input type="number" name="sort_order" value="{{ profile.sort_order }}" min="0">
+                </div>
+                <div class="form-group" style="margin:0;">
+                  <label class="form-check" style="margin-top:1.5rem;">
+                    <input type="checkbox" name="is_active" {% if profile.is_active %}checked{% endif %}> Active (visible)
+                  </label>
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-primary" style="margin-top:.75rem;">💾 Save Changes</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: CONTENT OVERVIEW (read-only — uploads happen in the Creator Dashboard) -->
+      <div>
+
+        <div class="section-card">
+          <div class="section-card-head">
+            <span>📦 Content Management</span>
+          </div>
+          <div class="section-card-body">
+            <p style="font-size:.85rem;color:var(--text2);line-height:1.6;margin-bottom:1rem;">
+              Photo and video uploads happen exclusively in the Creator Dashboard, by the creator
+              or their assigned manager. Admins no longer have upload access — this page is
+              moderation/management only (edit profile details, view content, assign managers).
+            </p>
+            {% if profile.manager_id %}
+            <span style="font-size:.78rem;color:var(--text3);">Manager assigned — they upload from their own login.</span>
+            {% else %}
+            <span style="font-size:.78rem;color:var(--text3);">No manager assigned yet — assign one from Admin → Managers so this creator can upload.</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- EXISTING POSTS (read-only — view & delete only) -->
+        <div class="section-card">
+          <div class="section-card-head">
+            <span>📋 Posts ({{ posts|length }})</span>
+          </div>
+          <div class="section-card-body">
+            {% if posts %}
+            <div class="post-list">
+              {% for post in posts %}
+              <div class="post-item">
+                <!-- Thumbnail -->
+                {% if post.media_filename %}
+                  {% if post.post_type == 'video' %}
+                  <div class="post-thumb-ph">🎬</div>
+                  {% else %}
+                  <img class="post-thumb"
+                       src="{{ url_for('serve_post_media', filename=post.media_filename) }}" alt="">
+                  {% endif %}
+                {% elif post.photo_id %}
+                  <img class="post-thumb"
+                       src="{{ url_for('serve_preview', photo_id=post.photo_id) }}"
+                       style="filter:blur({{ post.blur_strength }}px) brightness(.75);" alt="">
+                {% else %}
+                  <div class="post-thumb-ph">📷</div>
+                {% endif %}
+
+                <!-- Info -->
+                <div class="post-info">
+                  <div class="post-info-title">{{ post.title or post.caption or 'Untitled post' }}</div>
+                  <div class="post-info-meta">
+                    {{ post.post_type|upper }} ·
+                    {{ post.created_at.strftime('%b %d, %Y') }} ·
+                    👁 {{ post.view_count }} ·
+                    {% if post.blur_strength > 0 %}🌫 Blur {{ post.blur_strength }}px{% else %}👁 No blur{% endif %}
+                    {% if post.photo_id %} · 🔗 Photo #{{ post.photo_id }}{% endif %}
+                    {% if post.video_id %} · 🔗 Video #{{ post.video_id }}{% endif %}
+                  </div>
+                </div>
+
+                <!-- Delete -->
+                <div class="post-actions">
+                  <form method="POST" action="{{ url_for('admin_delete_post', post_id=post.id) }}">
+                    <button type="submit" class="btn btn-danger btn-sm"
+                            onclick="return confirm('Permanently delete this post? This cannot be undone.')">🗑</button>
+                  </form>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div style="text-align:center;padding:2rem;color:var(--text3);">
+              <div style="font-size:2.5rem;opacity:.3;margin-bottom:.75rem;">📭</div>
+              <p style="font-size:.85rem;">No posts yet. The creator/manager can upload from their dashboard.</p>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+      </div><!-- /right -->
+    </div><!-- /edit-layout -->
+  </div><!-- /admin-content -->
+</div><!-- /admin-layout -->
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── Image preview (avatar/cover only) ───────────────────────────────────────
+function previewZone(input, id) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = document.getElementById(id);
+    img.src = e.target.result;
+    img.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── Color picker ──────────────────────────────────────────────────────────────
+function editPickColor(hex, el) {
+  document.querySelectorAll('#edit-swatches .color-swatch').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('edit-accent').value = hex;
+}
+</script>
+{% endblock %}

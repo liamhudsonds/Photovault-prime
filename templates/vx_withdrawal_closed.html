@@ -1,0 +1,25 @@
+{% extends 'vx_base.html' %}
+{% block title %}Withdrawals Closed{% endblock %}
+{% block navbar %}
+<div class="navbar">
+  <div class="brand">Vault<span>X</span></div>
+  <nav><a href="/creator/home">← Dashboard</a></nav>
+</div>
+{% endblock %}
+{% block content %}
+<div class="container" style="max-width:480px;padding-top:4rem;text-align:center">
+  <div class="withdrawal-closed" style="padding:2.5rem">
+    <div style="font-size:3rem;margin-bottom:1rem">🔒</div>
+    <h2 style="color:var(--amber);margin-bottom:.5rem">Withdrawals Closed Today</h2>
+    <p style="color:#ccc;margin-bottom:1.5rem">Withdrawal requests are only accepted on <strong style="color:var(--gold)">Wednesdays</strong> and <strong style="color:var(--gold)">Saturdays</strong>.</p>
+    <div style="background:#1a1a30;border-radius:9px;padding:1rem;display:inline-block">
+      <div style="font-size:.85rem;color:var(--muted)">Next Withdrawal Window</div>
+      <div style="font-size:1.5rem;font-weight:800;color:var(--gold);margin-top:.25rem">{{next_window}}</div>
+    </div>
+    <div style="margin-top:1.5rem">
+      <a href="/creator/home" class="btn btn-outline">← Back to Dashboard</a>
+      <a href="/creator/withdrawal-history" class="btn btn-outline" style="margin-left:.5rem">View History</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

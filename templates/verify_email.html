@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block title %}Verify Email — PhotoVault{% endblock %}
+{% block content %}
+<div style="max-width:480px;margin:4rem auto;padding:0 1rem">
+
+  {% if verified %}
+  <!-- ── VERIFIED STATE ──────────────────────────────────────────────────── -->
+  <div style="text-align:center;padding:2.5rem;background:var(--surface);
+              border:1px solid rgba(74,222,128,.3);border-radius:16px">
+    <div style="font-size:3rem;margin-bottom:1rem">✅</div>
+    <h1 style="font-family:var(--font-serif);font-size:1.6rem;margin-bottom:.5rem">
+      Email Verified!
+    </h1>
+    <p style="color:var(--text3);margin-bottom:.25rem">You're verified as:</p>
+    <p style="font-weight:600;color:var(--gold)">{{ email }}</p>
+    <p style="color:var(--text3);margin-top:1rem;font-size:.88rem">
+      You'll now receive notifications about trending content, new posts from creators you follow,
+      and platform activity.
+    </p>
+    <a href="{{ url_for('index') }}" class="btn btn-primary" style="margin-top:1.5rem;display:inline-block">
+      Back to Home
+    </a>
+  </div>
+
+  {% else %}
+  <!-- ── UNVERIFIED STATE ────────────────────────────────────────────────── -->
+  <div style="text-align:center;margin-bottom:2rem">
+    <div style="font-size:2.5rem">📬</div>
+    <h1 style="font-family:var(--font-serif);font-size:1.6rem;margin:.5rem 0">
+      Verify Your Email
+    </h1>
+    <p style="color:var(--text3);font-size:.9rem">
+      Get notified when creators you follow post new content, when posts trend, and more.
+    </p>
+  </div>
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2rem">
+
+    {% if email %}
+    <div style="background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.3);
+                border-radius:8px;padding:.85rem 1rem;margin-bottom:1.25rem;font-size:.85rem">
+      📧 Verification email sent to <strong>{{ email }}</strong>.
+      Check your inbox (and spam folder).
+    </div>
+    {% endif %}
+
+    <form method="POST">
+      <label style="display:block;font-size:.85rem;color:var(--text3);margin-bottom:.4rem">
+        Your Email Address
+      </label>
+      <input type="email" name="email" placeholder="you@example.com"
+             value="{{ email }}"
+             style="width:100%;padding:.75rem 1rem;background:var(--surface2);
+                    border:1px solid var(--border);border-radius:8px;
+                    color:var(--text);font-size:.95rem;box-sizing:border-box" required>
+      <button type="submit" class="btn btn-primary"
+              style="width:100%;margin-top:1rem;padding:.8rem">
+        Send Verification Email
+      </button>
+    </form>
+
+    <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border);
+                font-size:.78rem;color:var(--text4)">
+      <p>✓ We only send you relevant notifications</p>
+      <p style="margin-top:.3rem">✓ No spam — unsubscribe anytime</p>
+      <p style="margin-top:.3rem">✓ Verification improves platform trust</p>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

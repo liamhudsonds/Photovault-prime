@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block title %}Revenue — Admin{% endblock %}
+{% block content %}
+<div class="admin-layout">
+  <aside class="admin-sidebar">
+    <div class="admin-sidebar-brand">⬡ PhotoVault<br>
+      <small style="font-family:var(--font-body);font-size:.75rem;color:var(--text3);">Admin Panel</small>
+    </div>
+    <nav class="admin-nav">
+      <a href="{{ url_for('admin_dashboard') }}">📊 Dashboard</a>
+      <a href="{{ url_for('admin_comments') }}">💬 Comments</a>
+      <a href="{{ url_for('admin_revenue') }}" class="active">💰 Revenue</a>
+      <a href="{{ url_for('index') }}" target="_blank">🌐 View Site</a>
+      <a href="{{ url_for('logout') }}" style="color:var(--red);">🚪 Logout</a>
+    </nav>
+  </aside>
+
+  <div class="admin-content">
+    <div class="admin-header">
+      <h1>Revenue</h1>
+      <p>All completed payments broken down by gateway.</p>
+    </div>
+
+    <!-- Gateway summary -->
+    <div class="stat-grid" style="margin-bottom:2rem;">
+      {% for gateway, total in by_gateway.items() %}
+      <div class="stat-card">
+        <div class="stat-label">{{ gateway|title }}</div>
+        <div class="stat-value">${{ '%.2f'|format(total) }}</div>
+        <div class="stat-sub">Total collected</div>
+      </div>
+      {% else %}
+      <div class="stat-card">
+        <div class="stat-label">Total Revenue</div>
+        <div class="stat-value">$0.00</div>
+        <div class="stat-sub">No payments yet</div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-title">Payment History</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Content ID</th>
+            <th>Gateway</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Transaction</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for pay in payments %}
+          <tr>
+            <td style="font-size:.82rem;white-space:nowrap;">{{ pay.created_at.strftime('%b %d, %Y %H:%M') }}</td>
+            <td>#{{ pay.photo_id }}</td>
+            <td>{{ pay.gateway|title }}</td>
+            <td style="color:var(--gold);font-weight:500;">${{ '%.2f'|format(pay.amount) }}</td>
+            <td><span class="badge badge-{{ pay.status }}">{{ pay.status }}</span></td>
+            <td style="color:var(--text3);font-size:.75rem;">{{ (pay.transaction_id or '')[:20] }}…</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" style="color:var(--text3);text-align:center;padding:2rem;">No completed payments yet</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

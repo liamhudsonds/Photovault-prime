@@ -1,0 +1,16 @@
+{# Sidebar nav for creator dashboard pages. Requires: profile #}
+<a href="{{ url_for('creator_dashboard') }}" class="mgr-nav-item{% if active == 'dashboard' %} active{% endif %}">
+  <span class="mgr-nav-icon">📊</span> Dashboard
+</a>
+<a href="{{ url_for('creator_dashboard_videos') }}" class="mgr-nav-item{% if active == 'videos' %} active{% endif %}">
+  <span class="mgr-nav-icon">🎬</span> Videos
+</a>
+<a href="{{ url_for('creator_upload_photo') }}" class="mgr-nav-item{% if active == 'upload_photo' %} active{% endif %}">
+  <span class="mgr-nav-icon">📷</span> Upload Photo
+</a>
+<a href="{{ url_for('creator_upload_video') }}" class="mgr-nav-item{% if active == 'upload_video' %} active{% endif %}">
+  <span class="mgr-nav-icon">⬆️</span> Upload Video
+</a>
+<a href="{{ url_for('profile_page', username=profile.username) }}" target="_blank" class="mgr-nav-item">
+  <span class="mgr-nav-icon">👁</span> View Profile
+</a>

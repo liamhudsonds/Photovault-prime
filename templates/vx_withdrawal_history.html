@@ -1,0 +1,38 @@
+{% extends 'vx_base.html' %}
+{% block title %}Withdrawal History{% endblock %}
+{% block navbar %}
+<div class="navbar">
+  <div class="brand">Vault<span>X</span></div>
+  <nav><a href="/creator/home">← Dashboard</a></nav>
+</div>
+{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header"><h1>📋 Withdrawal History</h1></div>
+  <div class="card">
+    {% if not requests %}
+    <div style="text-align:center;color:var(--muted);padding:2rem">No withdrawal requests yet.</div>
+    {% else %}
+    <table class="table">
+      <thead><tr><th>Date</th><th>Amount</th><th>Method</th><th>Status</th><th>Note</th></tr></thead>
+      <tbody>
+      {% for wr in requests %}
+      <tr>
+        <td style="font-size:.85rem;color:var(--muted)">{{wr.requested_at.strftime('%b %d, %Y')}}</td>
+        <td style="font-weight:700;color:var(--gold)">${{"%.2f"|format(wr.amount)}}</td>
+        <td>{% if wr.payout_method %}{{wr.payout_method.method_type|upper}}{% else %}—{% endif %}</td>
+        <td>
+          {% if wr.status=='pending' %}<span class="badge badge-amber">⏳ Pending</span>
+          {% elif wr.status=='approved' %}<span class="badge badge-green">✅ Approved</span>
+          {% elif wr.status=='paid' %}<span class="badge badge-green">💚 Paid</span>
+          {% else %}<span class="badge badge-red">❌ Rejected</span>{% endif %}
+        </td>
+        <td style="font-size:.85rem;color:var(--muted)">{{wr.admin_note or '—'}}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

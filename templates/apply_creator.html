@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+{% block title %}Apply to Become a Creator — VoultX{% endblock %}
+
+{% block head %}
+<style>
+.apply-wrap { max-width: 680px; margin: 3rem auto; padding: 0 1rem 4rem; }
+.apply-hero { text-align: center; margin-bottom: 2.5rem; }
+.apply-hero-badge { display: inline-block; background: linear-gradient(135deg,#C9A84C,#f59e0b); color: #1a1a00; font-size: .75rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; padding: .3rem .85rem; border-radius: 99px; margin-bottom: 1rem; }
+.apply-hero h1 { font-family: var(--font-head); font-size: 2.2rem; color: var(--text); margin-bottom: .5rem; }
+.apply-hero p { color: var(--text2); line-height: 1.6; }
+
+.apply-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem; }
+.apply-tab { background: var(--surface); border: 2px solid var(--border); border-radius: 14px; padding: 1.25rem; cursor: pointer; text-align: center; transition: all .2s; }
+.apply-tab:hover, .apply-tab.selected { border-color: #C9A84C; background: rgba(201,168,76,.08); }
+.apply-tab-icon { font-size: 2rem; margin-bottom: .5rem; }
+.apply-tab-title { font-family: var(--font-head); font-size: 1rem; color: var(--text); font-weight: 600; }
+.apply-tab-desc { font-size: .78rem; color: var(--text3); margin-top: .3rem; line-height: 1.4; }
+.apply-tab-badge { display: inline-block; font-size: .68rem; font-weight: 700; padding: .15rem .5rem; border-radius: 6px; margin-top: .4rem; }
+.badge-manager { background: rgba(167,139,250,.15); color: #a78bfa; }
+.badge-creator { background: rgba(201,168,76,.15); color: #C9A84C; }
+
+.apply-form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; }
+.apply-form-card h2 { font-family: var(--font-head); font-size: 1.2rem; color: var(--text); margin-bottom: 1.5rem; }
+.form-group { margin-bottom: 1.25rem; }
+.form-group label { display: block; font-size: .82rem; color: var(--text2); margin-bottom: .4rem; font-weight: 500; }
+.form-group input, .form-group textarea, .form-group select {
+  width: 100%; background: var(--bg2); border: 1px solid var(--border); border-radius: 9px;
+  padding: .65rem .9rem; color: var(--text); font-size: .9rem; font-family: var(--font-body);
+  transition: border-color .15s;
+}
+.form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: #C9A84C; }
+.form-group textarea { min-height: 100px; resize: vertical; }
+
+.split-info { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem; }
+.split-info-title { font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; color: var(--text3); font-weight: 700; margin-bottom: .6rem; }
+.split-row { display: flex; justify-content: space-between; align-items: center; padding: .35rem 0; font-size: .85rem; }
+.split-row span:first-child { color: var(--text2); }
+.split-row span:last-child { font-weight: 700; }
+.split-pct-manager { color: #a78bfa; }
+.split-pct-creator { color: #C9A84C; }
+.split-pct-platform { color: var(--text3); }
+
+.path-manager { display: none; }
+.path-creator { display: none; }
+
+.btn-apply { width: 100%; background: linear-gradient(135deg,#C9A84C,#f59e0b); color: #1a1a00; border: none; border-radius: 10px; padding: .85rem 2rem; font-size: 1rem; font-weight: 800; cursor: pointer; transition: opacity .15s; margin-top: .5rem; }
+.btn-apply:hover { opacity: .88; }
+
+.progress-path { display: flex; gap: 0; margin: 2rem 0 2.5rem; }
+.path-step { flex: 1; text-align: center; position: relative; }
+.path-step::before { content: ''; position: absolute; top: 16px; left: 50%; right: -50%; height: 2px; background: var(--border); z-index: 0; }
+.path-step:last-child::before { display: none; }
+.path-step-dot { width: 32px; height: 32px; border-radius: 50%; background: var(--surface); border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: .8rem; margin: 0 auto .4rem; position: relative; z-index: 1; color: var(--text3); }
+.path-step-label { font-size: .65rem; color: var(--text3); line-height: 1.3; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="apply-wrap">
+  <div class="apply-hero">
+    <div class="apply-hero-badge">🎯 Join VoultX as a Creator</div>
+    <h1>Start Your Creator Journey</h1>
+    <p>Choose your path below. All new creators begin as Junior Creators — earning while you build your upload history — and automatically promote to full Creator after reaching 4 photo sales and 4 video sales.</p>
+  </div>
+
+  <!-- Step path -->
+  <div class="progress-path">
+    <div class="path-step">
+      <div class="path-step-dot">1</div>
+      <div class="path-step-label">Apply as Manager</div>
+    </div>
+    <div class="path-step">
+      <div class="path-step-dot">2</div>
+      <div class="path-step-label">Upload & Sell</div>
+    </div>
+    <div class="path-step">
+      <div class="path-step-dot">3</div>
+      <div class="path-step-label">Performance Review</div>
+    </div>
+    <div class="path-step">
+      <div class="path-step-dot">4</div>
+      <div class="path-step-label">Verified Creator</div>
+    </div>
+  </div>
+
+  <!-- Application type picker -->
+  <div class="apply-tabs" id="apply-tabs">
+    <div class="apply-tab {% if preselect != 'verified_creator' %}selected{% endif %}" onclick="selectType('junior_creator', this)">
+      <div class="apply-tab-icon">🚀</div>
+      <div class="apply-tab-title">Junior Creator</div>
+      <div class="apply-tab-desc">Start here. Get a temporary account, upload content, build your audience and earnings.</div>
+      <div class="apply-tab-badge badge-manager">55% Revenue Share</div>
+    </div>
+    <div class="apply-tab {% if preselect == 'verified_creator' %}selected{% endif %}" onclick="selectType('verified_creator', this)">
+      <div class="apply-tab-icon">✅</div>
+      <div class="apply-tab-title">Verified Creator</div>
+      <div class="apply-tab-desc">For creators who've completed the Manager stage. Own your account and earn more.</div>
+      <div class="apply-tab-badge badge-creator">70% Revenue Share</div>
+    </div>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div style="background:{% if cat=='error' %}rgba(239,68,68,.1){% else %}rgba(34,197,94,.1){% endif %};border:1px solid {% if cat=='error' %}rgba(239,68,68,.3){% else %}rgba(34,197,94,.3){% endif %};color:{% if cat=='error' %}#ef4444{% else %}#22c55e{% endif %};padding:.75rem 1rem;border-radius:9px;margin-bottom:1rem;font-size:.88rem;">
+        {{ msg }}
+      </div>
+    {% endfor %}
+  {% endwith %}
+
+  <form method="POST" enctype="multipart/form-data">
+    <input type="hidden" name="application_type" id="application_type" value="junior_creator">
+
+    <div class="apply-form-card">
+      <h2 id="form-title">📋 Junior Creator Application</h2>
+
+      <!-- Revenue split info -->
+      <div class="split-info" id="split-info-manager">
+        <div class="split-info-title">Revenue Split — Junior Creator</div>
+        <div class="split-row"><span>You (Manager)</span><span class="split-pct-manager">55%</span></div>
+        <div class="split-row"><span>Platform</span><span class="split-pct-platform">45%</span></div>
+        <div style="font-size:.72rem;color:var(--text3);margin-top:.5rem;">After graduating to Verified Creator, your share increases to 70%.</div>
+      </div>
+      <div class="split-info" id="split-info-creator" style="display:none;">
+        <div class="split-info-title">Revenue Split — Verified Creator</div>
+        <div class="split-row"><span>You (Creator)</span><span class="split-pct-creator">70%</span></div>
+        <div class="split-row"><span>Platform</span><span class="split-pct-platform">30%</span></div>
+        <div style="font-size:.72rem;color:var(--text3);margin-top:.5rem;">Maximum creator share. Requires completed Manager stage + ID verification.</div>
+      </div>
+
+      <!-- Common fields -->
+      <div class="form-group">
+        <label>Full Name *</label>
+        <input type="text" name="applicant_name" required placeholder="Your real full name">
+      </div>
+      <div class="form-group">
+        <label>Email Address *</label>
+        <input type="email" name="applicant_email" required placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label>What type of content will you share?</label>
+        <input type="text" name="content_type" placeholder="e.g. Photography, Fitness, Education, Art...">
+      </div>
+      <div class="form-group">
+        <label>Why do you want to join VoultX as a creator?</label>
+        <textarea name="motivation" placeholder="Tell us about yourself and your content..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Your Social Links (optional)</label>
+        <input type="text" name="social_links" placeholder="TikTok, Instagram, Twitter, LinkedIn URLs...">
+      </div>
+
+      <!-- Verified creator extra fields -->
+      <div class="path-creator" id="verified-fields">
+        <div class="form-group">
+          <label>Legal Name (exactly as on ID) *</label>
+          <input type="text" name="legal_name" placeholder="As it appears on your government ID">
+        </div>
+        <div class="form-group">
+          <label>Upload ID Document *</label>
+          <input type="file" name="id_document" accept="image/*">
+          <div style="font-size:.72rem;color:var(--text3);margin-top:.3rem;">National ID, Passport, or Driver's License. JPG/PNG only.</div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-apply" id="submit-btn">🚀 Submit Junior Creator Application</button>
+    </div>
+  </form>
+</div>
+
+<script>
+function selectType(type, el) {
+  document.querySelectorAll('.apply-tab').forEach(t => t.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('application_type').value = type;
+
+  if (type === 'junior_creator') {
+    document.getElementById('form-title').textContent = '📋 Junior Creator Application';
+    document.getElementById('split-info-manager').style.display = '';
+    document.getElementById('split-info-creator').style.display = 'none';
+    document.querySelectorAll('.path-creator').forEach(e => e.style.display = 'none');
+    document.getElementById('submit-btn').textContent = '🚀 Submit Junior Creator Application';
+  } else {
+    document.getElementById('form-title').textContent = '✅ Verified Creator Application';
+    document.getElementById('split-info-manager').style.display = 'none';
+    document.getElementById('split-info-creator').style.display = '';
+    document.querySelectorAll('.path-creator').forEach(e => e.style.display = '');
+    document.getElementById('submit-btn').textContent = '✅ Submit Verified Creator Application';
+  }
+}
+
+// Handle preselect on page load
+(function() {
+  const preselect = '{{ preselect }}';
+  if (preselect === 'verified_creator') {
+    document.getElementById('application_type').value = 'verified_creator';
+    document.getElementById('form-title').textContent = '✅ Verified Creator Application';
+    document.getElementById('split-info-manager').style.display = 'none';
+    document.getElementById('split-info-creator').style.display = '';
+    document.querySelectorAll('.path-creator').forEach(e => e.style.display = '');
+    document.getElementById('submit-btn').textContent = '✅ Submit Verified Creator Application';
+  }
+})();
+</script>
+{% endblock %}

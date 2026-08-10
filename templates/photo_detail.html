@@ -1,0 +1,474 @@
+{% extends 'base.html' %}
+{% block title %}{{ photo.title }} — PhotoVault{% endblock %}
+
+{% block head %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,300&family=DM+Mono:wght@300;400&display=swap');
+:root {
+  --gold:#C9A84C;--gold-dim:rgba(201,168,76,0.25);--gold-glow:rgba(201,168,76,0.07);
+  --red-hot:#FF4757;--surface:#111114;--bg2:#0d0d10;--border:rgba(255,255,255,0.07);
+  --text:#f0ede8;--text2:#8a8680;--text3:#4a4744;--green:#4caf89;
+}
+
+.detail-wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem;
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 3rem;
+  align-items: start;
+}
+@media(max-width:860px){ .detail-wrap{grid-template-columns:1fr;} }
+
+/* ── Image panel ─────────────────────────────────────────────────────────────── */
+.detail-img-panel { position: sticky; top: 1.5rem; z-index: 1; }
+.detail-img-wrap {
+  position: relative;
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.detail-img-wrap img {
+  width: 100%; display: block;
+  transition: filter 0.4s;
+}
+/* Blur locked images */
+.detail-img-wrap.locked img {
+  filter: blur(18px) brightness(0.7) saturate(0.7);
+  transform: scale(1.04);
+}
+.detail-lock-screen {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 1rem; text-align: center; padding: 2rem;
+  background: rgba(10,10,14,0.55);
+  backdrop-filter: blur(4px);
+  z-index: 3;
+}
+.detail-lock-ring {
+  width: 80px; height: 80px;
+  background: rgba(201,168,76,0.12);
+  border: 1.5px solid var(--gold-dim);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2rem;
+  box-shadow: 0 0 60px rgba(201,168,76,0.15);
+  animation: lockPulse 2.5s ease-in-out infinite;
+}
+@keyframes lockPulse {
+  0%,100%{box-shadow:0 0 40px rgba(201,168,76,0.1);}
+  50%{box-shadow:0 0 80px rgba(201,168,76,0.3);}
+}
+.detail-lock-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.5rem; font-style: italic; color: var(--text);
+}
+.detail-lock-sub {
+  font-family: 'DM Mono', monospace; font-size: .78rem; color: var(--text3);
+}
+
+/* Engagement floating bar under image */
+.img-engage-bar {
+  display: flex; align-items: center; gap: .75rem;
+  padding: 1rem 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  margin-top: 1rem;
+}
+.img-engage-bar .big-like {
+  display: flex; align-items: center; gap: 8px;
+  background: none; border: 1px solid var(--border);
+  color: var(--text2); font-family: 'DM Mono', monospace; font-size: .78rem;
+  padding: 8px 18px; border-radius: 100px; cursor: pointer;
+  transition: all .25s;
+}
+.img-engage-bar .big-like:hover { border-color: var(--red-hot); color: var(--red-hot); }
+.img-engage-bar .big-like.liked { border-color: var(--red-hot); color: var(--red-hot); background: rgba(255,71,87,0.08); }
+.img-engage-bar .big-like .heart { font-size: 1rem; transition: transform .25s; }
+.img-engage-bar .big-like.liked .heart { transform: scale(1.3); }
+.eng-stat {
+  display: flex; align-items: center; gap: 6px;
+  font-family: 'DM Mono', monospace; font-size: .75rem; color: var(--text3);
+}
+.share-btn {
+  margin-left: auto;
+  background: none; border: 1px solid var(--border);
+  color: var(--text3); font-family: 'DM Mono', monospace; font-size: .72rem;
+  padding: 7px 14px; border-radius: 100px; cursor: pointer;
+  transition: all .2s; letter-spacing: .06em;
+}
+.share-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+/* ── Info panel ─────────────────────────────────────────────────────────────── */
+.detail-info { display: flex; flex-direction: column; gap: 1.5rem; }
+.detail-breadcrumb {
+  font-family: 'DM Mono', monospace; font-size: .7rem; color: var(--text3); letter-spacing: .04em;
+}
+.detail-breadcrumb a { color: var(--text3); }
+.detail-breadcrumb a:hover { color: var(--gold); }
+
+.detail-tier-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: 'DM Mono', monospace; font-size: .65rem; letter-spacing: .12em; text-transform: uppercase;
+  padding: 5px 14px; border-radius: 100px;
+}
+.detail-tier-badge.basic    { background:rgba(76,175,137,0.12); color:#4caf89; border:1px solid rgba(76,175,137,0.3); }
+.detail-tier-badge.advanced { background:rgba(201,168,76,0.12); color:#C9A84C; border:1px solid rgba(201,168,76,0.3); }
+.detail-tier-badge.premium  { background:rgba(192,132,252,0.12);color:#c084fc; border:1px solid rgba(192,132,252,0.3); }
+
+.detail-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  font-weight: 300; line-height: 1.15; color: var(--text); margin: 0;
+}
+.detail-desc { font-size: .9rem; color: var(--text2); line-height: 1.75; }
+
+.detail-meta-table {
+  display: flex; flex-direction: column; gap: 0;
+  border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+}
+.dmt-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: .7rem 1rem;
+  border-bottom: 1px solid var(--border);
+  font-family: 'DM Mono', monospace; font-size: .75rem;
+}
+.dmt-row:last-child { border-bottom: none; }
+.dmt-row .dmt-key { color: var(--text3); }
+.dmt-row .dmt-val { color: var(--text2); }
+
+/* Price box */
+.price-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px; padding: 1.5rem;
+}
+.price-big {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2.8rem; font-weight: 600; color: var(--gold); line-height: 1;
+}
+.price-note { font-family: 'DM Mono', monospace; font-size: .7rem; color: var(--text3); margin-top: .25rem; }
+.unlock-btn {
+  display: block; width: 100%; margin-top: 1.2rem;
+  background: var(--gold); color: #0a0a0e;
+  font-family: 'DM Mono', monospace; font-size: .8rem; letter-spacing: .1em; text-transform: uppercase;
+  padding: 14px 0; border-radius: 100px; border: none; cursor: pointer;
+  text-decoration: none; text-align: center;
+  transition: background .2s, transform .2s;
+  font-weight: 500;
+}
+.unlock-btn:hover { background: #e0b85a; transform: scale(1.01); }
+.unlocked-access-box {
+  background: rgba(76,175,137,0.06);
+  border: 1px solid rgba(76,175,137,0.25);
+  border-radius: 14px; padding: 1.25rem;
+  text-align: center;
+}
+.unlocked-access-box .check { font-size: 2rem; margin-bottom: .5rem; }
+.unlocked-access-box p { font-family:'DM Mono',monospace; font-size:.75rem; color:var(--green); margin-bottom:.75rem; }
+
+/* ── Comments section ────────────────────────────────────────────────────────── */
+.comments-section {
+  grid-column: 1 / -1;
+  border-top: 1px solid var(--border);
+  padding-top: 2.5rem;
+  margin-top: 1rem;
+  position: relative;
+  z-index: 2;
+  background: var(--bg2);
+}
+.comments-header {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.6rem; font-style: italic; color: var(--text);
+  margin-bottom: 1.5rem;
+}
+.comment-form {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; padding: 1.25rem; margin-bottom: 2rem;
+}
+.comment-form input, .comment-form textarea {
+  width: 100%; background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text);
+  font-family: 'DM Mono', monospace; font-size: .8rem;
+  padding: .65rem 1rem; box-sizing: border-box;
+  outline: none; transition: border-color .2s;
+  margin-bottom: .75rem;
+  resize: none;
+}
+.comment-form input:focus, .comment-form textarea:focus { border-color: var(--gold-dim); }
+.comment-form textarea { height: 90px; }
+.comment-submit {
+  background: none; border: 1px solid var(--gold-dim); color: var(--gold);
+  font-family: 'DM Mono', monospace; font-size: .72rem; letter-spacing: .1em;
+  text-transform: uppercase; padding: 8px 22px; border-radius: 100px;
+  cursor: pointer; transition: all .2s;
+}
+.comment-submit:hover { background: var(--gold-glow); }
+.comment-form-row { display: flex; gap: .75rem; align-items: flex-end; flex-wrap: wrap; }
+.comment-form .name-field { flex: 1; min-width: 140px; margin-bottom: 0; }
+
+/* Comment cards */
+.comment-list { display: flex; flex-direction: column; gap: 1rem; }
+.comment-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 1rem 1.25rem;
+  animation: fadeIn .35s ease both;
+}
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+.comment-card-header {
+  display: flex; align-items: center; gap: .75rem; margin-bottom: .5rem;
+}
+.comment-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold-dim), rgba(100,100,200,0.2));
+  display: flex; align-items: center; justify-content: center;
+  font-size: .85rem; color: var(--gold); font-family: 'DM Mono', monospace;
+  font-weight: 400; flex-shrink: 0;
+}
+.comment-author { font-family:'DM Mono',monospace; font-size:.75rem; color:var(--text); }
+.comment-date   { font-family:'DM Mono',monospace; font-size:.68rem; color:var(--text3); margin-left:auto; }
+.comment-body   { font-size:.88rem; color:var(--text2); line-height:1.65; }
+.comment-delete {
+  background:none; border:none; color:var(--text3);
+  font-size:.7rem; cursor:pointer; margin-top:.4rem;
+  font-family:'DM Mono',monospace; padding:0; transition:color .2s;
+}
+.comment-delete:hover { color:var(--red-hot); }
+.no-comments { font-family:'DM Mono',monospace; font-size:.8rem; color:var(--text3); padding:1.5rem 0; }
+.comment-error { color:var(--red-hot); font-family:'DM Mono',monospace; font-size:.75rem; margin-top:.5rem; display:none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="detail-wrap" id="top">
+
+  <!-- ── LEFT: Image ─────────────────────────────────────────────────────────── -->
+  <div class="detail-img-panel">
+    <div class="detail-img-wrap {% if not photo.unlocked %}locked{% endif %}" id="img-wrap">
+      <img src="{{ url_for('serve_preview', photo_id=photo.id) }}" alt="{{ photo.title }}" id="main-photo-img">
+      {% if not photo.unlocked %}
+      <div class="detail-lock-screen">
+        <div class="detail-lock-ring">🔒</div>
+        <div class="detail-lock-title">Unlock to Reveal</div>
+        <div class="detail-lock-sub">Purchase access to see the full image in stunning clarity</div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Engagement bar -->
+    <div class="img-engage-bar">
+      <button class="big-like" id="big-like-btn" onclick="toggleDetailLike()">
+        <span class="heart">♡</span>
+        <span id="like-count-big">–</span> Likes
+      </button>
+      <span class="eng-stat">👁 <strong id="view-count">{{ photo.view_count }}</strong></span>
+      <span class="eng-stat">💬 <span id="comment-count-detail">–</span></span>
+      <button class="share-btn" onclick="sharePhoto()">↗ Share</button>
+    </div>
+  </div>
+
+  <!-- ── RIGHT: Info ─────────────────────────────────────────────────────────── -->
+  <div class="detail-info">
+    <div class="detail-breadcrumb">
+      <a href="{{ url_for('index') }}">Home</a> ›
+      <a href="{{ url_for('gallery') }}">Gallery</a> ›
+      {% if photo.category %}<a href="{{ url_for('gallery') }}?category={{ photo.category }}">{{ photo.category }}</a> › {% endif %}
+      {{ photo.title }}
+    </div>
+
+    <div>
+      <span class="detail-tier-badge {{ photo.tier }}">{{ photo.tier }}</span>
+    </div>
+
+    <h1 class="detail-title">{{ photo.title }}</h1>
+    {% if photo.description %}
+    <p class="detail-desc">{{ photo.description }}</p>
+    {% endif %}
+
+    <div class="detail-meta-table">
+      {% if photo.category %}<div class="dmt-row"><span class="dmt-key">Category</span><span class="dmt-val">{{ photo.category }}</span></div>{% endif %}
+      <div class="dmt-row"><span class="dmt-key">Access Duration</span><span class="dmt-val">{{ photo.unlock_duration }} hours</span></div>
+      <div class="dmt-row"><span class="dmt-key">Total Views</span><span class="dmt-val">{{ photo.view_count }}</span></div>
+      <div class="dmt-row"><span class="dmt-key">Likes</span><span class="dmt-val" id="meta-like-count">–</span></div>
+      <div class="dmt-row"><span class="dmt-key">Comments</span><span class="dmt-val" id="meta-comment-count">–</span></div>
+      <div class="dmt-row"><span class="dmt-key">Added</span><span class="dmt-val">{{ photo.created_at.strftime('%b %Y') if photo.created_at else '—' }}</span></div>
+    </div>
+
+    <!-- Price / unlock box -->
+    {% if photo.unlocked %}
+    <div class="unlocked-access-box">
+      <div class="check">✓</div>
+      <p>You have full access to this image</p>
+      <a href="{{ url_for('serve_original', photo_id=photo.id) }}" class="unlock-btn" style="max-width:100%;">⬇ Download Full Image</a>
+    </div>
+    {% else %}
+    <div class="price-box">
+      <div class="price-big">${{ '%.2f'|format(photo.current_price) }}</div>
+      <div class="price-note">{{ photo.unlock_duration }}h access · instant delivery</div>
+      <a href="{{ url_for('checkout', photo_id=photo.id) }}" class="unlock-btn">🔓 Unlock Full Image</a>
+    </div>
+    {% endif %}
+
+    <a href="{{ url_for('gallery') }}" style="font-family:'DM Mono',monospace;font-size:.72rem;color:var(--text3);letter-spacing:.06em;">← Back to Gallery</a>
+  </div>
+
+  <!-- ── COMMENTS SECTION ──────────────────────────────────────────────────── -->
+  <div class="comments-section" id="comments">
+    <div class="comments-header">Conversation <span style="color:var(--text3);font-size:1rem;" id="c-count-header"></span></div>
+
+    <!-- Post comment form -->
+    <div class="comment-form">
+      <div class="comment-form-row">
+        <input type="text" id="comment-name" class="name-field" placeholder="Your name (optional)" maxlength="80">
+        <button class="comment-submit" onclick="submitComment()">Post Comment</button>
+      </div>
+      <textarea id="comment-body" placeholder="Share your thoughts about this image…" maxlength="1000"></textarea>
+      <div class="comment-error" id="comment-error"></div>
+    </div>
+
+    <!-- Comment list -->
+    <div class="comment-list" id="comment-list">
+      <div class="no-comments" id="no-comments-msg" style="display:none;">No comments yet. Be the first!</div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const PHOTO_ID = {{ photo.id }};
+let userLiked  = false;
+
+// ── Load stats ────────────────────────────────────────────────────────────────
+fetch('/api/stats/photo/' + PHOTO_ID)
+  .then(r => r.json())
+  .then(data => {
+    document.getElementById('like-count-big').textContent  = data.likes;
+    document.getElementById('comment-count-detail').textContent = data.comments;
+    document.getElementById('meta-like-count').textContent  = data.likes;
+    document.getElementById('meta-comment-count').textContent = data.comments;
+    document.getElementById('c-count-header').textContent  = '(' + data.comments + ')';
+    userLiked = data.liked;
+    if (data.liked) applyLikedState();
+  }).catch(() => {});
+
+// ── Load comments ─────────────────────────────────────────────────────────────
+function loadComments() {
+  fetch('/api/comments/photo/' + PHOTO_ID)
+    .then(r => r.json())
+    .then(comments => {
+      const list = document.getElementById('comment-list');
+      const none = document.getElementById('no-comments-msg');
+      list.innerHTML = '';
+      if (!comments.length) { none.style.display='block'; return; }
+      none.style.display = 'none';
+      comments.forEach(c => {
+        const div = document.createElement('div');
+        div.className = 'comment-card';
+        div.innerHTML = `
+          <div class="comment-card-header">
+            <div class="comment-avatar">${c.author_name.charAt(0).toUpperCase()}</div>
+            <span class="comment-author">${escHtml(c.author_name)}</span>
+            <span class="comment-date">${c.created_at}</span>
+          </div>
+          <div class="comment-body">${escHtml(c.body)}</div>
+          ${c.is_mine ? `<button class="comment-delete" onclick="deleteComment(${c.id}, this)">Delete</button>` : ''}
+        `;
+        list.appendChild(div);
+      });
+      // Update counts
+      const n = comments.length;
+      document.getElementById('comment-count-detail').textContent = n;
+      document.getElementById('meta-comment-count').textContent   = n;
+      document.getElementById('c-count-header').textContent       = '(' + n + ')';
+    }).catch(() => {});
+}
+loadComments();
+
+// ── Submit comment ────────────────────────────────────────────────────────────
+function submitComment() {
+  const name = document.getElementById('comment-name').value.trim();
+  const body = document.getElementById('comment-body').value.trim();
+  const err  = document.getElementById('comment-error');
+  err.style.display = 'none';
+
+  if (!body || body.length < 2) { showErr('Please write something before posting.'); return; }
+
+  fetch('/api/comment', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({content_type:'photo', content_id: PHOTO_ID, author_name: name || 'Anonymous', body})
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.error) { showErr(data.error); return; }
+    document.getElementById('comment-body').value = '';
+    loadComments();
+  }).catch(() => showErr('Something went wrong. Try again.'));
+}
+
+function deleteComment(id, btn) {
+  fetch('/api/comment/' + id + '/delete', {method:'POST'})
+    .then(r => r.json())
+    .then(data => { if (data.deleted) loadComments(); })
+    .catch(() => {});
+}
+
+function showErr(msg) {
+  const el = document.getElementById('comment-error');
+  el.textContent = msg; el.style.display = 'block';
+}
+
+// ── Like ──────────────────────────────────────────────────────────────────────
+function toggleDetailLike() {
+  fetch('/api/photo/' + PHOTO_ID + '/like', {method:'POST'})
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById('like-count-big').textContent = data.count;
+      document.getElementById('meta-like-count').textContent = data.count;
+      userLiked = data.liked;
+      if (data.liked) applyLikedState(); else removeLikedState();
+    }).catch(() => {});
+}
+
+function applyLikedState() {
+  const btn = document.getElementById('big-like-btn');
+  btn.classList.add('liked');
+  btn.querySelector('.heart').textContent = '♥';
+}
+function removeLikedState() {
+  const btn = document.getElementById('big-like-btn');
+  btn.classList.remove('liked');
+  btn.querySelector('.heart').textContent = '♡';
+}
+
+// ── Share ─────────────────────────────────────────────────────────────────────
+function sharePhoto() {
+  const url = window.location.href;
+  if (navigator.share) {
+    navigator.share({title: '{{ photo.title }}', url});
+  } else {
+    navigator.clipboard.writeText(url).then(() => {
+      const btn = document.querySelector('.share-btn');
+      const orig = btn.textContent;
+      btn.textContent = '✓ Link Copied!';
+      setTimeout(() => btn.textContent = orig, 2000);
+    });
+  }
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Allow Enter to submit comment
+document.getElementById('comment-body').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && e.ctrlKey) submitComment();
+});
+</script>
+{% endblock %}

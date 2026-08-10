@@ -1,0 +1,534 @@
+{% extends 'base.html' %}
+{% block title %}Videos — PhotoVault{% endblock %}
+
+{% block head %}
+<style>
+:root {
+  --rose:#e8547a; --rose-dim:rgba(232,84,122,0.18);
+  --rose-glow:rgba(232,84,122,0.07);
+  --purple:#9f6ef5; --purple-dim:rgba(159,110,245,0.18);
+  --gold:#C9A84C; --gold-dim:rgba(201,168,76,0.2);
+  --surface:#111116; --bg2:#0d0d11; --border:rgba(255,255,255,0.08);
+  --text:#f2ede8; --text2:#9a9490; --text3:#5a5660; --green:#4caf7d;
+}
+
+/* ── Page header ── */
+.vg-header {
+  background: linear-gradient(180deg, #0d0508 0%, transparent 100%);
+  padding: 3rem 2.5rem 2rem;
+  border-bottom: 1px solid var(--border);
+}
+.vg-header-inner {
+  max-width: 1300px; margin: 0 auto;
+  display: flex; align-items: flex-end; justify-content: space-between;
+  flex-wrap: wrap; gap: 1rem;
+}
+.vg-header h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(1.8rem,4vw,2.8rem);
+  font-style: italic; color: var(--text); line-height:1.1;
+}
+.vg-header h1 span { color: var(--rose); }
+.vg-header p { color: var(--text2); font-size: .88rem; margin-top:.3rem; }
+
+/* ── Filter bar ── */
+.vg-filters {
+  max-width: 1300px; margin: 1.5rem auto 0; padding: 0 2.5rem;
+  display: flex; gap: .5rem; flex-wrap: wrap; align-items: center;
+}
+.vg-pill {
+  font-size: .72rem; letter-spacing:.09em; text-transform:uppercase;
+  padding:.4rem 1rem; border-radius:100px;
+  border:1px solid var(--border); background:none; color:var(--text3);
+  cursor:pointer; transition:all .2s; text-decoration:none; font-family:inherit;
+}
+.vg-pill:hover, .vg-pill.active {
+  border-color:var(--rose); color:var(--rose); background:var(--rose-glow);
+}
+.vg-pill.creator-pill:hover, .vg-pill.creator-pill.active {
+  border-color:var(--purple); color:var(--purple); background:var(--purple-dim);
+}
+
+/* ── Video grid ── */
+.vg-layout {
+  max-width: 1400px; margin: 0 auto; padding: 0 1.5rem 4rem;
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+@media(max-width:860px){ .vg-layout{grid-template-columns:1fr;} }
+
+/* Left sidebar */
+.vg-sidebar {
+  position: sticky; top: 70px;
+  max-height: calc(100vh - 90px);
+  overflow-y: auto;
+  padding-right: .5rem;
+}
+.vg-sidebar::-webkit-scrollbar { width: 3px; }
+.vg-sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 3px; }
+.vg-sidebar-section { margin-bottom: 1.75rem; }
+.vg-sidebar-title {
+  font-size: .65rem; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--text3); margin-bottom: .6rem; padding-bottom: .4rem;
+  border-bottom: 1px solid var(--border);
+}
+.vg-sidebar-link {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .45rem .65rem; border-radius: 8px;
+  font-size: .82rem; color: var(--text2); text-decoration: none;
+  transition: all .15s; cursor: pointer; margin-bottom: .15rem;
+  border: none; background: none; width: 100%; text-align: left;
+}
+.vg-sidebar-link:hover { background: rgba(255,255,255,.04); color: var(--text); }
+.vg-sidebar-link.active { background: var(--rose-glow); color: var(--rose); }
+.vg-sidebar-link .sbl-count {
+  margin-left: auto; font-size: .68rem; color: var(--text3);
+  background: rgba(255,255,255,.06); padding: 1px 6px; border-radius: 100px;
+}
+
+.vg-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px,1fr));
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+}
+
+/* ── Video card ── */
+.vc {
+  border-radius:16px; overflow:hidden;
+  background:var(--surface); border:1px solid var(--border);
+  transition: transform .35s cubic-bezier(.22,.68,0,1.2), box-shadow .35s, border-color .3s;
+  cursor:pointer;
+  animation: vcIn .4s ease both;
+}
+@keyframes vcIn { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+{% for i in range(1,13) %}.vc:nth-child({{ i }}){animation-delay:{{ i*0.05 }}s}{% endfor %}
+.vc:hover {
+  transform:translateY(-6px) scale(1.01);
+  box-shadow:0 20px 55px rgba(0,0,0,.75), 0 0 0 1px var(--rose-dim);
+  border-color:var(--rose-dim);
+}
+
+/* Thumbnail */
+.vc-thumb {
+  position:relative; aspect-ratio:16/9; overflow:hidden; background:#0a080c;
+}
+.vc-thumb img {
+  width:100%; height:100%; object-fit:cover; display:block;
+  transition: transform .5s, filter .4s;
+  filter: blur(16px) brightness(0.5) saturate(1.2);
+  transform: scale(1.08);
+}
+/* Admin & unlocked: no blur */
+.vc.unlocked .vc-thumb img,
+.vc.admin-view .vc-thumb img {
+  filter: none !important;
+  transform: scale(1) !important;
+}
+.vc:hover .vc-thumb img { transform: scale(1.12); }
+.vc.unlocked:hover .vc-thumb img,
+.vc.admin-view:hover .vc-thumb img { transform: scale(1.05); filter: brightness(0.88) !important; }
+
+/* Tint */
+.vc-tint {
+  position:absolute; inset:0; pointer-events:none; z-index:1;
+  background: linear-gradient(135deg,rgba(232,84,122,0.3) 0%,rgba(30,10,50,0.2) 50%,rgba(159,110,245,0.2) 100%);
+  mix-blend-mode:color;
+  transition: opacity .3s;
+}
+.vc.unlocked .vc-tint, .vc.admin-view .vc-tint { opacity: 0; }
+
+/* Bottom gradient */
+.vc-thumb::after {
+  content:''; position:absolute; inset:0; z-index:2;
+  background:linear-gradient(to top, rgba(10,5,12,0.95) 0%, transparent 55%);
+  pointer-events:none;
+}
+
+/* Overlaid info on thumbnail */
+.vc-thumb-info {
+  position:absolute; bottom:0; left:0; right:0; z-index:3;
+  padding:.75rem 1rem .6rem; display:flex; align-items:flex-end; gap:.5rem;
+}
+.vc-tier {
+  font-size:.6rem; letter-spacing:.1em; text-transform:uppercase;
+  padding:2px 8px; border-radius:100px; backdrop-filter:blur(8px);
+}
+.vc-tier.basic    { background:rgba(91,138,245,.2);  color:#7ba7f7; border:1px solid rgba(91,138,245,.3); }
+.vc-tier.advanced { background:rgba(201,168,76,.2);  color:var(--gold); border:1px solid rgba(201,168,76,.3); }
+.vc-tier.premium  { background:rgba(159,110,245,.2); color:var(--purple); border:1px solid rgba(159,110,245,.3); }
+.vc-duration {
+  margin-left:auto; font-size:.65rem; color:rgba(255,255,255,.55);
+  background:rgba(0,0,0,.55); padding:2px 7px; border-radius:4px;
+}
+
+/* Lock overlay */
+.vc-lock {
+  position:absolute; top:50%; left:50%;
+  transform:translate(-50%,-55%);
+  z-index:4; display:flex; flex-direction:column; align-items:center; gap:5px;
+  pointer-events:none;
+  transition: opacity .3s;
+}
+.vc.unlocked .vc-lock,
+.vc.admin-view .vc-lock { opacity:0; }
+.vc-lock-ring {
+  width:56px; height:56px; border-radius:50%;
+  background:rgba(10,5,12,.65); border:1.5px solid rgba(232,84,122,.45);
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.3rem; backdrop-filter:blur(12px);
+  box-shadow:0 0 30px rgba(232,84,122,.2);
+}
+.vc-lock-price {
+  font-family:'Cormorant Garamond',serif; font-size:1rem; font-weight:600;
+  color:var(--rose); text-shadow:0 2px 8px rgba(0,0,0,.9);
+}
+.vc-unlocked-badge {
+  background:rgba(76,175,125,.15); color:var(--green);
+  border:1px solid rgba(76,175,125,.3);
+  font-size:.65rem; padding:3px 10px; border-radius:100px;
+  font-family:inherit; letter-spacing:.06em;
+}
+
+/* Hover CTA */
+.vc-cta {
+  position:absolute; bottom:38px; left:50%; transform:translateX(-50%) translateY(8px);
+  z-index:5; opacity:0; transition:all .3s; white-space:nowrap;
+}
+.vc:hover .vc-cta { opacity:1; transform:translateX(-50%) translateY(0); }
+.vc-cta a {
+  display:inline-block;
+  padding:7px 20px; border-radius:100px;
+  font-size:.72rem; letter-spacing:.07em; text-transform:uppercase;
+  text-decoration:none; font-weight:600; transition:all .2s;
+}
+.vc-cta .btn-unlock {
+  background:linear-gradient(135deg,var(--rose),#c2185b); color:#fff;
+  box-shadow:0 4px 18px rgba(232,84,122,.4);
+}
+.vc-cta .btn-watch {
+  background:linear-gradient(135deg,var(--green),#2e7d52); color:#fff;
+  box-shadow:0 4px 18px rgba(76,175,125,.35);
+}
+.vc-cta a:hover { transform:scale(1.05); }
+
+/* Creator mini badge */
+.vc-creator {
+  position:absolute; top:10px; left:10px; z-index:4;
+  display:flex; align-items:center; gap:5px;
+  background:rgba(10,5,12,.65); backdrop-filter:blur(8px);
+  border:1px solid rgba(255,255,255,.1); border-radius:100px;
+  padding:3px 10px 3px 4px;
+}
+.vc-creator-av {
+  width:20px; height:20px; border-radius:50%; object-fit:cover;
+}
+.vc-creator-av-ph {
+  width:20px; height:20px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:.65rem; font-weight:700; color:#07070a;
+}
+.vc-creator-name { font-size:.65rem; color:rgba(255,255,255,.75); letter-spacing:.04em; }
+
+/* Admin badge */
+.vc-admin-badge {
+  position:absolute; top:10px; right:10px; z-index:5;
+  background:rgba(201,168,76,.2); border:1px solid rgba(201,168,76,.4);
+  color:var(--gold); font-size:.6rem; letter-spacing:.1em;
+  padding:2px 8px; border-radius:100px; backdrop-filter:blur(6px);
+  font-family:inherit; text-transform:uppercase;
+}
+
+/* Card body */
+.vc-body { padding:12px 14px 14px; }
+.vc-title {
+  font-family:'Cormorant Garamond',serif; font-size:1rem;
+  color:var(--text); margin-bottom:3px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.vc-meta { font-size:.7rem; color:var(--text3); margin-bottom:9px; letter-spacing:.03em; }
+.vc-engage {
+  display:flex; align-items:center; gap:12px;
+  padding-top:9px; border-top:1px solid var(--border);
+}
+.vc-engage span { font-size:.7rem; color:var(--text3); display:flex; align-items:center; gap:4px; }
+
+/* Admin bar */
+.admin-view-bar {
+  max-width:1300px; margin:1rem auto 0; padding:0 2.5rem;
+}
+.admin-view-notice {
+  background:rgba(201,168,76,.08); border:1px solid rgba(201,168,76,.25);
+  border-radius:10px; padding:.65rem 1.25rem;
+  font-size:.82rem; color:var(--gold); display:flex; align-items:center; gap:.6rem;
+}
+
+/* Empty */
+.vg-empty {
+  max-width:1300px; margin:0 auto; padding:5rem 2.5rem; text-align:center; color:var(--text3);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- PAGE HEADER -->
+<div class="vg-header">
+  <div class="vg-header-inner">
+    <div>
+      <div style="font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--rose);margin-bottom:.4rem;font-family:monospace;">Cinematic Collection</div>
+      <h1>The <span>Reel</span></h1>
+      <p>{{ videos|length }} video{% if videos|length != 1 %}s{% endif %} available to unlock</p>
+    </div>
+    <a href="{{ url_for('gallery') }}" style="font-size:.78rem;color:var(--text3);letter-spacing:.05em;">← Photos</a>
+  </div>
+</div>
+
+<!-- ADMIN NOTICE -->
+{% if session.get('is_admin') %}
+<div class="admin-view-bar">
+  <div class="admin-view-notice">
+    👑 Admin View — all videos are unlocked for you. Visitors must purchase access.
+  </div>
+</div>
+{% endif %}
+
+<!-- FILTERS -->
+<div class="vg-filters">
+  <a class="vg-pill {% if not selected_tier %}active{% endif %}" href="{{ url_for('video_gallery') }}{% if selected_creator %}&creator={{ selected_creator }}{% endif %}">All Tiers</a>
+  <a class="vg-pill {% if selected_tier=='basic' %}active{% endif %}"    href="?tier=basic{% if selected_creator %}&creator={{ selected_creator }}{% endif %}">Basic</a>
+  <a class="vg-pill {% if selected_tier=='advanced' %}active{% endif %}" href="?tier=advanced{% if selected_creator %}&creator={{ selected_creator }}{% endif %}">Advanced</a>
+  <a class="vg-pill {% if selected_tier=='premium' %}active{% endif %}"  href="?tier=premium{% if selected_creator %}&creator={{ selected_creator }}{% endif %}">Premium</a>
+
+  {% if creators %}
+  <span style="width:1px;height:20px;background:var(--border);margin:0 .25rem;"></span>
+  <a class="vg-pill creator-pill {% if not selected_creator %}active{% endif %}"
+     href="{{ url_for('video_gallery') }}{% if selected_tier %}?tier={{ selected_tier }}{% endif %}">All Creators</a>
+  {% for cr in creators %}
+  <a class="vg-pill creator-pill {% if selected_creator==cr.id|string %}active{% endif %}"
+     href="?creator={{ cr.id }}{% if selected_tier %}&tier={{ selected_tier }}{% endif %}">
+    {% if cr.avatar_filename %}
+    <img src="{{ url_for('serve_profile_media', filename=cr.avatar_filename) }}"
+         style="width:14px;height:14px;border-radius:50%;object-fit:cover;margin-right:3px;vertical-align:middle;">
+    {% endif %}
+    {{ cr.name }}
+  </a>
+  {% endfor %}
+  {% endif %}
+</div>
+
+<!-- VIDEO GRID + LEFT SIDEBAR -->
+{% if videos %}
+<div class="vg-layout">
+  <!-- LEFT SIDEBAR -->
+  <aside class="vg-sidebar">
+    <div class="vg-sidebar-section">
+      <div class="vg-sidebar-title">Browse</div>
+      <a class="vg-sidebar-link {% if not selected_tier and not selected_cat %}active{% endif %}"
+         href="{{ url_for('video_gallery') }}">🎬 All Videos <span class="sbl-count">{{ videos|length }}</span></a>
+      <a class="vg-sidebar-link {% if selected_tier=='basic' %}active{% endif %}"
+         href="?tier=basic">🔵 Basic</a>
+      <a class="vg-sidebar-link {% if selected_tier=='advanced' %}active{% endif %}"
+         href="?tier=advanced">🟣 Advanced</a>
+      <a class="vg-sidebar-link {% if selected_tier=='premium' %}active{% endif %}"
+         href="?tier=premium">⭐ Premium</a>
+    </div>
+
+    {% if categories %}
+    <div class="vg-sidebar-section">
+      <div class="vg-sidebar-title">Categories</div>
+      {% for cat in categories %}
+      <a class="vg-sidebar-link {% if selected_cat==cat.name %}active{% endif %}"
+         href="?category={{ cat.name|urlencode }}{% if selected_tier %}&tier={{ selected_tier }}{% endif %}">
+        {{ cat.icon }} {{ cat.name }}
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if creators %}
+    <div class="vg-sidebar-section">
+      <div class="vg-sidebar-title">Creators</div>
+      <a class="vg-sidebar-link {% if not selected_creator %}active{% endif %}"
+         href="{{ url_for('video_gallery') }}{% if selected_tier %}?tier={{ selected_tier }}{% endif %}">
+        👤 All Creators</a>
+      {% for cr in creators %}
+      <a class="vg-sidebar-link {% if selected_creator==cr.id|string %}active{% endif %}"
+         href="?creator={{ cr.id }}{% if selected_tier %}&tier={{ selected_tier }}{% endif %}"
+         style="gap:.5rem;">
+        {% if cr.avatar_filename %}
+        <img src="{{ url_for('serve_profile_media', filename=cr.avatar_filename) }}"
+             style="width:20px;height:20px;border-radius:50%;object-fit:cover;flex-shrink:0;">
+        {% else %}
+        <span style="width:20px;height:20px;border-radius:50%;background:var(--rose-dim);display:inline-flex;align-items:center;justify-content:center;font-size:.65rem;flex-shrink:0;">{{ cr.name[0] }}</span>
+        {% endif %}
+        {{ cr.name }}
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </aside>
+
+  <!-- RIGHT: VIDEO CARDS -->
+  <div>
+    <div class="vg-grid">
+  {% for video in videos %}
+  {% set is_unlocked = video.unlocked or session.get('is_admin') %}
+  <div class="vc {% if is_unlocked %}unlocked{% endif %} {% if session.get('is_admin') %}admin-view{% endif %}"
+       data-locked="{{ 'no' if is_unlocked else 'yes' }}"
+       onclick="location.href='{{ url_for('video_detail', video_id=video.id) }}'">
+
+    <div class="vc-thumb">
+      <!-- Creator badge -->
+      {% if video.creator %}
+      <div class="vc-creator">
+        {% if video.creator.avatar_filename %}
+        <img class="vc-creator-av" src="{{ url_for('serve_profile_media', filename=video.creator.avatar_filename) }}" alt="">
+        {% else %}
+        <div class="vc-creator-av-ph" style="background:{{ video.creator.accent_color }};">{{ video.creator.name[0] }}</div>
+        {% endif %}
+        <span class="vc-creator-name">{{ video.creator.name }}</span>
+      </div>
+      {% endif %}
+
+      {% if session.get('is_admin') %}
+      <span class="vc-admin-badge">👑 Admin</span>
+      {% endif %}
+
+      <!-- Thumbnail / blurred video preview -->
+      <!-- serve_video_thumb now auto-generates a preview frame if no thumbnail was uploaded -->
+      <img class="vc-thumb-img" src="{{ url_for('serve_video_thumb', video_id=video.id) }}" alt="{{ video.title }}" loading="lazy"
+           style="width:100%;height:100%;object-fit:cover;transition:opacity .3s;">
+      <!-- Hover preview video - plays 3-5s clip and fades blur in -->
+      {% if not video.unlocked %}
+      <video class="vc-preview-vid" muted preload="none"
+             data-video-id="{{ video.id }}"
+             style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+                    opacity:0;transition:opacity .4s,filter 2.5s;filter:blur(0px);">
+        <source src="{{ url_for('serve_video_stream', video_id=video.id) }}" type="video/mp4">
+      </video>
+      {% else %}
+      <video class="vc-preview-vid" muted preload="none"
+             style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .4s;">
+        <source src="{{ url_for('serve_video_stream', video_id=video.id) }}" type="video/mp4">
+      </video>
+      {% endif %}
+
+      <!-- Tint -->
+      <div class="vc-tint"></div>
+
+      <!-- Lock / unlocked indicator -->
+      {% if is_unlocked %}
+      <div class="vc-lock" style="opacity:0;pointer-events:none;"></div>
+      {% else %}
+      <div class="vc-lock">
+        <div class="vc-lock-ring">🔒</div>
+        <span class="vc-lock-price">${{ '%.2f'|format(video.unlock_price) }}</span>
+      </div>
+      {% endif %}
+
+      <!-- Bottom info -->
+      <div class="vc-thumb-info">
+        <span class="vc-tier {{ video.tier }}">{{ video.tier }}</span>
+        {% if is_unlocked %}
+        <span class="vc-unlocked-badge">✓ Unlocked</span>
+        {% endif %}
+        {% if video.duration_seconds %}
+        <span class="vc-duration">{{ '%d:%02d'|format(video.duration_seconds//60, video.duration_seconds%60) }}</span>
+        {% endif %}
+      </div>
+
+      <!-- Hover CTA -->
+      <div class="vc-cta">
+        {% if is_unlocked %}
+        <a href="{{ url_for('video_detail', video_id=video.id) }}" class="btn-watch" onclick="event.stopPropagation()">▶ Watch Now</a>
+        {% else %}
+        <a href="{{ url_for('video_detail', video_id=video.id) }}" class="btn-unlock" onclick="event.stopPropagation()">🔓 Unlock Video</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Card body -->
+    <div class="vc-body">
+      <div class="vc-title">{{ video.title }}</div>
+      <div class="vc-meta">
+        {{ video.category or 'Uncategorized' }}
+        {% if video.creator %} · {{ video.creator.name }}{% endif %}
+        · {{ video.unlock_duration }}h access
+      </div>
+      <div class="vc-engage">
+        <span>👁 {{ video.view_count }}</span>
+        <span style="margin-left:auto;font-family:'Cormorant Garamond',serif;font-size:.95rem;color:{% if is_unlocked %}var(--green){% else %}var(--rose){% endif %};">
+          {% if is_unlocked %}✓ Unlocked{% else %}${{ '%.2f'|format(video.unlock_price) }}{% endif %}
+        </span>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+  </div><!-- end .vg-grid -->
+  </div><!-- end right column -->
+</div><!-- end .vg-layout -->
+
+{% else %}
+<div class="vg-empty">
+  <div style="font-size:3.5rem;opacity:.25;margin-bottom:1rem;">🎬</div>
+  <h3 style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;margin-bottom:.5rem;">No Videos Yet</h3>
+  <p style="font-size:.88rem;">
+    {% if selected_tier or selected_creator %}
+      No videos match these filters. <a href="{{ url_for('video_gallery') }}" style="color:var(--rose);">Clear filters →</a>
+    {% else %}
+      Check back soon — new videos are being added.
+    {% endif %}
+  </p>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── Video card hover preview: plays 3-5s then fades blur in ─────────────────
+document.querySelectorAll('.vc').forEach(card => {
+  const thumb  = card.querySelector('.vc-thumb-img');
+  const vid    = card.querySelector('.vc-preview-vid');
+  if (!vid) return;
+
+  let timer = null;
+
+  card.addEventListener('mouseenter', () => {
+    vid.currentTime = 0;
+    vid.play().catch(() => {});
+    // Fade preview video in, fade thumb out
+    if (thumb) thumb.style.opacity = '0';
+    vid.style.opacity = '1';
+    vid.style.filter  = 'blur(0px)';
+
+    // After 3 seconds start fading blur in (for locked content)
+    const isLocked = card.dataset.locked === 'yes';
+    if (isLocked) {
+      timer = setTimeout(() => {
+        vid.style.filter = 'blur(18px) brightness(.5)';
+      }, 3000);
+    }
+
+    // Stop after 5 seconds
+    timer = setTimeout(() => {
+      vid.pause();
+      vid.style.opacity = '0';
+      if (thumb) thumb.style.opacity = '1';
+      vid.style.filter = 'blur(0px)';
+    }, 5000);
+  });
+
+  card.addEventListener('mouseleave', () => {
+    clearTimeout(timer);
+    vid.pause();
+    vid.style.opacity = '0';
+    vid.style.filter  = 'blur(0px)';
+    if (thumb) thumb.style.opacity = '1';
+  });
+});
+</script>
+{% endblock %}

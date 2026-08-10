@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block title %}Edit Photo — Admin{% endblock %}
+{% block content %}
+<div class="admin-layout">
+  <aside class="admin-sidebar">
+    <div class="admin-sidebar-brand">⬡ PhotoVault<br>
+      <small style="font-family:var(--font-body);font-size:.75rem;color:var(--text3);">Admin Panel</small>
+    </div>
+    <nav class="admin-nav">
+      <a href="{{ url_for('admin_dashboard') }}">📊 Dashboard</a>
+      <a href="{{ url_for('admin_comments') }}">💬 Comments</a>
+      <a href="{{ url_for('admin_revenue') }}">💰 Revenue</a>
+      <a href="{{ url_for('index') }}" target="_blank">🌐 View Site</a>
+      <a href="{{ url_for('logout') }}" style="color:var(--red);">🚪 Logout</a>
+    </nav>
+  </aside>
+
+  <div class="admin-content">
+    <div class="admin-header">
+      <h1>Edit Photo</h1>
+      <p>Editing: <strong>{{ photo.title }}</strong></p>
+    </div>
+
+    <div style="max-width:640px;">
+      <!-- Preview -->
+      <div style="margin-bottom:1.5rem;">
+        <img src="{{ url_for('serve_preview', photo_id=photo.id) }}"
+             style="width:100%;max-width:320px;border-radius:10px;border:1px solid var(--border);filter:blur(6px) brightness(0.7);">
+      </div>
+
+      <form method="POST">
+        <div class="form-group">
+          <label>Title</label>
+          <input type="text" name="title" value="{{ photo.title }}" required>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+          <div class="form-group">
+            <label>Category</label>
+            <input type="text" name="category" value="{{ photo.category or '' }}">
+          </div>
+          <div class="form-group">
+            <label>Tier</label>
+            <select name="tier">
+              <option value="basic"    {% if photo.tier=='basic' %}selected{% endif %}>Basic</option>
+              <option value="advanced" {% if photo.tier=='advanced' %}selected{% endif %}>Advanced</option>
+              <option value="premium"  {% if photo.tier=='premium' %}selected{% endif %}>Premium</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+          <div class="form-group">
+            <label>Unlock Price (USD)</label>
+            <input type="number" name="price" step="0.01" min="0.5" value="{{ photo.unlock_price }}">
+          </div>
+          <div class="form-group">
+            <label>Access Duration (hours)</label>
+            <input type="number" name="duration" min="1" value="{{ photo.unlock_duration }}">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Description</label>
+          <textarea name="description" rows="3">{{ photo.description or '' }}</textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-check">
+            <input type="checkbox" name="dynamic_pricing" {% if photo.dynamic_pricing %}checked{% endif %}>
+            Enable dynamic pricing
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label class="form-check">
+            <input type="checkbox" name="is_active" {% if photo.is_active %}checked{% endif %}>
+            Active (visible in gallery)
+          </label>
+        </div>
+
+        <div style="display:flex;gap:.75rem;margin-top:1.5rem;">
+          <button type="submit" class="btn btn-primary btn-lg">Save Changes</button>
+          <a href="{{ url_for('admin_dashboard') }}" class="btn btn-ghost btn-lg">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

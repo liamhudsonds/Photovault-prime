@@ -1,0 +1,364 @@
+{% extends 'base.html' %}
+{% block title %}Creator Dashboard — PhotoVault{% endblock %}
+
+{% block head %}
+<style>
+:root { --mgr:#a78bfa; --mgr-dim:rgba(167,139,250,0.15); --mgr-glow:rgba(167,139,250,0.07); }
+
+.mgr-layout { display:grid; grid-template-columns:240px 1fr; gap:0; min-height:calc(100vh - 60px); }
+@media(max-width:800px){ .mgr-layout{grid-template-columns:1fr;} }
+
+/* Sidebar */
+.mgr-sidebar {
+  background:var(--surface); border-right:1px solid var(--border);
+  padding:1.5rem 0; position:sticky; top:60px; height:calc(100vh - 60px);
+  overflow-y:auto;
+}
+.mgr-sidebar-header { padding:0 1.25rem 1.25rem; border-bottom:1px solid var(--border); margin-bottom:.75rem; }
+.mgr-creator-avatar {
+  width:48px; height:48px; border-radius:50%; object-fit:cover;
+  border:2px solid var(--mgr); margin-bottom:.5rem;
+}
+.mgr-creator-avatar-ph {
+  width:48px; height:48px; border-radius:50%; background:var(--mgr-dim);
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.4rem; border:2px solid var(--mgr); margin-bottom:.5rem;
+}
+.mgr-creator-name { font-family:var(--font-head); font-size:1rem; color:var(--text); }
+.mgr-creator-handle { font-size:.72rem; color:var(--text3); }
+.mgr-creator-country { font-size:.75rem; color:var(--text2); margin-top:.2rem; }
+
+.mgr-nav-item {
+  display:flex; align-items:center; gap:.65rem; padding:.65rem 1.25rem;
+  color:var(--text2); text-decoration:none; font-size:.88rem;
+  transition:all .15s; border-left:3px solid transparent;
+}
+.mgr-nav-item:hover { color:var(--mgr); background:var(--mgr-glow); }
+.mgr-nav-item.active { color:var(--mgr); border-left-color:var(--mgr); background:var(--mgr-glow); font-weight:600; }
+.mgr-nav-icon { font-size:1rem; width:20px; text-align:center; }
+
+/* Main content */
+.mgr-main { padding:2rem; background:var(--bg); }
+@media(max-width:800px){ .mgr-main{padding:1rem;} }
+
+/* Stats bar */
+.mgr-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:2rem; }
+@media(max-width:900px){ .mgr-stats{grid-template-columns:repeat(2,1fr);} }
+@media(max-width:500px){ .mgr-stats{grid-template-columns:1fr 1fr;} }
+
+.mgr-stat-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:14px; padding:1.1rem 1.25rem;
+  display:flex; flex-direction:column; gap:.3rem;
+}
+.mgr-stat-label { font-size:.72rem; color:var(--text3); text-transform:uppercase; letter-spacing:.05em; }
+.mgr-stat-value { font-family:var(--font-head); font-size:1.8rem; color:var(--text); line-height:1; }
+.mgr-stat-icon { font-size:1.4rem; margin-bottom:.2rem; }
+
+/* Section card */
+.mgr-section {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:16px; overflow:hidden; margin-bottom:1.5rem;
+}
+.mgr-section-head {
+  padding:.85rem 1.25rem; background:var(--bg2);
+  border-bottom:1px solid var(--border);
+  font-family:var(--font-head); font-size:1rem; color:var(--text);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.mgr-section-body { padding:1.25rem; }
+
+/* Media grid */
+.mgr-media-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:.85rem; }
+.mgr-media-card {
+  background:var(--bg2); border:1px solid var(--border);
+  border-radius:12px; overflow:hidden; transition:border-color .2s;
+}
+.mgr-media-card:hover { border-color:var(--mgr-dim); }
+.mgr-media-thumb {
+  width:100%; aspect-ratio:16/9; object-fit:cover; background:var(--bg3);
+  display:flex; align-items:center; justify-content:center; font-size:2rem;
+}
+.mgr-media-info { padding:.6rem .75rem; }
+.mgr-media-title { font-size:.82rem; color:var(--text); font-weight:500;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.mgr-media-meta { font-size:.7rem; color:var(--text3); margin-top:.15rem; }
+
+/* No content */
+.mgr-empty { text-align:center; padding:3rem 1rem; color:var(--text3); }
+.mgr-empty-icon { font-size:3rem; margin-bottom:.75rem; }
+
+.btn-mgr {
+  background:var(--mgr); color:#fff; border:none; border-radius:8px;
+  padding:.5rem 1rem; font-size:.82rem; cursor:pointer; text-decoration:none;
+  display:inline-flex; align-items:center; gap:.4rem; transition:opacity .15s;
+}
+.btn-mgr:hover { opacity:.85; }
+.btn-mgr-ghost {
+  background:none; color:var(--mgr); border:1px solid var(--mgr);
+  border-radius:8px; padding:.45rem .9rem; font-size:.82rem;
+  cursor:pointer; text-decoration:none; display:inline-flex;
+  align-items:center; gap:.4rem; transition:all .15s;
+}
+.btn-mgr-ghost:hover { background:var(--mgr-glow); }
+</style>
+{% endblock %}
+
+{% block content %}
+{% if not profile %}
+<div style="max-width:600px;margin:4rem auto;text-align:center;padding:2rem;">
+  <div style="font-size:3rem;margin-bottom:1rem;">👤</div>
+  <h2 style="font-family:var(--font-head);color:var(--text);margin-bottom:.5rem;">No Creator Assigned</h2>
+  <p style="color:var(--text3);">You have not been assigned to manage a creator yet. Please contact your admin.</p>
+</div>
+{% else %}
+<div class="mgr-layout">
+
+  <!-- Sidebar -->
+  <aside class="mgr-sidebar">
+    <div class="mgr-sidebar-header">
+      {% if profile.avatar_filename %}
+        <img src="{{ url_for('serve_profile_media', filename=profile.avatar_filename) }}"
+             class="mgr-creator-avatar" alt="{{ profile.name }}">
+      {% else %}
+        <div class="mgr-creator-avatar-ph">{{ profile.name[0]|upper }}</div>
+      {% endif %}
+      <div class="mgr-creator-name">{{ profile.name }}</div>
+      <div class="mgr-creator-handle">@{{ profile.username }}</div>
+      {% if profile.country_code %}
+      <div class="mgr-creator-country">
+        {{ COUNTRY_FLAGS.get(profile.country_code, '🌍') }}
+        {{ COUNTRY_NAMES.get(profile.country_code, profile.country_code) }}
+      </div>
+      {% endif %}
+    </div>
+
+    <nav>
+      <a href="{{ upload_url('creator_dashboard', profile.id) }}" class="mgr-nav-item active">
+        <span class="mgr-nav-icon">📊</span> Dashboard
+      </a>
+      <a href="{{ url_for('manager_edit_profile') }}" class="mgr-nav-item">
+        <span class="mgr-nav-icon">♨️</span> Edit Profile
+      </a>
+      <a href="{{ upload_url('creator_dashboard_videos', profile.id) }}" class="mgr-nav-item">
+        <span class="mgr-nav-icon">🎬</span> Videos
+      </a>
+      <a href="{{ upload_url('creator_upload_photo', profile.id) }}" class="mgr-nav-item">
+        <span class="mgr-nav-icon">📷</span> Upload Photo
+      </a>
+      <a href="{{ upload_url('creator_upload_video', profile.id) }}" class="mgr-nav-item">
+        <span class="mgr-nav-icon">⬆️</span> Upload Video
+      </a>
+      <a href="{{ url_for('profile_page', username=profile.username) }}" target="_blank" class="mgr-nav-item">
+        <span class="mgr-nav-icon">👁</span> View Profile
+      </a>
+
+      <!-- VaultX Creator Tools -->
+      <div style="margin:.75rem 1.25rem .4rem;font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);font-weight:700;">
+        💎 VaultX
+      </div>
+      <a href="/creator/home" class="mgr-nav-item" style="color:#C9A84C;">
+        <span class="mgr-nav-icon">🏠</span> VX Creator Home
+      </a>
+      <a href="{{ url_for('creator_dm_inbox') }}" class="mgr-nav-item">
+        <span class="mgr-nav-icon">💬</span> DM Inbox
+      </a>
+      <a href="/creator/dm-settings" class="mgr-nav-item">
+        <span class="mgr-nav-icon">⚙️</span> DM Settings
+      </a>
+      <a href="/creator/application-status" class="mgr-nav-item">
+        <span class="mgr-nav-icon">📋</span> Application Status
+      </a>
+      <a href="{{ url_for('creator_payout_methods') }}" class="mgr-nav-item">
+        <span class="mgr-nav-icon">🏦</span> Payout Methods
+      </a>
+      <a href="/creator/withdraw" class="mgr-nav-item">
+        <span class="mgr-nav-icon">💸</span> Request Withdrawal
+      </a>
+      <a href="/creator/withdrawal-history" class="mgr-nav-item">
+        <span class="mgr-nav-icon">📋</span> Withdrawal History
+      </a>
+
+      <a href="{{ url_for('logout') }}" class="mgr-nav-item" style="margin-top:auto;color:var(--text3);">
+        <span class="mgr-nav-icon">🚪</span> Logout
+      </a>
+    </nav>
+  </aside>
+
+  <!-- Main -->
+  <main class="mgr-main">
+    <h1 style="font-family:var(--font-head);font-size:1.5rem;color:var(--text);margin-bottom:.25rem;">
+      Welcome back 👋
+    </h1>
+    <p style="color:var(--text3);font-size:.88rem;margin-bottom:1.5rem;">
+      Managing <strong style="color:var(--mgr)">{{ profile.name }}</strong>
+      {% if profile.country_code %} · {{ COUNTRY_FLAGS.get(profile.country_code,'') }} {{ COUNTRY_NAMES.get(profile.country_code,'') }}{% endif %}
+    </p>
+
+    <!-- VaultX Wallet Banner -->
+    <div style="background:linear-gradient(135deg,#1a1a2e,#2a1a3e);border:2px solid #C9A84C;border-radius:14px;padding:1.25rem;margin-bottom:1.5rem;">
+      <div style="font-weight:700;color:#C9A84C;letter-spacing:.08em;font-size:.8rem;margin-bottom:.75rem;">💎 VAULTX WALLET &nbsp;·&nbsp; <span style="color:#a78bfa;">{{ split_label }} — Your share: {{ creator_pct }}%</span></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:.85rem">
+        <div style="text-align:center;background:#1a1a30;border-radius:10px;padding:.75rem">
+          <div style="font-size:1.3rem;font-weight:800;color:#f59e0b">${{"%.2f"|format(vx_pending|default(0))}}</div>
+          <div style="font-size:.72rem;color:#8888aa;margin-top:.2rem;text-transform:uppercase">Pending</div>
+        </div>
+        <div style="text-align:center;background:#1a1a30;border-radius:10px;padding:.75rem">
+          <div style="font-size:1.3rem;font-weight:800;color:#22c55e">${{"%.2f"|format(vx_available|default(0))}}</div>
+          <div style="font-size:.72rem;color:#8888aa;margin-top:.2rem;text-transform:uppercase">Available</div>
+        </div>
+        <div style="text-align:center;background:#1a1a30;border-radius:10px;padding:.75rem">
+          <div style="font-size:1.3rem;font-weight:800;color:#C9A84C">${{"%.2f"|format(vx_lifetime|default(0))}}</div>
+          <div style="font-size:.72rem;color:#8888aa;margin-top:.2rem;text-transform:uppercase">Lifetime</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+        <a href="/creator/home" style="background:#C9A84C;color:#1a1a2e;padding:.4rem .9rem;border-radius:8px;font-size:.82rem;font-weight:700;text-decoration:none;">🏠 VX Dashboard</a>
+        <a href="/creator/withdraw" style="background:#C9184A;color:#fff;padding:.4rem .9rem;border-radius:8px;font-size:.82rem;font-weight:700;text-decoration:none;">💸 Withdraw</a>
+        <a href="{{ url_for('creator_dm_inbox') }}" style="background:transparent;color:#ff6b97;border:1px solid #C9184A;padding:.4rem .9rem;border-radius:8px;font-size:.82rem;font-weight:700;text-decoration:none;">💬 DM Inbox</a>
+        <a href="/creator/withdrawal-history" style="background:transparent;color:#8888aa;border:1px solid #2e2e52;padding:.4rem .9rem;border-radius:8px;font-size:.82rem;text-decoration:none;">📋 History</a>
+      </div>
+    </div>
+
+    <!-- Graduation Progress (manager trial only) -->
+    {% if profile and profile.account_type in ('manager_trial','junior_creator') %}
+    <div style="background:linear-gradient(135deg,#0f2027,#203a43);border:1px solid #C9A84C44;border-radius:12px;padding:1.1rem;margin-bottom:1.25rem;">
+      <div style="font-size:.8rem;color:#C9A84C;font-weight:700;margin-bottom:.6rem;">🎯 GRADUATION PROGRESS — Earn <strong>{{ split_label }}</strong> ({{ creator_pct }}%)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+        <div>
+          <div style="font-size:.72rem;color:#8888aa;margin-bottom:.3rem;">Photos Sold</div>
+          <div style="background:#1a1a2e;border-radius:6px;height:8px;overflow:hidden;">
+            <div style="width:{{ [((sold_photos|default(0)) / (GRAD_MIN_PHOTOS|default(4)) * 100), 100]|min }}%;background:#C9A84C;height:100%;border-radius:6px;transition:width .5s"></div>
+          </div>
+          <div style="font-size:.78rem;color:#e0e0e0;margin-top:.25rem;">{{ sold_photos|default(0) }} / {{ GRAD_MIN_PHOTOS|default(4) }}</div>
+        </div>
+        <div>
+          <div style="font-size:.72rem;color:#8888aa;margin-bottom:.3rem;">Videos Sold</div>
+          <div style="background:#1a1a2e;border-radius:6px;height:8px;overflow:hidden;">
+            <div style="width:{{ [((sold_videos|default(0)) / (GRAD_MIN_VIDEOS|default(4)) * 100), 100]|min }}%;background:#a78bfa;height:100%;border-radius:6px;transition:width .5s"></div>
+          </div>
+          <div style="font-size:.78rem;color:#e0e0e0;margin-top:.25rem;">{{ sold_videos|default(0) }} / {{ GRAD_MIN_VIDEOS|default(4) }}</div>
+        </div>
+      </div>
+      <p style="font-size:.72rem;color:#6b7280;margin-top:.6rem;margin-bottom:0;">After selling {{ GRAD_MIN_PHOTOS|default(4) }} photos + {{ GRAD_MIN_VIDEOS|default(4) }} videos over 7 days, your account automatically becomes a <strong style="color:#22c55e;">Sole Creator</strong> account earning <strong>70%</strong>.</p>
+    </div>
+    {% elif profile and profile.account_type == 'sole_creator' %}
+    <div style="background:linear-gradient(135deg,#052e16,#14532d);border:1px solid #22c55e44;border-radius:12px;padding:.85rem;margin-bottom:1.25rem;">
+      <div style="font-size:.8rem;color:#22c55e;font-weight:700;">🌟 SOLE CREATOR — You earn {{ creator_pct }}% on every sale</div>
+    </div>
+    {% endif %}
+
+
+    <div class="mgr-stats">
+      <div class="mgr-stat-card">
+        <div class="mgr-stat-icon">📷</div>
+        <div class="mgr-stat-label">Photos</div>
+        <div class="mgr-stat-value">{{ photos|length }}</div>
+      </div>
+      <div class="mgr-stat-card">
+        <div class="mgr-stat-icon">🎬</div>
+        <div class="mgr-stat-label">Videos</div>
+        <div class="mgr-stat-value">{{ videos|length }}</div>
+      </div>
+      <div class="mgr-stat-card">
+        <div class="mgr-stat-icon">👁</div>
+        <div class="mgr-stat-label">Total Views</div>
+        <div class="mgr-stat-value">{{ total_views }}</div>
+      </div>
+      <div class="mgr-stat-card">
+        <div class="mgr-stat-icon">❤️</div>
+        <div class="mgr-stat-label">Total Likes</div>
+        <div class="mgr-stat-value">{{ total_likes }}</div>
+      </div>
+    </div>
+
+    <!-- Recent Videos -->
+    <div class="mgr-section">
+      <div class="mgr-section-head">
+        <span>🎬 Recent Videos</span>
+        <a href="{{ url_for('creator_dashboard_videos') }}" class="btn-mgr-ghost">View All</a>
+      </div>
+      <div class="mgr-section-body">
+        {% if videos %}
+          <div class="mgr-media-grid">
+            {% for v in videos[:8] %}
+            <div class="mgr-media-card">
+              {% if v.thumbnail_filename %}
+                <img src="{{ url_for('serve_video_thumb', video_id=v.id) }}"
+                     class="mgr-media-thumb" alt="{{ v.title }}">
+              {% else %}
+                <div class="mgr-media-thumb">🎬</div>
+              {% endif %}
+              <div class="mgr-media-info">
+                <div class="mgr-media-title">{{ v.title }}</div>
+                <div class="mgr-media-meta">{{ v.view_count }} views · {{ v.tier }}</div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="mgr-empty">
+            <div class="mgr-empty-icon">🎬</div>
+            <p>No videos yet.</p>
+            <a href="{{ upload_url('creator_upload_video', profile.id) }}" class="btn-mgr" style="margin-top:.75rem;">Upload First Video</a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Recent Posts -->
+    <div class="mgr-section">
+      <div class="mgr-section-head">
+        <span>📝 Recent Posts</span>
+      </div>
+      <div class="mgr-section-body">
+        {% if posts %}
+          <div style="display:flex;flex-direction:column;gap:.75rem;">
+            {% for post in posts[:6] %}
+            <div style="display:flex;gap:.75rem;align-items:center;background:var(--bg2);
+                        border:1px solid var(--border);border-radius:10px;padding:.75rem;
+                        {% if post.is_pinned %}border-color:#C9A84C;{% endif %}">
+              {% if post.media_filename %}
+                <img src="{{ url_for('serve_post_media', filename=post.media_filename) }}"
+                     style="width:52px;height:44px;border-radius:7px;object-fit:cover;flex-shrink:0;">
+              {% else %}
+                <div style="width:52px;height:44px;border-radius:7px;background:var(--bg3);
+                            display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;">
+                  {{ '🎬' if post.post_type=='video' else '📷' }}
+                </div>
+              {% endif %}
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:.88rem;color:var(--text);font-weight:500;
+                            white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                  {% if post.is_pinned %}<span style="color:#C9A84C;font-size:.72rem;margin-right:.35rem;">📌 PINNED</span>{% endif %}
+                  {{ post.title or post.caption[:60] or '(untitled)' }}
+                </div>
+                <div style="font-size:.7rem;color:var(--text3);margin-top:.15rem;">
+                  {{ post.view_count }} views · {{ post.created_at.strftime('%b %d, %Y') }}
+                </div>
+              </div>
+              <!-- Pin / Unpin toggle -->
+              <button onclick="togglePinPost({{ post.id }}, this)"
+                style="flex-shrink:0;background:{% if post.is_pinned %}rgba(201,168,76,.2){% else %}var(--surface2){% endif %};
+                       color:{% if post.is_pinned %}#C9A84C{% else %}var(--text3){% endif %};
+                       border:1px solid {% if post.is_pinned %}#C9A84C{% else %}var(--border){% endif %};
+                       border-radius:7px;padding:.3rem .55rem;font-size:.78rem;cursor:pointer;transition:all .2s;"
+                title="{{ 'Unpin' if post.is_pinned else 'Pin to top' }}">
+                📌
+              </button>
+            </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="mgr-empty">
+            <div class="mgr-empty-icon">📝</div>
+            <p>No posts yet for this creator.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </main>
+</div>
+{% endif %}
+{% endblock %}

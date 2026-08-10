@@ -1,0 +1,219 @@
+{% extends 'vx_base.html' %}
+{% block title %}Edit Profile{% endblock %}
+{% block navbar %}
+<div class="navbar">
+  <div class="brand">Vault<span>X</span></div>
+  <nav><a href="/creator/home">← Dashboard</a></nav>
+</div>
+{% endblock %}
+{% block content %}
+<div class="container" style="max-width:640px">
+  <div class="page-header"><h1>✏️ Edit My Profile</h1><p>Update your public creator profile.</p></div>
+
+  {% with msgs = get_flashed_messages(with_categories=true) %}
+  {% for cat, msg in msgs %}
+  <div style="padding:.75rem 1rem;margin-bottom:1rem;border-radius:8px;
+    background:{{'rgba(34,197,94,.12)' if cat=='success' else 'rgba(239,68,68,.12)'}};
+    color:{{'#22c55e' if cat=='success' else '#f87171'}};border:1px solid {{'rgba(34,197,94,.25)' if cat=='success' else 'rgba(239,68,68,.25)'}}">
+    {{msg}}
+  </div>
+  {% endfor %}
+  {% endwith %}
+
+  <div class="card">
+    <form method="POST" enctype="multipart/form-data">
+
+      <!-- Avatar upload -->
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem">
+        {% if profile.avatar_filename and not profile.avatar_filename.startswith('http') %}
+          <img src="/static/uploads/profiles/{{profile.avatar_filename}}" id="avatar-preview"
+               style="width:72px;height:72px;border-radius:50%;border:3px solid var(--rose);object-fit:cover"/>
+        {% elif profile.avatar_filename %}
+          <img src="{{profile.avatar_filename}}" id="avatar-preview"
+               style="width:72px;height:72px;border-radius:50%;border:3px solid var(--rose);object-fit:cover"/>
+        {% else %}
+          <div id="avatar-preview" style="width:72px;height:72px;border-radius:50%;border:3px solid var(--rose);
+               background:#1e1e38;display:flex;align-items:center;justify-content:center;font-size:1.8rem">👤</div>
+        {% endif %}
+        <div style="flex:1">
+          <div class="form-group" style="margin:0">
+            <label>Avatar Photo</label>
+            <div style="border:2px dashed rgba(201,24,74,.4);border-radius:10px;padding:.75rem;text-align:center;cursor:pointer;transition:border-color .2s"
+                 onclick="document.getElementById('avatar-file-input').click()" id="avatar-drop-area">
+              <div style="font-size:1.2rem;margin-bottom:.25rem">📷</div>
+              <div style="font-size:.82rem;color:var(--muted)" id="avatar-label">Click to upload avatar (JPG/PNG/WEBP)</div>
+            </div>
+            <input type="file" name="avatar_file" id="avatar-file-input" accept="image/*" style="display:none"
+                   onchange="previewAvatar(this)"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cover photo upload -->
+      <div class="form-group">
+        <label>Cover Photo</label>
+        {% if profile.cover_filename %}
+        <div style="height:80px;border-radius:10px;overflow:hidden;margin-bottom:.5rem;border:1px solid var(--border)">
+          <img src="{{'/' + 'static/uploads/profiles/' + profile.cover_filename if not profile.cover_filename.startswith('http') else profile.cover_filename}}"
+               style="width:100%;height:100%;object-fit:cover" id="cover-preview"/>
+        </div>
+        {% else %}
+        <div id="cover-preview" style="height:80px;border-radius:10px;background:#1e1e38;margin-bottom:.5rem;
+             display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.85rem;border:1px solid var(--border)">
+          No cover yet
+        </div>
+        {% endif %}
+        <div style="border:2px dashed rgba(201,24,74,.4);border-radius:10px;padding:.65rem;text-align:center;cursor:pointer"
+             onclick="document.getElementById('cover-file-input').click()">
+          <span style="font-size:.82rem;color:var(--muted)" id="cover-label">📸 Upload new cover (JPG/PNG, 16:9 recommended)</span>
+        </div>
+        <input type="file" name="cover_file" id="cover-file-input" accept="image/*" style="display:none"
+               onchange="previewCover(this)"/>
+      </div>
+
+      <!-- Name / Username -->
+      <div class="form-row">
+        <div class="form-group"><label>Display Name</label><input type="text" name="name" value="{{profile.name}}" required/></div>
+        <div class="form-group"><label>Username</label><input type="text" name="username" value="{{profile.username}}" required/></div>
+      </div>
+
+      <!-- Tagline -->
+      <div class="form-group">
+        <label>Tagline <span style="color:var(--muted);font-size:.8rem">(short line shown on your card)</span></label>
+        <input type="text" name="tagline" value="{{profile.tagline or ''}}" placeholder="e.g. A dramatic queen…"/>
+      </div>
+
+      <!-- Bio -->
+      <div class="form-group"><label>Bio</label><textarea name="bio" rows="4">{{profile.bio or ''}}</textarea></div>
+
+      <!-- Country / Category -->
+      <div class="form-row">
+        <div class="form-group">
+          <label>Country</label>
+          <select name="country_code">
+            <option value="">— Select —</option>
+            {% for code, name in COUNTRY_NAMES.items() %}
+            <option value="{{code}}" {{'selected' if profile.country_code==code}}>
+              {{COUNTRY_FLAGS.get(code,'')}} {{name}}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <select name="category">
+            <option value="">— Select —</option>
+            {% for cat in categories %}
+            <option value="{{cat.name}}" {{'selected' if profile.category==cat.name}}>{{cat.name}}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <!-- Blur controls -->
+      <div style="border-top:1px solid #2e2e52;margin:1.5rem 0;padding-top:1.5rem">
+        <div style="font-size:.88rem;font-weight:700;color:var(--rose-light);margin-bottom:.75rem">🌫️ Content Blur Settings</div>
+        <p style="font-size:.8rem;color:var(--muted);margin-bottom:1rem">Control how strongly previews are blurred for non-subscribers. 0 = no blur, 20 = heavy blur.</p>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Photo Blur <span id="photo-blur-val" style="color:var(--rose-light);font-weight:700">{{blur.photo_blur}}px</span></label>
+            <input type="range" name="photo_blur" min="0" max="20" value="{{blur.photo_blur}}"
+                   oninput="document.getElementById('photo-blur-val').textContent=this.value+'px'"
+                   style="width:100%;accent-color:var(--rose)"/>
+          </div>
+          <div class="form-group">
+            <label>Video Blur <span id="video-blur-val" style="color:var(--rose-light);font-weight:700">{{blur.video_blur}}px</span></label>
+            <input type="range" name="video_blur" min="0" max="20" value="{{blur.video_blur}}"
+                   oninput="document.getElementById('video-blur-val').textContent=this.value+'px'"
+                   style="width:100%;accent-color:var(--rose)"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- Social links -->
+      <div style="border-top:1px solid #2e2e52;margin:1rem 0;padding-top:1.5rem">
+        <div style="font-size:.88rem;font-weight:700;color:var(--rose-light);margin-bottom:.75rem">🔗 Social Links</div>
+        <div id="social-links-wrap">
+          {% for sl in social_links %}
+          <div style="display:flex;gap:.5rem;margin-bottom:.5rem" class="social-row">
+            <input type="text" name="social_platform[]" value="{{sl.platform}}" placeholder="instagram" style="flex:1"/>
+            <input type="url" name="social_url[]" value="{{sl.url}}" placeholder="https://…" style="flex:2"/>
+            <button type="button" onclick="this.closest('.social-row').remove()" style="background:rgba(239,68,68,.15);color:#ef4444;border:none;border-radius:8px;padding:.4rem .65rem;cursor:pointer">✕</button>
+          </div>
+          {% endfor %}
+        </div>
+        <button type="button" onclick="addSocial()" style="background:none;color:var(--rose-light);border:1px dashed rgba(201,24,74,.4);border-radius:8px;padding:.45rem 1rem;font-size:.82rem;cursor:pointer;margin-top:.25rem">+ Add Social Link</button>
+      </div>
+
+      <!-- Account settings -->
+      <div style="border-top:1px solid #2e2e52;margin:1.5rem 0;padding-top:1.5rem">
+        <div style="font-size:.88rem;font-weight:700;color:var(--rose-light);margin-bottom:.75rem">🔐 Account Settings</div>
+        <div class="form-group"><label>Login Email</label><input type="email" name="email" value="{{user.email}}"/></div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>New Password <span style="color:var(--muted)">(leave blank to keep)</span></label>
+            <input type="password" name="new_password" placeholder="Min 6 characters"/>
+          </div>
+          <div class="form-group"></div>
+        </div>
+      </div>
+
+      <button class="btn btn-rose" type="submit" style="width:100%">💾 Save Changes</button>
+    </form>
+  </div>
+</div>
+
+<script>
+function previewAvatar(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const prev = document.getElementById('avatar-preview');
+      if (prev.tagName === 'IMG') {
+        prev.src = e.target.result;
+      } else {
+        // Replace div with img
+        const img = document.createElement('img');
+        img.id = 'avatar-preview';
+        img.src = e.target.result;
+        img.style = 'width:72px;height:72px;border-radius:50%;border:3px solid var(--rose);object-fit:cover';
+        prev.replaceWith(img);
+      }
+    };
+    reader.readAsDataURL(input.files[0]);
+    document.getElementById('avatar-label').textContent = '✅ ' + input.files[0].name;
+  }
+}
+
+function previewCover(input) {
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const prev = document.getElementById('cover-preview');
+      prev.innerHTML = '';
+      prev.style = 'height:80px;border-radius:10px;overflow:hidden;margin-bottom:.5rem;border:1px solid var(--border)';
+      const img = document.createElement('img');
+      img.src = e.target.result;
+      img.style = 'width:100%;height:100%;object-fit:cover';
+      prev.appendChild(img);
+    };
+    reader.readAsDataURL(input.files[0]);
+    document.getElementById('cover-label').textContent = '✅ ' + input.files[0].name;
+  }
+}
+
+function addSocial() {
+  const wrap = document.getElementById('social-links-wrap');
+  const row = document.createElement('div');
+  row.className = 'social-row';
+  row.style = 'display:flex;gap:.5rem;margin-bottom:.5rem';
+  row.innerHTML = `
+    <input type="text" name="social_platform[]" placeholder="instagram" style="flex:1"/>
+    <input type="url" name="social_url[]" placeholder="https://…" style="flex:2"/>
+    <button type="button" onclick="this.closest('.social-row').remove()"
+      style="background:rgba(239,68,68,.15);color:#ef4444;border:none;border-radius:8px;padding:.4rem .65rem;cursor:pointer">✕</button>
+  `;
+  wrap.appendChild(row);
+}
+</script>
+{% endblock %}

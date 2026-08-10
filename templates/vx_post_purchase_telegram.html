@@ -1,0 +1,31 @@
+{% extends 'vx_base.html' %}
+{% block title %}Join Our Community!{% endblock %}
+{% block navbar %}
+<div class="navbar">
+  <div class="brand">Vault<span>X</span></div>
+  <nav>
+    <a href="/my/dashboard">My Dashboard</a>
+    <a href="/">Browse Creators</a>
+    <a href="/logout" style="color:var(--muted)">Logout</a>
+  </nav>
+</div>
+{% endblock %}
+{% block content %}
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#1a1a3e 0%,#0d0d1a 70%)">
+  <div class="card" style="max-width:480px;width:90%;text-align:center">
+    <div style="font-size:2.5rem;margin-bottom:.75rem">🎉</div>
+    <h2 style="color:var(--gold);margin-bottom:.5rem">Purchase Successful!</h2>
+    <p style="color:#ccc;margin-bottom:1.5rem">Join our Telegram community for exclusive content, updates, and more.</p>
+    {% if channels %}
+    {% for ch in channels %}
+    <a href="{{ch.channel_url}}" target="_blank" class="btn btn-rose" style="display:block;margin-bottom:.6rem;font-size:1rem;padding:.75rem">
+      📢 Join {{ch.name}}
+    </a>
+    {% endfor %}
+    {% else %}
+    <div style="color:var(--muted);margin-bottom:1rem">No channels configured yet.</div>
+    {% endif %}
+    <a href="/my/dashboard" class="btn btn-outline" style="margin-top:.5rem">Continue to My Dashboard →</a>
+  </div>
+</div>
+{% endblock %}

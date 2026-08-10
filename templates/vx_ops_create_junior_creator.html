@@ -1,0 +1,115 @@
+{% extends 'vx_base.html' %}
+{% block title %}Create Junior Creator{% endblock %}
+{% block navbar %}
+<div class="navbar">
+  <div class="brand">Vault<span>X</span></div>
+  <nav>
+    <a href="/ops/dashboard">Operations</a>
+    <a href="/ops/applications">Applications</a>
+    <a href="/ops/login" style="color:var(--muted)">Logout</a>
+  </nav>
+</div>
+{% endblock %}
+{% block content %}
+<div class="container" style="max-width:560px;margin:2rem auto">
+
+  <div class="page-header">
+    <h1>✨ Create Junior Creator</h1>
+    <p>Junior Creators log in at <strong>/creator/login</strong> and upload their own content.
+       They auto-promote to full Creator after selling <strong>4 photos</strong> and <strong>4 videos</strong>.</p>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+    <div style="padding:.75rem 1rem;border-radius:10px;margin-bottom:1rem;
+                background:{{'rgba(34,197,94,.12)' if cat=='success' else 'rgba(239,68,68,.12)'}};
+                color:{{'#22c55e' if cat=='success' else '#ef4444'}};
+                border:1px solid {{'rgba(34,197,94,.3)' if cat=='success' else 'rgba(239,68,68,.3)'}}">
+      {{msg}}
+    </div>
+    {% endfor %}
+  {% endwith %}
+
+  <div class="card">
+    <form method="POST" action="/ops/create-junior-creator">
+
+      <div style="display:flex;flex-direction:column;gap:1.1rem">
+
+        <div>
+          <label style="display:block;font-size:.8rem;color:var(--muted);margin-bottom:.35rem">Full Name *</label>
+          <input name="name" required placeholder="Display name"
+                 style="width:100%;background:var(--card);border:1px solid var(--border,#333);border-radius:10px;
+                        color:#e8e8f0;padding:.65rem .9rem;font-size:.92rem"/>
+        </div>
+
+        <div>
+          <label style="display:block;font-size:.8rem;color:var(--muted);margin-bottom:.35rem">Email Address *</label>
+          <input name="email" type="email" required placeholder="creator@email.com"
+                 style="width:100%;background:var(--card);border:1px solid var(--border,#333);border-radius:10px;
+                        color:#e8e8f0;padding:.65rem .9rem;font-size:.92rem"/>
+        </div>
+
+        <div>
+          <label style="display:block;font-size:.8rem;color:var(--muted);margin-bottom:.35rem">Username (optional)</label>
+          <input name="username" placeholder="creator_username"
+                 style="width:100%;background:var(--card);border:1px solid var(--border,#333);border-radius:10px;
+                        color:#e8e8f0;padding:.65rem .9rem;font-size:.92rem"/>
+        </div>
+
+        <div>
+          <label style="display:block;font-size:.8rem;color:var(--muted);margin-bottom:.35rem">Temporary Password *</label>
+          <input name="password" type="password" required minlength="6" placeholder="Min. 6 characters"
+                 style="width:100%;background:var(--card);border:1px solid var(--border,#333);border-radius:10px;
+                        color:#e8e8f0;padding:.65rem .9rem;font-size:.92rem"/>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:.6rem">
+          <input type="checkbox" name="create_new_profile" id="cnp" value="on" checked
+                 style="width:16px;height:16px;accent-color:var(--rose)"/>
+          <label for="cnp" style="font-size:.87rem;color:var(--muted)">Create a new profile for this creator</label>
+        </div>
+
+        {% if available_profiles %}
+        <div id="existing-profile-wrap" style="display:none">
+          <label style="display:block;font-size:.8rem;color:var(--muted);margin-bottom:.35rem">Assign Existing Profile</label>
+          <select name="profile_id"
+                  style="width:100%;background:var(--card);border:1px solid var(--border,#333);border-radius:10px;
+                         color:#e8e8f0;padding:.65rem .9rem;font-size:.92rem">
+            <option value="">— Select profile —</option>
+            {% for p in available_profiles %}
+            <option value="{{p.id}}">{{p.name}} (@{{p.username}})</option>
+            {% endfor %}
+          </select>
+        </div>
+        <script>
+          document.getElementById('cnp').addEventListener('change', function(){
+            document.getElementById('existing-profile-wrap').style.display = this.checked ? 'none' : 'block';
+          });
+        </script>
+        {% endif %}
+
+        <div style="background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.2);
+                    border-radius:10px;padding:.8rem 1rem;font-size:.82rem;color:#a78bfa">
+          <strong>ℹ️ How it works:</strong><br>
+          The Junior Creator receives login credentials for <code>/creator/login</code>.
+          They upload photos and videos immediately. Once they hit <strong>4 photo sales + 4 video sales</strong>,
+          the system auto-promotes them to full Creator — no action needed from you.
+        </div>
+
+        <button type="submit"
+                style="background:linear-gradient(135deg,var(--rose),#a4133c);color:#fff;
+                       border:none;border-radius:10px;padding:.75rem;font-size:.95rem;
+                       font-weight:700;cursor:pointer;margin-top:.5rem">
+          ✨ Create Junior Creator Account
+        </button>
+
+      </div>
+    </form>
+  </div>
+
+  <div style="text-align:center;margin-top:1rem">
+    <a href="/ops/dashboard" style="color:var(--muted);font-size:.85rem">← Back to Dashboard</a>
+  </div>
+
+</div>
+{% endblock %}

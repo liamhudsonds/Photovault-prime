@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Create Account — PhotoVault{% endblock %}
+{% block content %}
+<div class="auth-wrap fade-up">
+  <div class="auth-card">
+    <h1 class="auth-title">Create Account</h1>
+    <p class="auth-sub">Optional — you can also <a href="{{ url_for('gallery') }}">browse as a guest</a></p>
+
+    {% if error %}
+    <div class="error-msg">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST">
+      <div class="form-group">
+        <label>Email address</label>
+        <input type="email" name="email" placeholder="you@example.com" required>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" name="password" placeholder="Min 8 characters" required minlength="8">
+      </div>
+      <button type="submit" class="btn btn-primary btn-lg btn-full">Create Account</button>
+    </form>
+    <div class="auth-footer">Already have an account? <a href="{{ url_for('login') }}">Sign in</a></div>
+  </div>
+</div>
+{% endblock %}

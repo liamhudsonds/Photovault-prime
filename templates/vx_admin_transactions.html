@@ -1,0 +1,43 @@
+{% extends 'vx_base.html' %}
+{% block title %}All Transactions{% endblock %}
+{% block navbar %}
+<div class="navbar">
+  <div class="brand">Vault<span>X</span></div>
+  <nav><a href="/admin/vaultx">← Dashboard</a></nav>
+</div>
+{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header"><h1>🔄 All Transactions</h1><p>Every payment that has entered VaultX.</p></div>
+  <div class="card">
+    <table class="table">
+      <thead><tr><th>Reference</th><th>Subscriber</th><th>Creator</th><th>Type</th><th>Amount</th><th>Gateway</th><th>Status</th><th>Date</th></tr></thead>
+      <tbody>
+      {% for tx in txs.items %}
+      <tr>
+        <td style="font-family:monospace;font-size:.78rem">{{tx.reference}}</td>
+        <td style="font-size:.85rem;color:var(--muted)">{{tx.subscriber.email if tx.subscriber else 'Guest'}}</td>
+        <td style="font-weight:600">{{tx.profile.name if tx.profile else '—'}}</td>
+        <td><span class="badge badge-rose">{{tx.content_type}}</span></td>
+        <td style="color:var(--gold);font-weight:700">${{"%.2f"|format(tx.gross_amount)}}</td>
+        <td style="color:var(--muted);font-size:.82rem">{{tx.gateway}}</td>
+        <td>
+          {% if tx.status=='completed' %}<span class="badge badge-green">✓ {{tx.status}}</span>
+          {% elif tx.status=='pending' %}<span class="badge badge-amber">⏳ {{tx.status}}</span>
+          {% else %}<span class="badge badge-red">{{tx.status}}</span>{% endif %}
+        </td>
+        <td style="font-size:.8rem;color:var(--muted)">{{tx.created_at.strftime('%b %d %Y %H:%M')}}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1rem;font-size:.88rem;color:var(--muted)">
+      <span>Page {{txs.page}} of {{txs.pages}} — {{txs.total}} total</span>
+      <div style="display:flex;gap:.4rem">
+        {% if txs.has_prev %}<a href="?page={{txs.prev_num}}" class="btn btn-outline btn-sm">← Prev</a>{% endif %}
+        {% if txs.has_next %}<a href="?page={{txs.next_num}}" class="btn btn-outline btn-sm">Next →</a>{% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

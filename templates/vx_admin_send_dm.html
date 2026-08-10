@@ -1,0 +1,44 @@
+{% extends 'vx_base.html' %}
+{% block title %}Send Admin Notice{% endblock %}
+{% block navbar %}
+<div class="navbar">
+  <div class="brand">Vault<span>X</span></div>
+  <nav><a href="/admin/vaultx">← Dashboard</a></nav>
+</div>
+{% endblock %}
+{% block content %}
+<div class="container" style="max-width:600px">
+  <div class="page-header">
+    <h1>📢 Send Admin Notice</h1>
+    <p>Send a styled platform notice into subscriber DM threads.</p>
+  </div>
+  <div class="card">
+    <div style="background:#1a1a30;border-radius:9px;padding:1rem;margin-bottom:1.2rem;font-size:.88rem">
+      <div style="font-weight:700;color:var(--rose);letter-spacing:.1em;margin-bottom:.4rem">━━━━━━━━━━━━━━━━━<br/>ADMIN NOTICE<br/>━━━━━━━━━━━━━━━━━</div>
+      <div style="border-top:1px solid var(--rose)33;padding-top:.4rem;color:var(--muted)">Preview of how your message will appear in chats.</div>
+    </div>
+    <form method="POST">
+      <div class="form-group">
+        <label>Target</label>
+        <select name="target" onchange="document.getElementById('profile-select').style.display=this.value=='profile'?'block':'none'">
+          <option value="all">📢 All DM Threads (Platform-wide)</option>
+          <option value="profile">🎯 Specific Creator's Threads</option>
+        </select>
+      </div>
+      <div class="form-group" id="profile-select" style="display:none">
+        <label>Select Creator Profile</label>
+        <select name="profile_id">
+          {% for p in profiles %}
+          <option value="{{p.id}}">{{p.name}} (@{{p.username}})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Notice Message</label>
+        <textarea name="body" rows="5" required placeholder="Your platform-wide notice here…"></textarea>
+      </div>
+      <button class="btn btn-rose" type="submit" onclick="return confirm('Send this admin notice?')">📢 Send Notice</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

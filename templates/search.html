@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% block title %}Search{% if q %}: {{ q }}{% endif %} — PhotoVault{% endblock %}
+
+{% block head %}
+<style>
+:root {
+  --gold:#C9A84C;--gold-dim:rgba(201,168,76,0.25);
+  --surface:#111114;--bg2:#0d0d10;--border:rgba(255,255,255,0.07);
+  --text:#f0ede8;--text2:#8a8680;--text3:#4a4744;
+}
+.search-wrap { max-width:1100px; margin:0 auto; padding:2rem 1.5rem; }
+.search-hero { text-align:center; padding:2rem 0 2.5rem; }
+.search-hero h1 { font-size:2rem; color:var(--text); margin-bottom:.5rem; }
+.search-bar-row { display:flex; gap:.75rem; max-width:600px; margin:0 auto; }
+.search-bar-row input {
+  flex:1; background:var(--surface); border:1px solid var(--border);
+  border-radius:100px; color:var(--text); font-size:.95rem;
+  padding:.75rem 1.5rem; outline:none;
+}
+.search-bar-row input:focus { border-color:var(--gold-dim); }
+.search-bar-row button {
+  background:var(--gold); color:#111; border:none; border-radius:100px;
+  padding:.75rem 1.5rem; font-size:.85rem; font-weight:600; cursor:pointer;
+}
+.search-section-title {
+  font-size:1.2rem; color:var(--text); margin:2rem 0 1rem;
+  border-bottom:1px solid var(--border); padding-bottom:.5rem;
+  display:flex; align-items:center; gap:.5rem;
+}
+.search-grid {
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:1.25rem;
+}
+.search-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:14px; overflow:hidden; text-decoration:none;
+  display:block; transition:border-color .2s, transform .2s;
+}
+.search-card:hover { border-color:var(--gold-dim); transform:translateY(-2px); }
+.search-card-img {
+  width:100%; aspect-ratio:4/3; object-fit:cover;
+  background:var(--bg2); display:flex; align-items:center;
+  justify-content:center; font-size:2rem; color:var(--text3);
+}
+.search-card-body { padding:.75rem 1rem; }
+.search-card-title { font-size:.9rem; color:var(--text); margin-bottom:.3rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.search-card-meta { font-size:.72rem; color:var(--text3); font-family:monospace; }
+.tier-pill {
+  display:inline-block; font-size:.65rem; padding:2px 8px;
+  border-radius:100px; background:rgba(201,168,76,0.15);
+  color:var(--gold); font-family:monospace; margin-left:.5rem;
+}
+.creator-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:1rem; }
+.creator-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:14px; padding:1.25rem 1rem; text-align:center;
+  text-decoration:none; display:block; transition:border-color .2s;
+}
+.creator-card:hover { border-color:var(--gold-dim); }
+.creator-avatar {
+  width:64px; height:64px; border-radius:50%; object-fit:cover;
+  background:var(--bg2); margin:0 auto .75rem;
+  border:2px solid var(--gold-dim);
+}
+.creator-name { font-size:.9rem; color:var(--text); }
+.creator-tagline { font-size:.72rem; color:var(--text3); margin-top:.25rem; }
+.no-results { text-align:center; padding:3rem; color:var(--text3); font-family:monospace; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="search-wrap">
+  <div class="search-hero">
+    <h1>🔍 Search PhotoVault</h1>
+    <form method="get" action="{{ url_for('search_page') }}">
+      <div class="search-bar-row">
+        <input type="text" name="q" value="{{ q }}" placeholder="Search creators, photos, videos, categories…" autofocus>
+        <button type="submit">Search</button>
+      </div>
+    </form>
+  </div>
+
+  {% if q %}
+    {% if not photos and not videos and not creators %}
+      <div class="no-results">No results found for "<strong>{{ q }}</strong>"</div>
+    {% endif %}
+
+    {% if creators %}
+    <div class="search-section-title">👤 Creators <span style="font-size:.8rem;color:var(--text3);">({{ creators|length }})</span></div>
+    <div class="creator-grid">
+      {% for c in creators %}
+      <a href="{{ url_for('profile_page', username=c.username) }}" class="creator-card">
+        {% if c.avatar_filename %}
+        <img src="{{ url_for('serve_media', filename='profile/' + c.avatar_filename) }}" class="creator-avatar" alt="{{ c.name }}">
+        {% else %}
+        <div class="creator-avatar" style="line-height:64px;font-size:1.5rem;">👤</div>
+        {% endif %}
+        <div class="creator-name">{{ c.name }}</div>
+        <div class="creator-tagline">{{ c.tagline or c.category }}</div>
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if photos %}
+    <div class="search-section-title">🖼 Photos <span style="font-size:.8rem;color:var(--text3);">({{ photos|length }})</span></div>
+    <div class="search-grid">
+      {% for p in photos %}
+      <a href="{{ url_for('photo_detail', photo_id=p.id) }}" class="search-card">
+        <img src="{{ url_for('serve_preview', photo_id=p.id) }}" class="search-card-img" alt="{{ p.title }}"
+          {% if not p.unlocked %}style="filter:blur(8px) brightness(.6);"{% endif %}>
+        <div class="search-card-body">
+          <div class="search-card-title">{{ p.title }}<span class="tier-pill">{{ p.tier }}</span></div>
+          <div class="search-card-meta">{{ p.view_count }} views · ${{ '%.2f'|format(p.current_price) }}</div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if videos %}
+    <div class="search-section-title">🎬 Videos <span style="font-size:.8rem;color:var(--text3);">({{ videos|length }})</span></div>
+    <div class="search-grid">
+      {% for v in videos %}
+      <a href="{{ url_for('video_detail', video_id=v.id) }}" class="search-card">
+        <div class="search-card-img">
+          {% if v.thumbnail_filename %}
+          <img src="{{ url_for('serve_video_thumb', video_id=v.id) }}" style="width:100%;height:100%;object-fit:cover;" alt="{{ v.title }}">
+          {% else %}
+          ▶
+          {% endif %}
+        </div>
+        <div class="search-card-body">
+          <div class="search-card-title">{{ v.title }}<span class="tier-pill">{{ v.tier }}</span></div>
+          <div class="search-card-meta">{{ v.view_count }} views · ${{ '%.2f'|format(v.unlock_price) }}</div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% else %}
+    <!-- Show trending when no query -->
+    <div class="search-section-title">🔥 Trending Now</div>
+    <div id="trending-results"><div class="no-results" style="padding:1rem;">Loading trending content…</div></div>
+    <script>
+    fetch('/api/trending').then(r=>r.json()).then(data=>{
+      const el=document.getElementById('trending-results');
+      if(!data.length){el.innerHTML='<div class="no-results">Nothing trending yet.</div>';return;}
+      el.innerHTML='<div class="search-grid">'+data.map(p=>`
+        <a href="/photo/${p.id}" class="search-card">
+          <div class="search-card-img">🖼</div>
+          <div class="search-card-body">
+            <div class="search-card-title">${p.title}<span class="tier-pill">${p.tier}</span></div>
+            <div class="search-card-meta">${p.views} views · ${p.likes} likes</div>
+          </div>
+        </a>`).join('')+'</div>';
+    });
+    </script>
+  {% endif %}
+</div>
+{% endblock %}

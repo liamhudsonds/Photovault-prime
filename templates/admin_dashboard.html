@@ -1,0 +1,458 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard — PhotoVault{% endblock %}
+{% block content %}
+<div class="admin-layout">
+
+  <!-- ── Sidebar ─────────────────────────────────────────────────────────────── -->
+  <aside class="admin-sidebar">
+
+  <div class="admin-sidebar-brand">
+    ⬡ PhotoVault<br>
+    <small style="font-family:var(--font-body);font-size:.75rem;color:var(--text3);">
+      Admin Panel
+    </small>
+  </div>
+
+  <nav class="admin-nav">
+
+    <!-- Dashboard -->
+    <a href="{{ url_for('admin_dashboard') }}" class="single-link">
+      📊 Dashboard
+    </a>
+
+    <!-- Content (admin can only moderate, not upload) -->
+    <div class="dropdown">
+      <button class="dropdown-btn">
+        📂 Content Moderation
+        <span>▾</span>
+      </button>
+      <div class="dropdown-content">
+        <a href="{{ url_for('admin_categories') }}">🗂 Categories</a>
+        <a href="{{ url_for('admin_comments') }}">💬 Comments</a>
+        <a href="{{ url_for('admin_trending') }}" style="color:var(--gold)">🔥 Trending & Scores</a>
+      </div>
+    </div>
+
+    <!-- Engagement -->
+    <div class="dropdown">
+
+      <button class="dropdown-btn">
+        💬 Engagement
+        <span>▾</span>
+      </button>
+
+      <div class="dropdown-content">
+
+        <a href="{{ url_for('admin_comments') }}">
+          Comments
+        </a>
+
+        <a href="{{ url_for('admin_analytics') }}">
+          Analytics
+        </a>
+
+        <a href="{{ url_for('admin_trending') }}" style="color:var(--gold)">
+          🔥 Trending & Scores
+        </a>
+
+        <a href="{{ url_for('admin_revenue') }}">
+          Revenue
+        </a>
+
+      </div>
+
+    </div>
+
+    <!-- VaultX Revenue Hub -->
+    <div class="dropdown">
+      <button class="dropdown-btn" style="color:#C9A84C;font-weight:700;">
+        💎 VaultX Hub
+        <span>▾</span>
+      </button>
+      <div class="dropdown-content">
+        <a href="/admin/vaultx" style="color:#C9A84C;">📊 VX Dashboard</a>
+        <a href="/admin/vaultx/withdrawals">💸 Withdrawals</a>
+        <a href="/admin/vaultx/transactions">🔄 Transactions</a>
+        <a href="/admin/vaultx/earnings">📈 Earnings</a>
+        <a href="/admin/vaultx/revenue-split">⚖️ Revenue Split</a>
+        <a href="/admin/vaultx/telegram-channels">📢 Telegram Channels</a>
+        <a href="/admin/vaultx/send-admin-dm">📩 Admin DM Blast</a>
+        <a href="/admin/vaultx/create-operations-manager">🏢 Create Ops Mgr</a>
+      </div>
+    </div>
+
+    <!-- Subscribers -->
+    <div class="dropdown">
+      <button class="dropdown-btn">
+        👥 Subscribers
+        <span>▾</span>
+      </button>
+      <div class="dropdown-content">
+        <a href="/my/dashboard">📋 Subscriber Dashboards</a>
+        <a href="{{ url_for('register') }}">➕ Register User</a>
+      </div>
+    </div>
+
+    <!-- Site -->
+    <div class="dropdown">
+
+      <button class="dropdown-btn">
+        ⚙️ Site
+        <span>▾</span>
+      </button>
+
+      <div class="dropdown-content">
+
+        <a href="{{ url_for('admin_settings') }}">
+          Settings
+        </a>
+
+        <a href="{{ url_for('admin_inbox') }}" style="color:#e8547a;">
+          ✉️ DM Inbox
+        </a>
+
+        <a href="{{ url_for('index') }}" target="_blank">
+          View Site
+        </a>
+
+        <a href="{{ url_for('logout') }}" class="logout-link">
+          Logout
+        </a>
+
+      </div>
+
+    </div>
+
+  </nav>
+
+</aside>
+
+  <!-- ── Main Content ─────────────────────────────────────────────────────────── -->
+  <div class="admin-content">
+    <div class="admin-header">
+      <h1>Dashboard</h1>
+      <p>Overview of your PhotoVault platform</p>
+    </div>
+
+    <!-- ── Stats Grid ──────────────────────────────────────────────────────────── -->
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Revenue</div>
+        <div class="stat-value">${{ '%.2f'|format(total_revenue) }}</div>
+        <div class="stat-sub">All time</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Photos</div>
+        <div class="stat-value">{{ total_photos }}</div>
+        <div class="stat-sub">Active listings</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Videos</div>
+        <div class="stat-value">{{ total_videos or 0 }}</div>
+        <div class="stat-sub">Active videos</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Purchases</div>
+        <div class="stat-value">{{ total_purchases }}</div>
+        <div class="stat-sub">Total unlocks</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Users</div>
+        <div class="stat-value">{{ total_users }}</div>
+        <div class="stat-sub">Registered accounts</div>
+      </div>
+    </div>
+
+    <!-- ── Quick Action Buttons ─────────────────────────────────────────────── -->
+    <div style="display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap;">
+      <a href="{{ url_for('admin_comments') }}" class="btn btn-ghost">💬 Moderate Comments</a>
+      <a href="{{ url_for('admin_categories') }}" class="btn btn-ghost">🗂 Categories</a>
+    </div>
+
+    <!-- ── VaultX Quick Access ───────────────────────────────────────────────── -->
+    <div style="background:linear-gradient(135deg,#1a1a2e,#2a1a3e);border:2px solid #C9A84C;border-radius:14px;padding:1.25rem;margin-bottom:2rem;">
+      <div style="font-weight:700;color:#C9A84C;letter-spacing:.08em;font-size:.85rem;margin-bottom:.85rem;">💎 VAULTX REVENUE HUB</div>
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap;">
+        <a href="/admin/vaultx" class="btn btn-ghost" style="color:#C9A84C;border-color:#C9A84C;font-size:.82rem;">📊 VX Dashboard</a>
+        <a href="/admin/vaultx/withdrawals" class="btn btn-ghost" style="font-size:.82rem;">💸 Withdrawals</a>
+        <a href="/admin/vaultx/transactions" class="btn btn-ghost" style="font-size:.82rem;">🔄 Transactions</a>
+        <a href="/admin/vaultx/earnings" class="btn btn-ghost" style="font-size:.82rem;">📈 Earnings</a>
+        <a href="/admin/vaultx/revenue-split" class="btn btn-ghost" style="font-size:.82rem;">⚖️ Revenue Split</a>
+        <a href="/admin/vaultx/telegram-channels" class="btn btn-ghost" style="font-size:.82rem;">📢 Telegram</a>
+      </div>
+    </div>
+
+
+    <!-- ── Content Tabs ───────────────────────────────────────────────────────── -->
+    <div style="display:flex;gap:.5rem;border-bottom:1px solid var(--border);margin-bottom:1.5rem;">
+      <button class="admin-tab active" onclick="showTab('photos', this)">📷 Photos ({{ total_photos }})</button>
+      <button class="admin-tab" onclick="showTab('videos', this)">🎬 Videos ({{ total_videos or 0 }})</button>
+      <button class="admin-tab" onclick="showTab('users', this)">👤 Users ({{ total_users }})</button>
+      <button class="admin-tab" onclick="showTab('payments', this)">💳 Payments</button>
+    </div>
+
+    <!-- ── PHOTOS TAB ─────────────────────────────────────────────────────────── -->
+    <div id="tab-photos" class="admin-tab-panel">
+      <div class="table-wrap">
+        <div class="table-title" style="display:flex;justify-content:space-between;align-items:center;">
+          <span>All Photos</span>
+
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Preview</th>
+              <th>Title</th>
+              <th>Tier</th>
+              <th>Price</th>
+              <th>Views</th>
+              <th>Likes</th>
+              <th>Comments</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for photo in photos %}
+            <tr>
+              <td>
+                <img src="{{ url_for('serve_preview', photo_id=photo.id) }}"
+                     style="width:52px;height:40px;object-fit:cover;border-radius:6px;filter:blur(4px) brightness(0.7);"
+                     loading="lazy">
+              </td>
+              <td>
+                <a href="{{ url_for('photo_detail', photo_id=photo.id) }}" target="_blank"
+                   style="color:var(--text);font-weight:500;">{{ photo.title }}</a>
+              </td>
+              <td><span class="badge tier-{{ photo.tier }}">{{ photo.tier|title }}</span></td>
+              <td>${{ '%.2f'|format(photo.unlock_price) }}</td>
+              <td>{{ photo.view_count }}</td>
+              <td class="photo-like-count" data-id="{{ photo.id }}">–</td>
+              <td class="photo-comment-count" data-id="{{ photo.id }}">–</td>
+              <td>
+                {% if photo.is_active %}
+                <span class="badge badge-completed">Active</span>
+                {% else %}
+                <span class="badge badge-failed">Hidden</span>
+                {% endif %}
+              </td>
+              <td>
+                <div class="td-actions">
+                  <a href="{{ url_for('admin_edit_photo', photo_id=photo.id) }}" class="btn btn-ghost" style="padding:.3rem .7rem;font-size:.78rem;">Edit</a>
+                  <form method="POST" action="{{ url_for('admin_delete_photo', photo_id=photo.id) }}" style="display:inline;">
+                    <button type="submit" class="btn btn-danger" style="padding:.3rem .7rem;font-size:.78rem;"
+                            onclick="return confirm('Hide this photo?')">Hide</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="9" style="color:var(--text3);text-align:center;padding:2rem;">No photos uploaded yet — creators upload via their Creator Dashboard</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── VIDEOS TAB ─────────────────────────────────────────────────────────── -->
+    <div id="tab-videos" class="admin-tab-panel" style="display:none;">
+      <div class="table-wrap">
+        <div class="table-title" style="display:flex;justify-content:space-between;align-items:center;">
+          <span>All Videos</span>
+          <span style="font-size:.78rem;color:var(--text3);">Upload via Creator Dashboard</span>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Thumb</th>
+              <th>Title</th>
+              <th>Tier</th>
+              <th>Price</th>
+              <th>Views</th>
+              <th>Likes</th>
+              <th>Comments</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if videos %}
+            {% for video in videos %}
+            <tr>
+              <td>
+                {% if video.thumbnail_filename %}
+                <img src="{{ url_for('serve_video_thumb', video_id=video.id) }}"
+                     style="width:60px;height:38px;object-fit:cover;border-radius:6px;filter:blur(4px) brightness(0.6);"
+                     loading="lazy">
+                {% else %}
+                <div style="width:60px;height:38px;background:var(--bg3);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">🎬</div>
+                {% endif %}
+              </td>
+              <td>
+                <a href="{{ url_for('video_detail', video_id=video.id) }}" target="_blank"
+                   style="color:var(--text);font-weight:500;">{{ video.title }}</a>
+              </td>
+              <td><span class="badge tier-{{ video.tier }}">{{ video.tier|title }}</span></td>
+              <td>${{ '%.2f'|format(video.unlock_price) }}</td>
+              <td>{{ video.view_count }}</td>
+              <td class="video-like-count" data-vid="{{ video.id }}">–</td>
+              <td class="video-comment-count" data-vid="{{ video.id }}">–</td>
+              <td>
+                {% if video.is_active %}
+                <span class="badge badge-completed">Active</span>
+                {% else %}
+                <span class="badge badge-failed">Hidden</span>
+                {% endif %}
+              </td>
+              <td>
+                <form method="POST" action="{{ url_for('admin_delete_video', video_id=video.id) }}" style="display:inline;">
+                  <button type="submit" class="btn btn-danger" style="padding:.3rem .7rem;font-size:.78rem;"
+                          onclick="return confirm('Delete this video permanently?')">Delete</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+            {% else %}
+            <tr><td colspan="9" style="color:var(--text3);text-align:center;padding:2rem;">No videos uploaded yet — creators upload via their Creator Dashboard</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── USERS TAB ──────────────────────────────────────────────────────────── -->
+    <div id="tab-users" class="admin-tab-panel" style="display:none;">
+      <div class="table-wrap">
+        <div class="table-title">Registered Users</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Joined</th>
+              <th>Purchases</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for user in users %}
+            <tr>
+              <td>{{ user.email }}</td>
+              <td>{{ user.created_at.strftime('%b %d, %Y') }}</td>
+              <td>{{ user.purchases|length }}</td>
+              <td>
+                {% if user.is_blocked %}
+                <span class="badge badge-failed">Blocked</span>
+                {% else %}
+                <span class="badge badge-completed">Active</span>
+                {% endif %}
+              </td>
+              <td>
+                <form method="POST" action="{{ url_for('admin_block_user', user_id=user.id) }}" style="display:inline;">
+                  <button type="submit" class="btn btn-ghost" style="padding:.3rem .7rem;font-size:.78rem;">
+                    {{ 'Unblock' if user.is_blocked else 'Block' }}
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" style="color:var(--text3);text-align:center;padding:2rem;">No users registered yet</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── PAYMENTS TAB ───────────────────────────────────────────────────────── -->
+    <div id="tab-payments" class="admin-tab-panel" style="display:none;">
+      <div class="table-wrap">
+        <div class="table-title">Recent Payments</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Content ID</th>
+              <th>Gateway</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Session</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for pay in recent_payments %}
+            <tr>
+              <td>{{ pay.created_at.strftime('%b %d, %Y %H:%M') }}</td>
+              <td>#{{ pay.photo_id }}</td>
+              <td>{{ pay.gateway|title }}</td>
+              <td>${{ '%.2f'|format(pay.amount) }}</td>
+              <td><span class="badge badge-{{ pay.status }}">{{ pay.status }}</span></td>
+              <td style="color:var(--text3);font-size:.78rem;">{{ pay.session_token[:12] if pay.session_token else '—' }}…</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" style="color:var(--text3);text-align:center;padding:2rem;">No payments yet</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- end admin-content -->
+</div><!-- end admin-layout -->
+{% endblock %}
+
+{% block scripts %}
+<style>
+.admin-tab {
+  background: none; border: none; border-bottom: 2px solid transparent;
+  color: var(--text3); font-family: var(--font-body); font-size: .85rem;
+  padding: .6rem 1.2rem; cursor: pointer; transition: all .2s;
+  letter-spacing: .02em;
+}
+.admin-tab:hover { color: var(--text); }
+.admin-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+</style>
+<script>
+function showTab(name, btn) {
+  document.querySelectorAll('.admin-tab-panel').forEach(p => p.style.display = 'none');
+  document.querySelectorAll('.admin-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).style.display = 'block';
+  btn.classList.add('active');
+}
+
+// Load engagement stats for all photos in table
+document.querySelectorAll('.photo-like-count[data-id]').forEach(el => {
+  fetch('/api/stats/photo/' + el.dataset.id)
+    .then(r => r.json())
+    .then(data => {
+      el.textContent = data.likes;
+      const cc = document.querySelector('.photo-comment-count[data-id="' + el.dataset.id + '"]');
+      if (cc) cc.textContent = data.comments;
+    }).catch(() => { el.textContent = '0'; });
+});
+
+// Load engagement stats for all videos in table
+document.querySelectorAll('.video-like-count[data-vid]').forEach(el => {
+  fetch('/api/stats/video/' + el.dataset.vid)
+    .then(r => r.json())
+    .then(data => {
+      el.textContent = data.likes;
+      const cc = document.querySelector('.video-comment-count[data-vid="' + el.dataset.vid + '"]');
+      if (cc) cc.textContent = data.comments;
+    }).catch(() => { el.textContent = '0'; });
+});
+
+document.querySelectorAll('.dropdown-btn').forEach(btn => {
+
+  btn.addEventListener('click', () => {
+
+    const dropdown = btn.parentElement;
+
+    dropdown.classList.toggle('active');
+
+  });
+
+});
+</script>
+{% endblock %}
+
+

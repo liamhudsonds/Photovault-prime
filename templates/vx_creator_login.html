@@ -1,0 +1,65 @@
+{% extends 'vx_base.html' %}
+{% block title %}Creator Login — VaultX{% endblock %}
+{% block content %}
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#1a1a3e 0%,#0d0d1a 70%);padding:1rem;">
+  <div style="width:100%;max-width:420px;">
+
+    <!-- Logo -->
+    <div style="text-align:center;margin-bottom:1.75rem;">
+      <div style="font-size:2.5rem;font-weight:900;color:#C9184A;">Vault<span style="color:#C9A84C;">X</span></div>
+      <div style="color:#888;margin-top:.25rem;font-size:.9rem;">Creator Portal</div>
+    </div>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+        <div style="background:{% if cat=='error' %}rgba(239,68,68,.12){% else %}rgba(34,197,94,.12){% endif %};
+                    border:1px solid {% if cat=='error' %}rgba(239,68,68,.3){% else %}rgba(34,197,94,.3){% endif %};
+                    color:{% if cat=='error' %}#ef4444{% else %}#22c55e{% endif %};
+                    padding:.75rem 1rem;border-radius:10px;margin-bottom:1rem;font-size:.88rem;">
+          {{ msg }}
+        </div>
+      {% endfor %}
+    {% endwith %}
+
+    <!-- Which portal notice -->
+    <div style="background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.18);border-radius:12px;padding:1rem;margin-bottom:1.25rem;">
+      <div style="font-size:.75rem;font-weight:700;color:#C9A84C;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem;">ℹ️ Which login is this?</div>
+      <div style="font-size:.82rem;color:#aaa;line-height:1.5;">
+        This is the <strong style="color:#fff;">VaultX Creator Portal</strong> — for verified creators with a dedicated creator account.<br><br>
+        <strong style="color:#a78bfa;">Ops Manager?</strong> Log in at <a href="/ops/login" style="color:#a78bfa;font-weight:700;">/ops/login</a> instead.
+      </div>
+    </div>
+
+    <!-- Login card -->
+    <div style="background:#12121e;border:1px solid #2a2a4a;border-radius:16px;padding:2rem;">
+      <h2 style="color:#fff;font-size:1.1rem;margin:0 0 1.5rem;font-weight:700;">Sign in to your Creator account</h2>
+      <form method="POST">
+        <div style="margin-bottom:1rem;">
+          <label style="display:block;font-size:.78rem;color:#888;margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.05em;">Email</label>
+          <input type="email" name="email" required placeholder="your@email.com"
+                 style="width:100%;background:#1a1a2e;border:1px solid #2a2a4a;border-radius:9px;padding:.65rem .9rem;color:#fff;font-size:.9rem;box-sizing:border-box;outline:none;"
+                 onfocus="this.style.borderColor='#C9A84C'" onblur="this.style.borderColor='#2a2a4a'">
+        </div>
+        <div style="margin-bottom:1.5rem;">
+          <label style="display:block;font-size:.78rem;color:#888;margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.05em;">Password</label>
+          <input type="password" name="password" required placeholder="••••••••"
+                 style="width:100%;background:#1a1a2e;border:1px solid #2a2a4a;border-radius:9px;padding:.65rem .9rem;color:#fff;font-size:.9rem;box-sizing:border-box;outline:none;"
+                 onfocus="this.style.borderColor='#C9A84C'" onblur="this.style.borderColor='#2a2a4a'">
+        </div>
+        <button type="submit"
+                style="width:100%;background:linear-gradient(135deg,#C9184A,#a01040);color:#fff;border:none;border-radius:10px;padding:.8rem;font-size:.95rem;font-weight:800;cursor:pointer;transition:opacity .15s;"
+                onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
+          Login to Creator Portal
+        </button>
+      </form>
+
+      <div style="margin-top:1.25rem;padding-top:1.25rem;border-top:1px solid #2a2a4a;display:flex;flex-direction:column;gap:.5rem;font-size:.82rem;text-align:center;">
+        
+        <div style="color:#666;">Subscriber? → <a href="/login" style="color:#888;">Subscriber Login</a></div>
+        <div style="color:#666;">Want to become a creator? → <a href="/apply-to-be-creator" style="color:#C9A84C;font-weight:700;">Apply here</a></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

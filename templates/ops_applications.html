@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% block title %}Creator Applications — Admin{% endblock %}
+
+{% block head %}
+<style>
+.apps-wrap { max-width: 1100px; margin: 2rem auto; padding: 0 1rem 3rem; }
+.apps-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+.apps-header h1 { font-family: var(--font-head); font-size: 1.5rem; color: var(--text); }
+.apps-grid { display: flex; flex-direction: column; gap: .75rem; }
+.app-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.25rem; }
+.app-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
+.app-name { font-family: var(--font-head); font-size: 1rem; color: var(--text); }
+.app-email { font-size: .78rem; color: var(--text3); margin-top: .15rem; }
+.app-meta { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .5rem; }
+.app-pill { font-size: .7rem; font-weight: 700; padding: .2rem .6rem; border-radius: 7px; }
+.pill-junior { background: rgba(167,139,250,.15); color: #a78bfa; }
+.pill-creator { background: rgba(201,168,76,.15); color: #C9A84C; }
+.pill-pending { background: rgba(251,191,36,.12); color: #f59e0b; }
+.pill-review { background: rgba(99,102,241,.12); color: #818cf8; }
+.pill-approved { background: rgba(34,197,94,.12); color: #22c55e; }
+.pill-rejected { background: rgba(239,68,68,.12); color: #ef4444; }
+
+.app-actions { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+.app-content { font-size: .82rem; color: var(--text2); margin-top: .75rem; line-height: 1.5; }
+.app-stage-bar { display: flex; gap: .25rem; margin-top: .75rem; }
+.stage-dot { flex: 1; height: 4px; border-radius: 4px; background: var(--border); }
+.stage-dot.filled { background: #C9A84C; }
+
+.btn-sm { padding: .3rem .75rem; border-radius: 8px; font-size: .78rem; font-weight: 700; border: none; cursor: pointer; text-decoration: none; display: inline-block; }
+.btn-approve { background: rgba(34,197,94,.15); color: #22c55e; border: 1px solid rgba(34,197,94,.3); }
+.btn-reject { background: rgba(239,68,68,.1); color: #ef4444; border: 1px solid rgba(239,68,68,.25); }
+.btn-review { background: rgba(99,102,241,.1); color: #818cf8; border: 1px solid rgba(99,102,241,.25); }
+
+.update-form { margin-top: .75rem; background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; display: none; }
+.update-form.open { display: block; }
+.update-form select, .update-form input, .update-form textarea {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  color: var(--text); padding: .45rem .75rem; font-size: .82rem; width: 100%; margin-bottom: .5rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="apps-wrap">
+  <div class="apps-header">
+    <h1>📋 Creator Applications</h1>
+    <span style="color:var(--text3);font-size:.85rem;">{{ applications|length }} total</span>
+  </div>
+
+  {% if not applications %}
+    <div style="text-align:center;padding:3rem;color:var(--text3);">No applications yet.</div>
+  {% else %}
+  <div class="apps-grid">
+    {% for a in applications %}
+    <div class="app-card">
+      <div class="app-card-top">
+        <div>
+          <div class="app-name">{{ a.applicant_name }}</div>
+          <div class="app-email">{{ a.applicant_email }}</div>
+          <div class="app-meta">
+            <span class="app-pill {% if a.application_type == 'junior_creator' %}pill-junior{% else %}pill-creator{% endif %}">
+              {{ 'Junior Creator' if a.application_type in ('junior_creator','junior_creator') else 'Verified Creator' }}
+            </span>
+            <span class="app-pill pill-{{ a.status|replace('_','-') if a.status in ['pending','under_review','approved','rejected'] else 'pending' }}">
+              {{ a.status|replace('_',' ')|title }}
+            </span>
+            <span style="font-size:.7rem;color:var(--text3);">Stage {{ a.stage }}/7</span>
+            <span style="font-size:.7rem;color:var(--text3);">{{ a.created_at.strftime('%b %d') }}</span>
+          </div>
+        </div>
+        <div class="app-actions">
+          <button class="btn-sm btn-review" onclick="toggleForm({{ a.id }})">✏️ Update</button>
+          <a href="{{ url_for('application_status', app_id=a.id) }}" class="btn-sm" style="background:var(--bg2);color:var(--text2);border:1px solid var(--border);" target="_blank">👁 View</a>
+        </div>
+      </div>
+
+      {% if a.content_type %}
+      <div class="app-content"><strong>Content:</strong> {{ a.content_type }}</div>
+      {% endif %}
+      {% if a.motivation %}
+      <div class="app-content"><strong>Motivation:</strong> {{ a.motivation[:200] }}{% if a.motivation|length > 200 %}…{% endif %}</div>
+      {% endif %}
+      {% if a.legal_name %}
+      <div class="app-content"><strong>Legal Name:</strong> {{ a.legal_name }}</div>
+      {% endif %}
+      {% if a.id_document %}
+      <div class="app-content"><strong>ID Document:</strong> <a href="/static/uploads/profiles/{{ a.id_document }}" target="_blank" style="color:#C9A84C;">View Document</a></div>
+      {% endif %}
+
+      <!-- Stage progress bar -->
+      <div class="app-stage-bar">
+        {% for i in range(7) %}
+        <div class="stage-dot {% if i < a.stage %}filled{% endif %}"></div>
+        {% endfor %}
+      </div>
+
+      <!-- Update form -->
+      <form method="POST" action="{{ url_for('ops_update_application', app_id=a.id) }}" class="update-form" id="form-{{ a.id }}">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
+          <div>
+            <label style="font-size:.72rem;color:var(--text3);">Status</label>
+            <select name="status">
+              <option value="pending" {% if a.status=='pending' %}selected{% endif %}>Pending</option>
+              <option value="under_review" {% if a.status=='under_review' %}selected{% endif %}>Under Review</option>
+              <option value="approved" {% if a.status=='approved' %}selected{% endif %}>Approved</option>
+              <option value="rejected" {% if a.status=='rejected' %}selected{% endif %}>Rejected</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:.72rem;color:var(--text3);">Stage (1–7)</label>
+            <input type="number" name="stage" min="1" max="7" value="{{ a.stage }}">
+          </div>
+        </div>
+        <label style="font-size:.72rem;color:var(--text3);">Rejection reason (if rejecting)</label>
+        <textarea name="rejection_reason" rows="2" placeholder="Reason for rejection (optional)">{{ a.rejection_reason or '' }}</textarea>
+        <button type="submit" class="btn-sm btn-approve" style="width:100%;padding:.45rem;">💾 Save Changes</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+
+<script>
+function toggleForm(id) {
+  const f = document.getElementById('form-' + id);
+  f.classList.toggle('open');
+}
+</script>
+{% endblock %}

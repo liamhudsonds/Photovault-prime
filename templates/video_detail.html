@@ -1,0 +1,664 @@
+{% extends 'base.html' %}
+{% block title %}{{ video.title }} — PhotoVault{% endblock %}
+
+{% block head %}
+<style>
+/* ── TikTok-style layout ──────────────────────────────────────────────────── */
+.vd-page {
+  display: flex; gap: 0; min-height: calc(100vh - 60px);
+  max-width: 1100px; margin: 0 auto; padding: 0;
+}
+
+/* Left: video panel */
+.vd-left {
+  flex: 0 0 420px; max-width: 420px; position: sticky; top: 60px;
+  height: calc(100vh - 60px); display: flex; flex-direction: column;
+  background: #000; overflow: hidden;
+}
+@media (max-width: 768px) {
+  .vd-page { flex-direction: column; }
+  .vd-left { flex: none; max-width: 100%; height: auto; position: static; }
+  .vd-right { height: auto; }
+}
+
+.vd-video-wrap {
+  position: relative; flex: 1; display: flex; align-items: center;
+  justify-content: center; overflow: hidden; background: #000;
+}
+.vd-video-wrap video,
+.vd-video-wrap img {
+  width: 100%; height: 100%; object-fit: contain;
+}
+.vd-thumb { width:100%; height:100%; object-fit:cover; }
+
+/* Lock overlay */
+.vd-lock-overlay {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,.55); backdrop-filter: blur(var(--video-blur, 16px));
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: .75rem; text-align: center; padding: 1.5rem;
+}
+.vd-lock-overlay h3 { color:#fff; font-family:var(--font-head); font-size:1.3rem; margin:0; }
+.vd-lock-overlay p  { color:rgba(255,255,255,.75); font-size:.85rem; margin:0; }
+
+/* Video controls bar */
+.vd-controls {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .6rem .75rem; background: rgba(0,0,0,.9);
+  border-top: 1px solid #1a1a1a;
+}
+.vd-ctrl-btn {
+  background: none; border: none; color: #fff; cursor: pointer;
+  font-size: 1rem; padding: .25rem .4rem; border-radius: 6px; transition: background .15s;
+}
+.vd-ctrl-btn:hover { background: rgba(255,255,255,.12); }
+.vd-progress { flex: 1; height: 4px; background: #333; border-radius: 4px; cursor: pointer; position: relative; }
+.vd-progress-fill { height: 100%; background: var(--accent); border-radius: 4px; transition: width .1s linear; pointer-events:none; }
+.vd-time { color: rgba(255,255,255,.65); font-size: .7rem; white-space: nowrap; }
+.vd-vol-wrap { display:flex; align-items:center; gap:.25rem; }
+.vd-vol-slider { width: 60px; accent-color: var(--accent); }
+
+/* Right: info + comments */
+.vd-right {
+  flex: 1; display: flex; flex-direction: column;
+  height: calc(100vh - 60px); overflow: hidden;
+  border-left: 1px solid var(--border);
+}
+.vd-info { padding: 1.25rem 1.25rem .75rem; border-bottom: 1px solid var(--border); }
+.vd-title { font-family: var(--font-head); font-size: 1.3rem; margin-bottom: .35rem; }
+.vd-meta  { display:flex; gap:.75rem; align-items:center; flex-wrap:wrap; font-size:.78rem; color:var(--text3); }
+.vd-actions { display:flex; gap:.5rem; margin-top:.9rem; align-items:center; }
+.vd-like-btn {
+  display:flex; align-items:center; gap:.35rem;
+  background:none; border:1px solid var(--border);
+  color:var(--text2); border-radius:100px; padding:.4rem .9rem;
+  font-size:.8rem; cursor:pointer; transition:all .2s;
+}
+.vd-like-btn:hover, .vd-like-btn.liked { border-color:#ff4757; color:#ff4757; background:rgba(255,71,87,.08); }
+.vd-back-btn {
+  display:flex; align-items:center; gap:.3rem;
+  background:none; border:1px solid var(--border); color:var(--text2);
+  border-radius:100px; padding:.4rem .9rem; font-size:.8rem; cursor:pointer;
+  text-decoration:none; transition:all .2s;
+}
+.vd-back-btn:hover { border-color:var(--accent); color:var(--accent); }
+
+/* Comments panel */
+.vd-comments-panel { flex: 1; overflow-y: auto; padding: .75rem 1.25rem 1rem; }
+.vd-comments-panel::-webkit-scrollbar { width: 4px; }
+.vd-comments-panel::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+
+.vc-header { font-size:.8rem; font-weight:600; color:var(--text3); text-transform:uppercase;
+             letter-spacing:.07em; margin-bottom:.85rem; }
+
+/* Individual comment */
+.vc-item {
+  display: flex; gap: .6rem; margin-bottom: .85rem;
+  position: relative; padding: .5rem .65rem;
+  border-radius: 12px; transition: background .2s;
+  cursor: default;
+}
+.vc-item:hover { background: rgba(255,255,255,.03); }
+.vc-item.pinned-comment { background: rgba(201,168,76,.06); border:1px solid rgba(201,168,76,.15); }
+.vc-item.highlighted-comment { background: rgba(99,91,255,.06); border:1px solid rgba(99,91,255,.2); }
+
+.vc-avatar {
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+  background: var(--accent); display: flex; align-items: center; justify-content: center;
+  font-size: .85rem; font-family: var(--font-head); color: #0a0a0c;
+}
+.vc-body-wrap { flex: 1; min-width: 0; }
+.vc-meta-row  { display:flex; align-items:center; gap:.4rem; flex-wrap:wrap; margin-bottom:.15rem; }
+.vc-name  { font-size:.78rem; font-weight:600; color:var(--text); }
+.vc-time  { font-size:.68rem; color:var(--text3); }
+.vc-pin-badge { font-size:.6rem; background:rgba(201,168,76,.2); color:var(--accent);
+                border-radius:4px; padding:.1rem .35rem; }
+.vc-hl-badge  { font-size:.6rem; background:rgba(99,91,255,.2); color:#a09eff;
+                border-radius:4px; padding:.1rem .35rem; }
+.vc-tag { color: var(--accent); font-size:.78rem; font-weight:500; }
+.vc-text  { font-size:.82rem; color:var(--text2); line-height:1.55; word-break:break-word; }
+
+.vc-reply-link {
+  font-size:.7rem; color:var(--text3); background:none; border:none;
+  cursor:pointer; padding:0; margin-top:.2rem; transition:color .15s;
+}
+.vc-reply-link:hover { color:var(--accent); }
+
+/* Nested replies */
+.vc-replies { margin-top:.5rem; padding-left: .85rem; border-left: 2px solid var(--border); }
+.vc-reply-item { display:flex; gap:.5rem; margin-bottom:.5rem; padding:.35rem .5rem; border-radius:8px; }
+.vc-reply-avatar { width:24px; height:24px; border-radius:50%; background:rgba(201,168,76,.3);
+                   display:flex; align-items:center; justify-content:center; font-size:.65rem;
+                   color:#0a0a0c; font-family:var(--font-head); flex-shrink:0; }
+.vc-reply-text { font-size:.78rem; color:var(--text2); line-height:1.5; }
+.vc-reply-meta { font-size:.65rem; color:var(--text3); margin-bottom:.1rem; }
+
+/* Admin action buttons (shown to admin only) */
+.vc-admin-btns { display:flex; gap:.35rem; margin-top:.3rem; }
+.vc-admin-btn {
+  font-size:.65rem; background:none; border:1px solid #2a2a38;
+  border-radius:6px; color:var(--text3); padding:.15rem .45rem; cursor:pointer; transition:all .15s;
+}
+.vc-admin-btn:hover { border-color:var(--accent); color:var(--accent); }
+.vc-admin-btn.del:hover { border-color:#ff4757; color:#ff4757; }
+
+/* Reply-bar (shown when replying) */
+.vc-reply-bar {
+  background: rgba(201,168,76,.08); border:1px solid rgba(201,168,76,.2);
+  border-radius:10px; padding:.5rem .75rem; margin-bottom:.5rem; font-size:.78rem;
+  display:flex; align-items:center; justify-content:space-between;
+  color:var(--accent);
+}
+.vc-reply-bar button { background:none; border:none; color:var(--text3); cursor:pointer; font-size:.9rem; }
+
+/* Comment input */
+.vd-comment-form { padding: .75rem 1.25rem 1rem; border-top: 1px solid var(--border); background:var(--bg); }
+.vd-comment-inputs { display:flex; gap:.5rem; align-items:flex-end; }
+.vd-name-in {
+  width: 110px; flex-shrink:0; height:38px; background: var(--surface); border:1px solid var(--border);
+  border-radius:10px; color:var(--text); padding:0 .65rem; font-size:.8rem; outline:none;
+}
+.vd-name-in:focus { border-color:var(--accent); }
+.vd-text-in {
+  flex:1; min-height:38px; max-height:100px; background:var(--surface); border:1px solid var(--border);
+  border-radius:10px; color:var(--text); padding:.5rem .75rem; font-size:.82rem; outline:none;
+  resize:none; font-family:var(--font-body); line-height:1.4; overflow-y:auto;
+}
+.vd-text-in:focus { border-color:var(--accent); }
+.vd-send-btn {
+  height:38px; padding:0 1rem; background:var(--accent); color:#0a0a0c;
+  border:none; border-radius:10px; font-size:.8rem; font-weight:600; cursor:pointer; white-space:nowrap;
+  transition:opacity .2s;
+}
+.vd-send-btn:hover { opacity:.85; }
+
+/* Swipe-to-reply animation */
+@keyframes slide-in { from{opacity:0;transform:translateX(-12px)} to{opacity:1;transform:translateX(0)} }
+.vc-item.reply-target-anim { animation: slide-in .2s ease; }
+
+/* Unlock box */
+.vd-unlock-box {
+  background: var(--surface); border: 1px solid var(--border); border-radius:16px;
+  padding: 1.5rem; margin: 1.25rem; text-align: center;
+}
+.vd-unlock-price { font-family:var(--font-head); font-size:2rem; color:var(--accent); margin:.5rem 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="vd-page">
+
+  <!-- ══ LEFT: Video Panel ═══════════════════════════════════════════════════ -->
+  <div class="vd-left">
+    <div class="vd-video-wrap" id="vd-media-wrap">
+
+      {% if unlocked or session.get('is_admin') %}
+      <!-- ── Full video player ── -->
+      <video id="main-vid" preload="metadata"
+             style="width:100%;height:100%;object-fit:contain;background:#000;"
+             controlsList="nodownload">
+        <source src="{{ url_for('serve_video_stream', video_id=video.id) }}" type="video/mp4">
+      </video>
+      {% else %}
+      <!-- ── Locked: show blurred video preview (3s on hover) ── -->
+      <video id="locked-preview" muted preload="metadata"
+             style="width:100%;height:100%;object-fit:cover;filter:blur(var(--video-blur,16px)) brightness(.6);"
+             onmouseenter="playPreview()" onmouseleave="stopPreview()">
+        <source src="{{ url_for('serve_video_stream', video_id=video.id) }}" type="video/mp4">
+      </video>
+      <div class="vd-lock-overlay">
+        <div style="font-size:2.5rem;">🔒</div>
+        <h3>Full Video Locked</h3>
+        <p>Unlock to watch the complete
+          {% if video.duration_seconds %}{{ '%d:%02d'|format(video.duration_seconds//60, video.duration_seconds%60) }}{% endif %}
+          video in HD with sound.</p>
+        <a href="{{ url_for('checkout', photo_id=video.id) }}"
+           style="display:inline-block;background:var(--accent);color:#0a0a0c;border-radius:100px;
+                  padding:.7rem 1.75rem;font-weight:700;font-size:.92rem;text-decoration:none;margin-top:.25rem;">
+          🔓 Unlock for ${{ '%.2f'|format(video.unlock_price) }}
+        </a>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Custom controls (only for unlocked video) -->
+    {% if unlocked or session.get('is_admin') %}
+    <div class="vd-controls" id="vd-controls">
+      <button class="vd-ctrl-btn" id="play-btn" onclick="togglePlay()" title="Play/Pause">▶</button>
+      <span class="vd-time" id="vd-cur">0:00</span>
+      <div class="vd-progress" id="vd-prog" onclick="seekVideo(event)">
+        <div class="vd-progress-fill" id="vd-fill" style="width:0%"></div>
+      </div>
+      <span class="vd-time" id="vd-dur">0:00</span>
+      <div class="vd-vol-wrap">
+        <button class="vd-ctrl-btn" id="mute-btn" onclick="toggleMute()" title="Mute">🔊</button>
+        <input type="range" class="vd-vol-slider" id="vol-slider" min="0" max="1" step="0.05" value="1"
+               oninput="setVolume(this.value)">
+      </div>
+      <button class="vd-ctrl-btn" onclick="toggleFullscreen()" title="Fullscreen">⛶</button>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ══ RIGHT: Info + Comments ══════════════════════════════════════════════ -->
+  <div class="vd-right">
+
+    <!-- Video info -->
+    <div class="vd-info">
+      <a href="{{ url_for('video_gallery') }}" class="vd-back-btn" style="display:inline-flex;margin-bottom:.75rem;">← Back to Videos</a>
+      <div class="vd-title">{{ video.title }}</div>
+      {% if video.description %}
+      <p style="color:var(--text2);font-size:.85rem;line-height:1.6;margin:.35rem 0 .5rem;">{{ video.description }}</p>
+      {% endif %}
+      <div class="vd-meta">
+        <span class="badge tier-{{ video.tier }}">{{ video.tier|title }}</span>
+        {% if video.category %}<span>{{ video.category }}</span>{% endif %}
+        {% if video.duration_seconds %}<span>⏱ {{ '%d:%02d'|format(video.duration_seconds//60, video.duration_seconds%60) }}</span>{% endif %}
+        <span id="vd-views">👁 {{ video.view_count }} views</span>
+        <span>{{ video.unlock_duration }}h access</span>
+      </div>
+      <div class="vd-actions">
+        <button class="vd-like-btn" id="like-btn" onclick="toggleLike()">
+          🤍 <span id="like-count">—</span>
+        </button>
+        <button class="vd-like-btn" id="repost-btn" onclick="openRepostModal()"
+                title="Repost this video to the activity feed">
+          🔁 <span id="repost-count">—</span>
+        </button>
+        {% if not unlocked %}
+        <a href="{{ url_for('checkout', photo_id=video.id) }}"
+           style="display:flex;align-items:center;gap:.3rem;background:var(--accent);color:#0a0a0c;
+                  border-radius:100px;padding:.4rem 1.1rem;font-size:.8rem;font-weight:600;text-decoration:none;">
+          🔓 Unlock ${{ '%.2f'|format(video.unlock_price) }}
+        </a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- ── Repost Modal ── -->
+    <div id="repost-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);
+         z-index:9000;align-items:center;justify-content:center;padding:1rem;"
+         onclick="if(event.target===this)closeRepostModal()">
+      <div style="background:#16161e;border:1px solid #2a2a38;border-radius:18px;
+                  padding:1.75rem;max-width:420px;width:100%;position:relative;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+          <div>
+            <div style="font-size:1rem;font-weight:600;color:#f5f5f7;">🔁 Repost Video</div>
+            <div style="font-size:.73rem;color:#7d7d88;margin-top:.15rem;">Share this with the community</div>
+          </div>
+          <button onclick="closeRepostModal()" style="background:none;border:none;color:#888;font-size:1.2rem;cursor:pointer;">✕</button>
+        </div>
+        <!-- Preview -->
+        <div style="display:flex;gap:.75rem;background:#0f0f17;border-radius:10px;padding:.75rem;margin-bottom:1rem;border:1px solid #23232d;">
+          <div style="width:56px;height:56px;border-radius:8px;background:#1a1a2a;
+               display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;">🎬</div>
+          <div style="min-width:0;">
+            <div style="font-size:.88rem;font-weight:600;color:#f5f5f7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ video.title }}</div>
+            <div style="font-size:.72rem;color:#7d7d88;margin-top:.2rem;">{{ video.tier|title }} · ${{ '%.2f'|format(video.unlock_price) }}</div>
+          </div>
+        </div>
+        <input id="rp-name" type="text" placeholder="Your name (optional)"
+               style="width:100%;padding:.6rem .8rem;background:#0f0f17;border:1px solid #23232d;
+                      border-radius:10px;color:#f5f5f7;font-size:.85rem;margin-bottom:.65rem;box-sizing:border-box;outline:none;">
+        <textarea id="rp-caption" placeholder="Add a thought… (optional)" maxlength="300"
+                  style="width:100%;padding:.65rem .8rem;background:#0f0f17;border:1px solid #23232d;
+                         border-radius:10px;color:#f5f5f7;font-size:.85rem;resize:none;height:80px;
+                         font-family:inherit;box-sizing:border-box;outline:none;"></textarea>
+        <div style="display:flex;gap:.6rem;margin-top:.85rem;">
+          <button id="rp-submit-btn" onclick="submitRepost()"
+                  style="flex:1;padding:.75rem;background:var(--accent);color:#0a0a0c;border:none;
+                         border-radius:10px;font-size:.88rem;font-weight:700;cursor:pointer;">
+            🔁 Repost
+          </button>
+          <button onclick="closeRepostModal()"
+                  style="padding:.75rem 1.25rem;background:none;border:1px solid #2a2a38;
+                         color:#888;border-radius:10px;font-size:.85rem;cursor:pointer;">Cancel</button>
+        </div>
+        <div id="rp-msg" style="font-size:.78rem;text-align:center;margin-top:.6rem;display:none;"></div>
+      </div>
+    </div>
+
+    <!-- Comments -->
+    <div class="vd-comments-panel" id="vd-comments-panel">
+      <div class="vc-header">💬 Comments</div>
+      <!-- Reply-to bar -->
+      <div id="reply-bar" style="display:none;" class="vc-reply-bar">
+        <span>Replying to <strong id="reply-bar-name"></strong></span>
+        <button onclick="clearReply()">✕</button>
+      </div>
+      <div id="comment-list">
+        <div style="text-align:center;padding:2rem;color:var(--text3);font-size:.82rem;">Loading comments…</div>
+      </div>
+    </div>
+
+    <!-- Comment input -->
+    <div class="vd-comment-form">
+      <div class="vd-comment-inputs">
+        <input class="vd-name-in" id="c-name" type="text" placeholder="Your name" maxlength="60">
+        <textarea class="vd-text-in" id="c-text" placeholder="Add a comment…" maxlength="1000"
+                  onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendComment();}"></textarea>
+        <button class="vd-send-btn" onclick="sendComment()">Send</button>
+      </div>
+      <div id="c-error" style="color:var(--red);font-size:.75rem;margin-top:.35rem;display:none;"></div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const VID_ID     = {{ video.id }};
+const IS_UNLOCKED= {{ 'true' if unlocked else 'false' }};
+const IS_ADMIN   = {{ 'true' if session.get('is_admin') else 'false' }};
+
+// Apply blur setting from server
+fetch('/api/settings/blur').then(r=>r.json()).then(d => {
+  document.documentElement.style.setProperty('--video-blur', d.blur_video + 'px');
+  const thumb = document.getElementById('locked-thumb');
+  if (thumb) thumb.style.filter = 'blur(' + d.blur_video + 'px) brightness(.7)';
+}).catch(()=>{});
+
+let replyToId   = null;
+let replyToName = '';
+
+// ── Register view (once per session) ────────────────────────────────────────
+fetch('/api/video/' + VID_ID + '/view', {method:'POST'})
+  .then(r => r.json())
+  .then(d => { document.getElementById('vd-views').textContent = '👁 ' + d.view_count + ' views'; })
+  .catch(() => {});
+
+// ── Load like state ──────────────────────────────────────────────────────────
+fetch('/api/video/' + VID_ID + '/stats')
+  .then(r => r.json())
+  .then(d => {
+    const btn = document.getElementById('like-btn');
+    document.getElementById('like-count').textContent = d.likes;
+    if (d.i_liked) { btn.classList.add('liked'); btn.innerHTML = '❤️ <span id="like-count">' + d.likes + '</span>'; }
+  }).catch(() => {});
+
+function toggleLike() {
+  fetch('/api/video/' + VID_ID + '/like', {method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})
+    .then(r => r.json())
+    .then(d => {
+      const btn = document.getElementById('like-btn');
+      document.getElementById('like-count').textContent = d.count;
+      btn.classList.toggle('liked', d.liked);
+      btn.childNodes[0].textContent = d.liked ? '❤️ ' : '🤍 ';
+    }).catch(() => {});
+}
+
+// ── Custom video player ──────────────────────────────────────────────────────
+{% if unlocked or session.get('is_admin') %}
+const vid = document.getElementById('main-vid');
+
+function fmtTime(s) {
+  const m = Math.floor(s/60); return m+':'+String(Math.floor(s%60)).padStart(2,'0');
+}
+function togglePlay() {
+  if (vid.paused) { vid.play(); document.getElementById('play-btn').textContent='⏸'; }
+  else            { vid.pause(); document.getElementById('play-btn').textContent='▶'; }
+}
+function toggleMute() {
+  vid.muted = !vid.muted;
+  document.getElementById('mute-btn').textContent = vid.muted ? '🔇' : '🔊';
+}
+function setVolume(v) {
+  vid.volume = parseFloat(v);
+  vid.muted  = (parseFloat(v) === 0);
+  document.getElementById('mute-btn').textContent = (parseFloat(v) === 0) ? '🔇' : '🔊';
+  document.getElementById('vol-slider').value = v;
+}
+// Initialise: unmute, full volume on load
+vid.muted  = false;
+vid.volume = 1;
+document.getElementById('vol-slider').value = 1;
+function seekVideo(e) {
+  const rect = document.getElementById('vd-prog').getBoundingClientRect();
+  vid.currentTime = ((e.clientX - rect.left) / rect.width) * vid.duration;
+}
+function toggleFullscreen() {
+  const w = document.getElementById('vd-media-wrap');
+  if (!document.fullscreenElement) w.requestFullscreen();
+  else document.exitFullscreen();
+}
+vid.addEventListener('timeupdate', () => {
+  if (!vid.duration) return;
+  const pct = (vid.currentTime / vid.duration) * 100;
+  document.getElementById('vd-fill').style.width = pct + '%';
+  document.getElementById('vd-cur').textContent  = fmtTime(vid.currentTime);
+});
+vid.addEventListener('loadedmetadata', () => {
+  document.getElementById('vd-dur').textContent = fmtTime(vid.duration);
+});
+vid.addEventListener('play',  () => { document.getElementById('play-btn').textContent='⏸'; });
+vid.addEventListener('pause', () => { document.getElementById('play-btn').textContent='▶'; });
+vid.addEventListener('ended', () => { document.getElementById('play-btn').textContent='▶'; });
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if (['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) return;
+  if (e.code === 'Space')      { e.preventDefault(); togglePlay(); }
+  if (e.code === 'ArrowRight') vid.currentTime = Math.min(vid.duration, vid.currentTime+5);
+  if (e.code === 'ArrowLeft')  vid.currentTime = Math.max(0, vid.currentTime-5);
+  if (e.code === 'KeyM')       toggleMute();
+});
+{% else %}
+// ── Locked preview: play 3s then blur again ──────────────────────────────────
+var _previewTimer = null;
+function playPreview() {
+  var pv = document.getElementById('locked-preview');
+  if (!pv) return;
+  pv.currentTime = 0;
+  pv.play().catch(()=>{});
+  _previewTimer = setTimeout(function(){ stopPreview(); }, 3000);
+}
+function stopPreview() {
+  var pv = document.getElementById('locked-preview');
+  if (!pv) return;
+  pv.pause();
+  pv.currentTime = 0;
+  if (_previewTimer) { clearTimeout(_previewTimer); _previewTimer = null; }
+}
+{% endif %}
+
+// ── Comments ─────────────────────────────────────────────────────────────────
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function avatarChar(name) { return (name||'?')[0].toUpperCase(); }
+
+function renderComment(c, isReply) {
+  const pinBadge = c.is_pinned ? '<span class="vc-pin-badge">📌 Pinned</span>' : '';
+  const hlBadge  = c.is_highlighted ? '<span class="vc-hl-badge">✨ Highlighted</span>' : '';
+  const tagSpan  = c.tagged_user ? '<span class="vc-tag">@' + esc(c.tagged_user) + '</span> ' : '';
+  const replyMeta= c.reply_to_name ? '<span style="color:var(--text3);font-size:.7rem;">↩ ' + esc(c.reply_to_name) + '</span> ' : '';
+  const adminBtns = IS_ADMIN ? `
+    <div class="vc-admin-btns">
+      <button class="vc-admin-btn" onclick="pinComment(${c.id},this)">${c.is_pinned?'Unpin':'📌 Pin'}</button>
+      <button class="vc-admin-btn" onclick="highlightComment(${c.id},this)">${c.is_highlighted?'Unhighlight':'✨ Highlight'}</button>
+      <button class="vc-admin-btn del" onclick="deleteComment(${c.id},this)">🗑</button>
+    </div>` : '';
+
+  const repliesHtml = (c.replies||[]).map(r => `
+    <div class="vc-reply-item">
+      <div class="vc-reply-avatar">${avatarChar(r.author_name)}</div>
+      <div>
+        <div class="vc-reply-meta"><strong style="font-size:.75rem;color:var(--text);">${esc(r.author_name)}</strong>
+          ${r.reply_to_name ? '<span style="color:var(--text3);">↩ '+esc(r.reply_to_name)+'</span>' : ''}
+          <span style="color:var(--text3);font-size:.65rem;">${esc(r.created_at)}</span>
+        </div>
+        <div class="vc-reply-text">${r.tagged_user?'<span class="vc-tag">@'+esc(r.tagged_user)+'</span> ':''}${esc(r.body)}</div>
+      </div>
+    </div>`).join('');
+
+  const classes = [
+    'vc-item',
+    c.is_pinned ? 'pinned-comment' : '',
+    c.is_highlighted ? 'highlighted-comment' : ''
+  ].filter(Boolean).join(' ');
+
+  return `
+  <div class="${classes}" id="cmt-${c.id}" data-id="${c.id}" data-name="${esc(c.author_name)}"
+       title="Swipe right to reply"
+       ontouchstart="touchStart(event,${c.id},'${esc(c.author_name)}')"
+       ontouchend="touchEnd(event,${c.id},'${esc(c.author_name)}')">
+    <div class="vc-avatar">${avatarChar(c.author_name)}</div>
+    <div class="vc-body-wrap">
+      <div class="vc-meta-row">
+        <span class="vc-name">${esc(c.author_name)}</span>
+        ${pinBadge}${hlBadge}
+        <span class="vc-time">${esc(c.created_at)}</span>
+      </div>
+      <div class="vc-text">${replyMeta}${tagSpan}${esc(c.body)}</div>
+      <button class="vc-reply-link" onclick="setReply(${c.id},'${esc(c.author_name)}')">↩ Reply</button>
+      ${adminBtns}
+      ${repliesHtml ? '<div class="vc-replies">'+repliesHtml+'</div>' : ''}
+    </div>
+  </div>`;
+}
+
+function loadComments() {
+  fetch('/api/comments/video/' + VID_ID)
+    .then(r => r.json())
+    .then(data => {
+      const el = document.getElementById('comment-list');
+      if (!data.length) {
+        el.innerHTML = '<div style="text-align:center;padding:2.5rem 1rem;color:var(--text3);font-size:.82rem;">No comments yet. Be first!</div>';
+        return;
+      }
+      el.innerHTML = data.map(c => renderComment(c)).join('');
+    }).catch(() => {
+      document.getElementById('comment-list').innerHTML =
+        '<div style="color:var(--text3);font-size:.8rem;padding:1rem;">Could not load comments.</div>';
+    });
+}
+loadComments();
+
+// Auto-scroll to bottom of comments panel
+const panel = document.getElementById('vd-comments-panel');
+
+function setReply(id, name) {
+  replyToId   = id; replyToName = name;
+  document.getElementById('reply-bar').style.display = 'flex';
+  document.getElementById('reply-bar-name').textContent = name;
+  document.getElementById('c-text').focus();
+  // Pre-fill tag
+  document.getElementById('c-text').value = '@' + name + ' ';
+  // Animate target comment
+  const el = document.getElementById('cmt-'+id);
+  if (el) { el.classList.add('reply-target-anim'); setTimeout(()=>el.classList.remove('reply-target-anim'),400); }
+}
+
+function clearReply() {
+  replyToId = null; replyToName = '';
+  document.getElementById('reply-bar').style.display = 'none';
+  document.getElementById('c-text').value = '';
+}
+
+// Touch-swipe-right to reply
+let touchStartX = 0;
+function touchStart(e, id, name) { touchStartX = e.touches[0].clientX; }
+function touchEnd(e, id, name) {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if (dx > 60) setReply(id, name);
+}
+
+function sendComment() {
+  const name = document.getElementById('c-name').value.trim() || 'Anonymous';
+  const text = document.getElementById('c-text').value.trim();
+  const errEl= document.getElementById('c-error');
+  if (!text) { errEl.textContent='Please write something.'; errEl.style.display='block'; return; }
+  errEl.style.display='none';
+
+  // Extract @tag from text
+  let taggedUser = '';
+  const tagMatch = text.match(/^@([\w\s]+?) /);
+  if (tagMatch) taggedUser = tagMatch[1].trim();
+
+  fetch('/api/comments/post', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      content_type: 'video', content_id: VID_ID,
+      author_name: name, body: text,
+      reply_to_id: replyToId, reply_to_name: replyToName,
+      tagged_user: taggedUser
+    })
+  }).then(r => r.json()).then(d => {
+    if (d.error) { errEl.textContent=d.error; errEl.style.display='block'; return; }
+    document.getElementById('c-text').value = '';
+    clearReply();
+    loadComments();
+    setTimeout(() => { panel.scrollTop = panel.scrollHeight; }, 200);
+  }).catch(() => { errEl.textContent='Network error.'; errEl.style.display='block'; });
+}
+
+// Admin comment actions
+function pinComment(id, btn) {
+  fetch('/api/comments/'+id+'/pin', {method:'POST'})
+    .then(r=>r.json()).then(d=>{ loadComments(); });
+}
+function highlightComment(id, btn) {
+  fetch('/api/comments/'+id+'/highlight', {method:'POST'})
+    .then(r=>r.json()).then(d=>{ loadComments(); });
+}
+function deleteComment(id, btn) {
+  if (!confirm('Delete this comment?')) return;
+  fetch('/api/comments/'+id+'/delete', {method:'POST'})
+    .then(r=>r.json()).then(d=>{ loadComments(); });
+}
+
+// ── Repost ────────────────────────────────────────────────────────────────────
+// Load repost count and state on page load
+fetch('/api/repost/status?type=video&id=' + VID_ID)
+  .then(r => r.json())
+  .then(d => {
+    const btn = document.getElementById('repost-btn');
+    document.getElementById('repost-count').textContent = d.count;
+    if (d.reposted) { btn.classList.add('liked'); btn.childNodes[0].textContent = '🔁 '; }
+  }).catch(() => {});
+
+function openRepostModal() {
+  document.getElementById('repost-modal').style.display = 'flex';
+  document.getElementById('rp-msg').style.display = 'none';
+  document.getElementById('rp-msg').textContent = '';
+}
+function closeRepostModal() {
+  document.getElementById('repost-modal').style.display = 'none';
+}
+function submitRepost() {
+  const name    = document.getElementById('rp-name').value.trim() || 'Anonymous';
+  const caption = document.getElementById('rp-caption').value.trim();
+  const btn     = document.getElementById('rp-submit-btn');
+  const msg     = document.getElementById('rp-msg');
+  btn.disabled  = true;
+  btn.textContent = 'Posting…';
+
+  fetch('/api/repost', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({content_type:'video', content_id: VID_ID, name, caption})
+  }).then(r => r.json()).then(d => {
+    if (d.error) { msg.textContent = d.error; msg.style.color='#ff4757'; msg.style.display='block'; btn.disabled=false; btn.textContent='🔁 Repost'; return; }
+    document.getElementById('repost-count').textContent = d.count;
+    const rpBtn = document.getElementById('repost-btn');
+    if (d.reposted) {
+      rpBtn.classList.add('liked');
+      msg.textContent = '✅ Reposted! It\'s now visible in the activity feed.';
+      msg.style.color = '#2ecc71';
+    } else {
+      rpBtn.classList.remove('liked');
+      msg.textContent = 'Repost removed.';
+      msg.style.color = '#888';
+    }
+    msg.style.display = 'block';
+    btn.textContent = d.reposted ? '✓ Reposted' : '🔁 Repost';
+    setTimeout(() => { if(d.reposted) closeRepostModal(); }, 1400);
+  }).catch(() => {
+    msg.textContent = 'Network error, please try again.';
+    msg.style.color = '#ff4757';
+    msg.style.display = 'block';
+    btn.disabled = false; btn.textContent = '🔁 Repost';
+  });
+}
+</script>
+{% endblock %}

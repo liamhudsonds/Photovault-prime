@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% block title %}Videos — Creator Dashboard{% endblock %}
+
+{% block head %}
+<style>
+:root { --mgr:#a78bfa; --mgr-dim:rgba(167,139,250,0.15); --mgr-glow:rgba(167,139,250,0.07); }
+.mgr-layout { display:grid; grid-template-columns:240px 1fr; gap:0; min-height:calc(100vh - 60px); }
+@media(max-width:800px){ .mgr-layout{grid-template-columns:1fr;} }
+.mgr-sidebar {
+  background:var(--surface); border-right:1px solid var(--border);
+  padding:1.5rem 0; position:sticky; top:60px; height:calc(100vh - 60px); overflow-y:auto;
+}
+.mgr-sidebar-header { padding:0 1.25rem 1.25rem; border-bottom:1px solid var(--border); margin-bottom:.75rem; }
+.mgr-creator-avatar { width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid var(--mgr);margin-bottom:.5rem; }
+.mgr-creator-avatar-ph {
+  width:48px;height:48px;border-radius:50%;background:var(--mgr-dim);
+  display:flex;align-items:center;justify-content:center;font-size:1.4rem;
+  border:2px solid var(--mgr);margin-bottom:.5rem;
+}
+.mgr-nav-item {
+  display:flex;align-items:center;gap:.65rem;padding:.65rem 1.25rem;
+  color:var(--text2);text-decoration:none;font-size:.88rem;
+  transition:all .15s;border-left:3px solid transparent;
+}
+.mgr-nav-item:hover { color:var(--mgr);background:var(--mgr-glow); }
+.mgr-nav-item.active { color:var(--mgr);border-left-color:var(--mgr);background:var(--mgr-glow);font-weight:600; }
+.mgr-main { padding:2rem;background:var(--bg); }
+@media(max-width:800px){ .mgr-main{padding:1rem;} }
+
+.video-table { width:100%;border-collapse:collapse; }
+.video-table th { padding:.6rem 1rem;font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;
+  color:var(--text3);border-bottom:1px solid var(--border);text-align:left; }
+.video-table td { padding:.75rem 1rem;border-bottom:1px solid var(--border);font-size:.85rem;color:var(--text2); }
+.video-table tr:last-child td { border-bottom:none; }
+.video-table tr:hover td { background:var(--bg2); }
+
+.btn-mgr { background:var(--mgr);color:#fff;border:none;border-radius:8px;
+  padding:.5rem 1rem;font-size:.82rem;cursor:pointer;text-decoration:none;
+  display:inline-flex;align-items:center;gap:.4rem;transition:opacity .15s; }
+.btn-mgr:hover { opacity:.85; }
+.btn-danger { background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3);
+  border-radius:8px;padding:.4rem .8rem;font-size:.78rem;cursor:pointer; }
+.btn-danger:hover { background:rgba(239,68,68,.25); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mgr-layout">
+  <aside class="mgr-sidebar">
+    <div class="mgr-sidebar-header">
+      {% if profile.avatar_filename %}
+        <img src="{{ url_for('serve_profile_media', filename=profile.avatar_filename) }}"
+             class="mgr-creator-avatar" alt="{{ profile.name }}">
+      {% else %}
+        <div class="mgr-creator-avatar-ph">{{ profile.name[0]|upper }}</div>
+      {% endif %}
+      <div style="font-family:var(--font-head);font-size:1rem;color:var(--text);">{{ profile.name }}</div>
+      <div style="font-size:.72rem;color:var(--text3);">@{{ profile.username }}</div>
+      {% if profile.country_code %}
+      <div style="font-size:.75rem;color:var(--text2);margin-top:.2rem;">
+        {{ COUNTRY_FLAGS.get(profile.country_code,'🌍') }} {{ COUNTRY_NAMES.get(profile.country_code,profile.country_code) }}
+      </div>
+      {% endif %}
+    </div>
+    <nav>
+      {% set active = 'videos' %}
+      {% include 'includes/creator_dashboard_nav.html' with context %}
+      <div style="margin:.75rem 1.25rem .4rem;font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);font-weight:700;">💎 VaultX</div>
+      <a href="/creator/home" class="mgr-nav-item" style="color:#C9A84C;">
+        <span style="font-size:1rem;width:20px;text-align:center;">🏠</span> VX Creator Home
+      </a>
+      <a href="/creator/dm-inbox" class="mgr-nav-item">
+        <span style="font-size:1rem;width:20px;text-align:center;">💬</span> DM Inbox
+      </a>
+      <a href="/creator/withdraw" class="mgr-nav-item">
+        <span style="font-size:1rem;width:20px;text-align:center;">💸</span> Withdraw
+      </a>
+      <a href="{{ url_for('logout') }}" class="mgr-nav-item" style="color:var(--text3);">
+        <span style="font-size:1rem;width:20px;text-align:center;">🚪</span> Logout
+      </a>
+    </nav>
+  </aside>
+
+  <main class="mgr-main">
+    {% include 'includes/creator_admin_banner.html' %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat,msg in messages %}
+        <div style="background:{% if cat=='error' %}rgba(239,68,68,.15){% else %}rgba(167,139,250,.15){% endif %};
+             color:{% if cat=='error' %}#ef4444{% else %}var(--mgr){% endif %};
+             border:1px solid {% if cat=='error' %}rgba(239,68,68,.3){% else %}var(--mgr-dim){% endif %};
+             border-radius:10px;padding:.75rem 1rem;margin-bottom:1rem;font-size:.88rem;">
+          {{ msg }}
+        </div>
+      {% endfor %}
+    {% endwith %}
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+      <div>
+        <h1 style="font-family:var(--font-head);font-size:1.4rem;color:var(--text);margin-bottom:.2rem;">🎬 Videos</h1>
+        <p style="color:var(--text3);font-size:.82rem;">{{ videos|length }} video{{ 's' if videos|length != 1 }}</p>
+      </div>
+      <a href="{{ upload_url('creator_upload_video', profile.id) }}" class="btn-mgr">⬆️ Upload Video</a>
+    </div>
+
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;">
+      {% if videos %}
+        <table class="video-table">
+          <thead>
+            <tr>
+              <th>Thumbnail</th>
+              <th>Title</th>
+              <th>Category</th>
+              <th>Tier</th>
+              <th>Price</th>
+              <th>Views</th>
+              <th>Uploaded</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for v in videos %}
+            <tr>
+              <td>
+                {% if v.thumbnail_filename %}
+                  <img src="{{ url_for('serve_video_thumb', video_id=v.id) }}"
+                       style="width:72px;height:46px;border-radius:7px;object-fit:cover;">
+                {% else %}
+                  <div style="width:72px;height:46px;border-radius:7px;background:var(--bg3);
+                              display:flex;align-items:center;justify-content:center;font-size:1.5rem;">🎬</div>
+                {% endif %}
+              </td>
+              <td>
+                <div style="font-weight:500;color:var(--text);">{{ v.title }}</div>
+                {% if v.description %}
+                  <div style="font-size:.72rem;color:var(--text3);margin-top:.15rem;">
+                    {{ v.description[:60] }}{% if v.description|length > 60 %}…{% endif %}
+                  </div>
+                {% endif %}
+              </td>
+              <td>{{ v.category or '—' }}</td>
+              <td>
+                <span style="background:var(--bg3);border:1px solid var(--border);
+                             border-radius:6px;padding:.2rem .5rem;font-size:.72rem;">
+                  {{ v.tier }}
+                </span>
+              </td>
+              <td>${{ '%.2f'|format(v.unlock_price) }}</td>
+              <td>{{ v.view_count }}</td>
+              <td style="font-size:.75rem;color:var(--text3);">{{ v.created_at.strftime('%b %d, %Y') }}</td>
+              <td>
+                <form method="POST" action="{{ url_for('creator_delete_video', video_id=v.id) }}"
+                      onsubmit="return confirm('Delete this video?');" style="display:inline;">
+                  <button type="submit" class="btn-danger">🗑 Delete</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div style="text-align:center;padding:4rem 1rem;">
+          <div style="font-size:3rem;margin-bottom:.75rem;">🎬</div>
+          <p style="color:var(--text3);margin-bottom:1rem;">No videos uploaded yet for {{ profile.name }}.</p>
+          <a href="{{ upload_url('creator_upload_video', profile.id) }}" class="btn-mgr">Upload First Video</a>
+        </div>
+      {% endif %}
+    </div>
+  </main>
+</div>
+{% endblock %}

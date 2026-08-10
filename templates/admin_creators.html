@@ -1,0 +1,412 @@
+{% extends 'base.html' %}
+{% block title %}Creators — Admin{% endblock %}
+
+{% block head %}
+<style>
+:root {
+  --rose:      #e8547a;
+  --rose-dim:  rgba(232,84,122,0.15);
+  --rose-glow: rgba(232,84,122,0.07);
+  --blush:     #f9a8c9;
+}
+
+/* Creator grid */
+.creator-admin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+/* Creator admin card */
+.creator-admin-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  transition: transform .3s cubic-bezier(.22,.68,0,1.2), box-shadow .3s, border-color .3s;
+}
+.creator-admin-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 50px rgba(0,0,0,0.5);
+  border-color: rgba(232,84,122,0.25);
+}
+
+/* Cover */
+.cac-cover {
+  height: 90px;
+  position: relative;
+  overflow: hidden;
+}
+.cac-cover img { width:100%; height:100%; object-fit:cover; }
+.cac-cover-placeholder {
+  width:100%; height:100%;
+}
+
+/* Avatar */
+.cac-avatar-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: -30px;
+  position: relative;
+  z-index: 2;
+}
+.cac-avatar {
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--surface);
+}
+.cac-avatar-placeholder {
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  border: 3px solid var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-head);
+  font-size: 1.3rem;
+  color: #07070a;
+}
+
+/* Tier badges */
+.tier-standard { background: rgba(91,138,245,.12); color: #7ba7f7; border: 1px solid rgba(91,138,245,.25); }
+.tier-verified  { background: rgba(76,175,125,.12); color: #4caf7d; border: 1px solid rgba(76,175,125,.25); }
+.tier-elite     { background: rgba(201,168,76,.12); color: #c9a84c; border: 1px solid rgba(201,168,76,.25); }
+
+/* Card body */
+.cac-body { padding: .75rem 1.25rem 1.25rem; text-align: center; }
+.cac-name {
+  font-family: var(--font-head);
+  font-size: 1.1rem;
+  color: var(--text);
+  margin-bottom: .15rem;
+}
+.cac-handle { font-size: .72rem; color: var(--text3); font-family: var(--font-mono); }
+.cac-flag   { font-size: .9rem; margin: .2rem 0; }
+.cac-tagline {
+  font-size: .8rem; color: var(--text2);
+  line-height: 1.5; margin: .4rem 0 .75rem;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* Stats row */
+.cac-stats {
+  display: flex;
+  justify-content: center;
+  gap: 1.25rem;
+  padding: .65rem 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: .85rem;
+}
+.cac-stat .n { display:block; font-family:var(--font-head); font-size:1rem; color:var(--rose); text-align:center; }
+.cac-stat .l { display:block; font-size:.62rem; color:var(--text3); text-transform:uppercase; letter-spacing:.08em; text-align:center; }
+
+/* Earnings */
+.cac-earnings {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  font-family: var(--font-mono);
+  font-size: .75rem;
+  color: #4caf7d;
+  background: rgba(76,175,125,.08);
+  border: 1px solid rgba(76,175,125,.2);
+  border-radius: 100px;
+  padding: 3px 10px;
+  margin-bottom: .75rem;
+}
+
+/* Actions */
+.cac-actions {
+  display: flex;
+  gap: .5rem;
+  padding: .75rem 1.25rem;
+  border-top: 1px solid var(--border);
+  background: var(--bg2);
+}
+.cac-btn {
+  flex: 1;
+  padding: .45rem .5rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--text2);
+  font-size: .75rem;
+  cursor: pointer;
+  text-decoration: none;
+  text-align: center;
+  transition: all .18s;
+  font-family: var(--font-body);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .3rem;
+}
+.cac-btn:hover { background: var(--surface2); color: var(--text); }
+.cac-btn.rose  { border-color: var(--rose-dim); color: var(--rose); }
+.cac-btn.rose:hover { background: var(--rose-glow); }
+.cac-btn.danger:hover { border-color: rgba(224,85,85,.3); color: var(--red); background: rgba(224,85,85,.06); }
+
+/* Add creator btn */
+.add-creator-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .6rem;
+  background: linear-gradient(135deg, var(--rose), #c2185b);
+  color: #fff;
+  border: none;
+  border-radius: 100px;
+  padding: .7rem 1.75rem;
+  font-size: .88rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all .25s;
+  box-shadow: 0 6px 20px rgba(232,84,122,0.28);
+}
+.add-creator-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(232,84,122,0.38);
+  color: #fff;
+}
+
+/* Empty state */
+.creators-empty {
+  text-align: center;
+  padding: 5rem 2rem;
+  color: var(--text3);
+  grid-column: 1/-1;
+}
+
+/* Page header */
+.creators-page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.creators-page-header h1 {
+  font-family: var(--font-head);
+  font-size: 2rem;
+  font-style: italic;
+  color: var(--text);
+}
+.creators-page-header h1 span { color: var(--rose); }
+.creators-page-header p { color: var(--text2); font-size: .88rem; margin-top: .25rem; }
+
+/* Delete confirm modal */
+.delete-modal {
+  position: fixed; inset: 0; z-index: 999;
+  background: rgba(0,0,0,.75); backdrop-filter: blur(8px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 1.5rem;
+}
+.delete-modal-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 2rem; max-width: 380px; width: 100%;
+  text-align: center;
+}
+.delete-modal-box h3 { font-family: var(--font-head); font-size: 1.3rem; margin-bottom: .75rem; }
+.delete-modal-box p  { color: var(--text2); font-size: .88rem; margin-bottom: 1.5rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+
+  <!-- ── Sidebar ─────────────────────────────────────────────────────────── -->
+  <aside class="admin-sidebar">
+    <div class="admin-sidebar-brand">
+      💕 Velvet Vault<br>
+      <small style="font-family:var(--font-body);font-size:.72rem;color:var(--text3);">Admin Panel</small>
+    </div>
+    <nav class="admin-nav">
+      <a href="{{ url_for('admin_dashboard') }}">📊 Dashboard</a>
+      <a href="{{ url_for('admin_profiles') }}" class="active" 
+      style="color:var(--rose);border-color:rgba(232,84,122,0.3);
+      background:rgba(232,84,122,0.06);">👤 Creators</a>
+      <a href="{{ url_for('admin_comments') }}">💬 Comments</a>
+      <a href="{{ url_for('admin_analytics') }}">📈 Analytics</a>
+      <a href="{{ url_for('admin_revenue') }}">💰 Revenue</a>
+      <a href="{{ url_for('admin_settings') }}">⚙️ Settings</a>
+      <a href="{{ url_for('index') }}" target="_blank">🌐 View Site</a>
+      <a href="{{ url_for('logout') }}" style="color:var(--red);">🚪 Logout</a>
+    </nav>
+  </aside>
+
+  <!-- ── Content ───────────────────────────────────────────────────────────── -->
+  <div class="admin-content">
+
+    <div class="creators-page-header">
+      <div>
+        <h1>Creator <span>Profiles</span></h1>
+        <p>Manage all creators on your platform — {{ profiles|length }} creator{% if profiles|length != 1 %}s{% endif %} total.</p>
+      </div>
+      <a href="{{ url_for('admin_profiles') }}/add" class="add-creator-btn">
+        💕 Add New Creator
+      </a>
+    </div>
+
+    <!-- ── Creator Cards ──────────────────────────────────────────────────── -->
+    <div class="creator-admin-grid">
+      {% for profile in profiles %}
+      <div class="creator-admin-card">
+
+        <!-- Cover -->
+        <div class="cac-cover">
+          {% if profile.cover_filename %}
+          <img src="{{ url_for('serve_profile_media', filename=profile.cover_filename) }}" alt="">
+          {% else %}
+          <div class="cac-cover-placeholder"
+               style="background:linear-gradient(135deg, {{ profile.accent_color }}30, #111118, {{ profile.accent_color }}18);"></div>
+          {% endif %}
+        </div>
+
+        <!-- Avatar -->
+        <div class="cac-avatar-wrap">
+          {% if profile.avatar_filename %}
+          <img class="cac-avatar"
+               src="{{ url_for('serve_profile_media', filename=profile.avatar_filename) }}"
+               alt="{{ profile.name }}"
+               style="box-shadow: 0 0 0 3px {{ profile.accent_color }};">
+          {% else %}
+          <div class="cac-avatar-placeholder"
+               style="background:{{ profile.accent_color }};box-shadow:0 0 0 3px {{ profile.accent_color }}30;">
+            {{ profile.name[0].upper() }}
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Body -->
+        <div class="cac-body">
+          <!-- Tier badge -->
+          <div style="margin-bottom:.4rem;">
+            <span class="badge tier-{{ profile.membership_tier or 'standard' }}"
+                  style="font-size:.62rem;padding:2px 10px;">
+              {% if profile.membership_tier == 'elite' %}💎 Elite
+              {% elif profile.membership_tier == 'verified' %}✅ Verified
+              {% else %}🌸 Standard{% endif %}
+            </span>
+            {% if not profile.is_active %}
+            <span class="badge" style="font-size:.62rem;padding:2px 8px;background:rgba(224,85,85,.1);color:var(--red);border:1px solid rgba(224,85,85,.2);">Hidden</span>
+            {% endif %}
+          </div>
+
+          <div class="cac-name">{{ profile.name }}</div>
+          <div class="cac-handle">@{{ profile.username }}</div>
+
+          <!-- Country flag -->
+          {% if profile.country_code or profile.category %}
+          <div class="cac-flag">
+            {% if profile.country_code %}
+            {% set flag_map = {'KE':'🇰🇪','NG':'🇳🇬','ZA':'🇿🇦','GH':'🇬🇭','ET':'🇪🇹','TZ':'🇹🇿','UG':'🇺🇬','RW':'🇷🇼','US':'🇺🇸','GB':'🇬🇧','FR':'🇫🇷','DE':'🇩🇪','IT':'🇮🇹','ES':'🇪🇸','BR':'🇧🇷','MX':'🇲🇽','IN':'🇮🇳','CN':'🇨🇳','JP':'🇯🇵','AU':'🇦🇺','CA':'🇨🇦','AE':'🇦🇪','SA':'🇸🇦','EG':'🇪🇬','MA':'🇲🇦','SN':'🇸🇳','CI':'🇨🇮','CM':'🇨🇲','ZW':'🇿🇼','ZM':'🇿🇲'} %}
+            {{ flag_map.get(profile.country_code, '🌍') }}
+            {% endif %}
+            {% if profile.category %}
+            <span style="font-size:.72rem;color:var(--text3);">{{ profile.category }}</span>
+            {% endif %}
+          </div>
+          {% endif %}
+
+          {% if profile.tagline %}
+          <div class="cac-tagline">{{ profile.tagline }}</div>
+          {% endif %}
+
+          <!-- Stats -->
+          <div class="cac-stats">
+            <div class="cac-stat">
+              <span class="n">{{ profile.post_count or 0 }}</span>
+              <span class="l">Posts</span>
+            </div>
+            <div class="cac-stat">
+              <span class="n">{{ profile.total_likes or 0 }}</span>
+              <span class="l">Likes</span>
+            </div>
+            <div class="cac-stat">
+              <span class="n">{{ profile.sort_order }}</span>
+              <span class="l">Order</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Actions -->
+        <div class="cac-actions">
+          <a href="{{ url_for('admin_edit_profile', profile_id=profile.id) }}"
+             class="cac-btn rose">✏️ Edit</a>
+          <a href="{{ url_for('profile_page', username=profile.username) }}"
+             target="_blank" class="cac-btn">👁 View</a>
+          <button class="cac-btn danger"
+                  onclick="confirmDelete({{ profile.id }}, '{{ profile.name|e }}')">🗑 Delete</button>
+        </div>
+
+      </div>
+      {% else %}
+      <div class="creators-empty">
+        <div style="font-size:3.5rem;opacity:.3;margin-bottom:1rem;">💕</div>
+        <h3 style="font-family:var(--font-head);font-size:1.3rem;margin-bottom:.5rem;">No Creators Yet</h3>
+        <p style="font-size:.88rem;margin-bottom:1.5rem;">
+          Add your first creator to start publishing content under their profile.
+        </p>
+        <a href="{{ url_for('admin_profiles') }}/add" class="add-creator-btn">
+          💕 Add First Creator
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- ── How creators work info ─────────────────────────────────────────── -->
+    <div style="padding:1.25rem 1.5rem;background:var(--surface);border:1px solid rgba(232,84,122,0.15);border-radius:14px;max-width:650px;">
+      <h3 style="font-size:.95rem;color:var(--rose);margin-bottom:.6rem;">💡 How Creators Work</h3>
+      <ul style="font-size:.82rem;color:var(--text2);line-height:2;padding-left:1.2rem;margin:0;">
+        <li>Create a creator profile — give them a name, avatar, cover, and flag</li>
+        <li>Creators and managers upload from the <strong>Creator Dashboard</strong>; admins can override via Admin → Profiles → Upload</li>
+        <li>Use <strong>Edit Profile</strong> to add posts that appear on their public page</li>
+        <li>Viewers can like, comment, and reply on each creator's posts</li>
+        <li>Revenue is tracked per creator — view it in <a href="{{ url_for('admin_analytics') }}" style="color:var(--rose);">Analytics</a></li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Delete Confirm Modal ───────────────────────────────────────────────── -->
+<div class="delete-modal" id="delete-modal" style="display:none;">
+  <div class="delete-modal-box">
+    <div style="font-size:2.5rem;margin-bottom:.75rem;">🗑</div>
+    <h3>Delete Creator?</h3>
+    <p id="delete-modal-msg">This will permanently delete the creator and all their posts. This cannot be undone.</p>
+    <form method="POST" id="delete-form">
+      <div style="display:flex;gap:.75rem;justify-content:center;">
+        <button type="submit" class="btn btn-danger">Yes, Delete</button>
+        <button type="button" class="btn btn-ghost" onclick="closeDeleteModal()">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function confirmDelete(id, name) {
+  document.getElementById('delete-modal-msg').textContent =
+    'Delete "' + name + '"? This will permanently remove their profile and all posts. Cannot be undone.';
+  document.getElementById('delete-form').action = '/admin/profiles/' + id + '/delete';
+  document.getElementById('delete-modal').style.display = 'flex';
+}
+function closeDeleteModal() {
+  document.getElementById('delete-modal').style.display = 'none';
+}
+document.getElementById('delete-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeDeleteModal();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDeleteModal(); });
+</script>
+{% endblock %}

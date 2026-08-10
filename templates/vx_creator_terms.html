@@ -1,0 +1,30 @@
+{% extends 'vx_base.html' %}
+{% block title %}Terms & Conditions — VaultX{% endblock %}
+{% block content %}
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#1a1a3e 0%,#0d0d1a 70%)">
+  <div class="card" style="max-width:600px;width:90%">
+    <div style="text-align:center;margin-bottom:1.5rem">
+      <div style="font-size:2rem;font-weight:900;color:var(--rose)">Vault<span style="color:var(--gold)">X</span></div>
+      <h2 style="margin-top:.5rem;font-size:1.2rem">Creator Agreement</h2>
+      <p style="color:var(--muted);font-size:.88rem">Please read and accept before continuing.</p>
+    </div>
+    <div style="background:#1a1a30;border-radius:9px;padding:1.2rem;max-height:320px;overflow-y:auto;font-size:.88rem;line-height:1.7;color:#ccc;margin-bottom:1.5rem">
+      <strong style="color:var(--rose)">📋 Terms &amp; Conditions</strong><br/><br/>
+      By creating and using your VaultX creator account, you agree to the following:<br/><br/>
+      <strong>Content Rules:</strong> All content must comply with platform guidelines. No illegal, harmful, or non-consensual content. You are responsible for content you upload.<br/><br/>
+      <strong>Payment Rules:</strong> All subscriber payments flow through VaultX first. Revenue is split automatically per the platform split rates. You cannot accept direct payments outside the platform.<br/><br/>
+      <strong>Withdrawal Rules:</strong> Withdrawals are only processed on <strong>Wednesdays and Saturdays</strong>. Minimum processing time is 24–72 hours after admin approval. You must maintain a valid payout method to request withdrawals.<br/><br/>
+      <strong>Privacy Rules:</strong> Subscriber data is confidential. You may not contact subscribers outside the platform DM system for commercial purposes. Data protection laws apply.<br/><br/>
+      <strong>Age Verification:</strong> You confirm you are 18 years of age or older. All content featuring real people must have documented consent from all parties.<br/><br/>
+      <strong>Platform Control:</strong> VaultX admin reserves the right to suspend, restrict, or remove any creator account that violates these terms. Revenue held in your balance during suspension is subject to review.
+    </div>
+    <form method="POST">
+      <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.2rem;background:#1a1a30;padding:1rem;border-radius:9px">
+        <input type="checkbox" name="agreed" id="agreed" required style="width:20px;height:20px;accent-color:var(--rose)"/>
+        <label for="agreed" style="font-size:.9rem;cursor:pointer">I have read and agree to all terms, payment rules, withdrawal rules, privacy rules, and confirm I am 18 years or older.</label>
+      </div>
+      <button class="btn btn-rose" type="submit" style="width:100%">✅ Accept &amp; Continue to Dashboard</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

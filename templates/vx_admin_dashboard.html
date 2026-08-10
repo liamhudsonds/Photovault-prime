@@ -1,0 +1,103 @@
+{% extends 'vx_base.html' %}
+{% block title %}VaultX Admin — Revenue Hub{% endblock %}
+{% block navbar %}
+<div class="navbar">
+  <div class="brand">Vault<span>X</span></div>
+  <nav>
+    <a href="/admin/vaultx" class="active">Dashboard</a>
+    <a href="/admin/vaultx/withdrawals">Withdrawals</a>
+    <a href="/admin/vaultx/transactions">Transactions</a>
+    <a href="/admin/vaultx/earnings">Earnings</a>
+    <a href="/admin/vaultx/revenue-split">Revenue Split</a>
+    <a href="/admin/vaultx/telegram-channels">Telegram</a>
+    <a href="/admin/vaultx/send-admin-dm">Admin DM</a>
+    <a href="/admin/vaultx/create-operations-manager">+ Ops Mgr</a>
+
+    <a href="{{ url_for('admin_dashboard') }}"  style="margin-left:1rem;color:var(--muted)">← Main Admin</a>
+  </nav>
+</div>
+{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <h1>💎 VaultX Revenue Hub</h1>
+    <p>Full financial control — every dollar tracked, split, and controlled by you.</p>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="val">${{"%.2f"|format(total_revenue)}}</div>
+      <div class="lbl">Total Revenue</div>
+    </div>
+    <div class="stat-card">
+      <div class="val">${{"%.2f"|format(platform_earnings)}}</div>
+      <div class="lbl">Platform Earnings</div>
+    </div>
+    <div class="stat-card">
+      <div class="val">{{pending_withdrawals}}</div>
+      <div class="lbl">Pending Withdrawals</div>
+    </div>
+    <div class="stat-card">
+      <div class="val">{{total_subscribers}}</div>
+      <div class="lbl">Subscribers</div>
+    </div>
+    <div class="stat-card">
+      <div class="val">{{total_creators}}</div>
+      <div class="lbl">Creators</div>
+    </div>
+    <div class="stat-card">
+      <div class="val">{{total_managers}}</div>
+      <div class="lbl">Junior Creators</div>
+    </div>
+    <div class="stat-card">
+      <div class="val">{{total_ops}}</div>
+      <div class="lbl">Ops Managers</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem">
+    <div class="card">
+      <div class="card-title">⚙️ Revenue Split</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+        <div class="stat-card"><div class="val">{{split.creator_pct}}%</div><div class="lbl">Creator</div></div>
+        <div class="stat-card"><div class="val">{{split.manager_pct}}%</div><div class="lbl">Junior Creator</div></div>
+        <div class="stat-card"><div class="val">{{split.ops_manager_pct}}%</div><div class="lbl">Ops Manager</div></div>
+        <div class="stat-card"><div class="val">{{split.platform_pct}}%</div><div class="lbl">Platform</div></div>
+      </div>
+      <div style="margin-top:1rem"><a href="/admin/vaultx/revenue-split" class="btn btn-outline btn-sm">Edit Split</a></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🏦 Quick Actions</div>
+      <div style="display:flex;flex-direction:column;gap:.6rem">
+        <a href="/admin/vaultx/withdrawals" class="btn btn-rose">💸 Review Withdrawals ({{pending_withdrawals}} pending)</a>
+        <a href="/admin/vaultx/mark-available" class="btn btn-outline" onclick="return confirm('Release all pending earnings to available?')">🔓 Release All Earnings</a>
+        <a href="/admin/vaultx/send-admin-dm" class="btn btn-outline">📢 Send Platform Notice</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔄 Recent Transactions</div>
+    <table class="table">
+      <thead><tr><th>Ref</th><th>Type</th><th>Amount</th><th>Profile</th><th>Status</th><th>Date</th></tr></thead>
+      <tbody>
+      {% for tx in recent_txs %}
+      <tr>
+        <td style="font-family:monospace;font-size:.8rem">{{tx.reference}}</td>
+        <td><span class="badge badge-rose">{{tx.content_type}}</span></td>
+        <td style="color:var(--gold);font-weight:700">${{"%.2f"|format(tx.gross_amount)}}</td>
+        <td>{{tx.profile.name if tx.profile else '—'}}</td>
+        <td>
+          {% if tx.status == 'completed' %}<span class="badge badge-green">✓ {{tx.status}}</span>
+          {% elif tx.status == 'pending' %}<span class="badge badge-amber">⏳ {{tx.status}}</span>
+          {% else %}<span class="badge badge-red">{{tx.status}}</span>{% endif %}
+        </td>
+        <td style="color:var(--muted);font-size:.82rem">{{tx.created_at.strftime('%b %d, %Y %H:%M')}}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <div style="margin-top:1rem"><a href="/admin/vaultx/transactions" class="btn btn-outline btn-sm">View All →</a></div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,1601 @@
+{% extends 'base.html' %}
+{% block title %}{{ profile.name }} — PhotoVault{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Cormorant+Garamond:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root { --accent: {{ profile.accent_color }}; --accent-dim: {{ profile.accent_color }}22; --accent-glow: {{ profile.accent_color }}18; }
+
+:root{
+  --bg:#0a0a0c;
+  --bg2:#111118;
+
+  --surface:#15151d;
+
+  --border:#23232d;
+
+  --text:#f5f5f7;
+  --text2:#b8b8c2;
+  --text3:#7d7d88;
+
+  --gold:#c9a84c;
+  --gold-dim:#c9a84c22;
+
+  --red:#ff4d6d;
+  --green:#2ecc71;
+
+  --shadow:
+  0 20px 60px rgba(0,0,0,.55);
+}
+
+--─ GLOBAL STYLES ──────────────────────────────────────────────────────────── */
+--font-body:'Inter',sans-serif;
+--font-head:'Cormorant Garamond',serif;
+
+/* ── COVER & HERO ─────────────────────────────────────────────────────────── */
+.profile-cover {
+  height: 320px;
+  position: relative;
+  overflow: hidden;
+}
+.profile-cover img { width:100%; height:100%; object-fit:cover; }
+.profile-cover-placeholder {
+  width:100%; height:100%;
+  background: linear-gradient(135deg, var(--accent-dim), #111118 60%, var(--accent-dim));
+}
+.profile-cover::after {
+  content:'';
+  position:absolute; inset:0;
+  background: linear-gradient(to bottom, transparent 40%, rgba(10,10,12,0.95) 100%);
+}
+
+/* ── PROFILE INFO BAR ─────────────────────────────────────────────────────── */
+.profile-info-bar {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  display: flex;
+  align-items: flex-end;
+  gap: 1.5rem;
+  margin-top: -80px;
+  position: relative;
+  z-index: 2;
+  flex-wrap: wrap;
+}
+.profile-avatar-lg {
+  width: 120px; height: 120px;
+  border-radius: 50%;
+  border: 4px solid #0a0a0c;
+  object-fit: cover;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 3px var(--accent);
+}
+.profile-avatar-lg-placeholder {
+  width: 120px; height: 120px;
+  border-radius: 50%;
+  border: 4px solid #0a0a0c;
+  background: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-head);
+  font-size: 2.5rem; color: #0a0a0c;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 3px var(--accent);
+}
+.profile-text { flex: 1; min-width: 200px; padding-bottom: .5rem; }
+.profile-name {
+  font-family: var(--font-head);
+  font-size: 2rem;
+  color: var(--text);
+  margin-bottom: .1rem;
+}
+.profile-handle { font-size: .82rem; color: var(--text3); letter-spacing: .08em; }
+.profile-category-badge {
+  display: inline-block;
+  font-size: .68rem; letter-spacing: .12em; text-transform: uppercase;
+  padding: 4px 14px; border-radius: 100px;
+  background: var(--accent-dim); color: var(--accent);
+  border: 1px solid var(--accent-glow);
+  margin-top: .4rem;
+}
+.profile-tagline {
+  font-size: .92rem; color: var(--text2); margin-top: .4rem; line-height: 1.5;
+}
+.profile-stats-row {
+  display: flex; gap: 2rem; flex-wrap: wrap;
+  padding: 1rem 0;
+}
+.psr-item { display: flex; flex-direction: column; }
+.psr-num   { font-family: var(--font-head); font-size: 1.4rem; color: var(--accent); }
+.psr-label { font-size: .7rem; color: var(--text3); letter-spacing: .08em; text-transform: uppercase; }
+
+/* ── MAIN LAYOUT ──────────────────────────────────────────────────────────── */
+.profile-layout {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 2.5rem;
+  align-items: start;
+}
+@media(max-width:860px){ .profile-layout{grid-template-columns:1fr;} }
+
+/* ── POSTS FEED ──────────────────────────────────────────────────────────── */
+.posts-feed { display: flex; flex-direction: column; gap: 2rem; }
+.post-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+  animation: postReveal .4s ease both;
+}
+@keyframes postReveal { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+
+.post-card-header {
+  display: flex; align-items: center; gap: .75rem;
+  padding: 1rem 1.25rem;
+}
+.post-mini-avatar {
+  width: 38px; height: 38px; border-radius: 50%; object-fit: cover;
+  border: 2px solid var(--accent);
+}
+.post-mini-avatar-placeholder {
+  width: 38px; height: 38px; border-radius: 50%;
+  background: var(--accent); display: flex; align-items: center; justify-content: center;
+  font-size: .9rem; color: #0a0a0c; font-family: var(--font-head); border: 2px solid var(--accent);
+}
+.post-header-name { font-size: .88rem; color: var(--text); font-weight: 500; }
+.post-header-time { font-size: .72rem; color: var(--text3); margin-left: auto; }
+
+/* Post media */
+.post-media {
+  position: relative;
+  overflow: hidden;
+  max-height: 500px;
+}
+.post-media img, .post-media video {
+  width: 100%; display: block;
+  object-fit: cover;
+  max-height: 500px;
+  transition: transform .4s;
+}
+.post-card:hover .post-media img { transform: scale(1.02); }
+
+/* Blur overlay for locked post media */
+.post-media .blur-media {
+  /* blur-strength set inline via style attribute */
+  transition: filter .3s;
+}
+.post-media-overlay {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(10,10,12,0.35);
+  pointer-events: none;
+}
+
+/* Post body */
+.post-body { padding: 1rem 1.25rem; }
+.post-title { font-family: var(--font-head); font-size: 1.05rem; color: var(--text); margin-bottom: .3rem; }
+.post-caption { font-size: .88rem; color: var(--text2); line-height: 1.65; margin-bottom: 1rem; }
+
+/* Engage row */
+.post-engage {
+  display: flex; align-items: center; gap: 1rem;
+  padding: .75rem 1.25rem;
+  border-top: 1px solid var(--border);
+}
+.post-like-btn {
+  display: flex; align-items: center; gap: 6px;
+  background: none; border: 1px solid var(--border);
+  color: var(--text2); font-size: .82rem;
+  padding: 6px 14px; border-radius: 100px; cursor: pointer;
+  transition: all .2s; font-family: var(--font-body);
+}
+.post-like-btn:hover { border-color: #ff4757; color: #ff4757; }
+.post-like-btn.liked { border-color: #ff4757; color: #ff4757; background: rgba(255,71,87,0.08); }
+.post-comment-toggle {
+  display: flex; align-items: center; gap: 6px;
+  background: none; border: 1px solid var(--border);
+  color: var(--text2); font-size: .82rem;
+  padding: 6px 14px; border-radius: 100px; cursor: pointer;
+  transition: all .2s; font-family: var(--font-body);
+}
+.post-comment-toggle:hover { border-color: var(--accent); color: var(--accent); }
+.post-views { margin-left: auto; font-size: .75rem; color: var(--text3); }
+
+/* Unlock CTA on post */
+.post-unlock-cta {
+  display: inline-block;
+  padding: 8px 20px; border-radius: 100px;
+  font-size: .78rem; letter-spacing: .06em;
+  background: var(--accent); color: #0a0a0c;
+  text-decoration: none; font-weight: 500;
+  transition: opacity .2s;
+  margin-left: auto;
+}
+.post-unlock-cta:hover { opacity: .88; color: #0a0a0c; text-decoration: none; }
+
+/* ── COMMENT SECTION ──────────────────────────────────────────────────────── */
+.post-comments {
+  border-top: 1px solid var(--border);
+  padding: 1rem 1.25rem;
+  display: none;
+  flex-direction: column;
+  gap: .75rem;
+}
+.post-comments.open { display: flex; }
+
+.comment-item {
+  display: flex; gap: .6rem; align-items: flex-start;
+}
+.comment-bubble-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--accent-dim); border: 1px solid var(--accent-glow);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .8rem; color: var(--accent); flex-shrink: 0;
+}
+.comment-bubble {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 12px 12px 12px 4px;
+  padding: .5rem .85rem; flex: 1;
+  font-size: .82rem; color: var(--text2); line-height: 1.5;
+}
+.comment-bubble strong { color: var(--text); display: block; font-size: .75rem; margin-bottom: .1rem; }
+.comment-emoji { font-size: 1rem; margin-right: .25rem; }
+
+/* Comment input */
+.comment-input-wrap {
+  display: flex; gap: .5rem; align-items: flex-end;
+  border-top: 1px solid var(--border);
+  padding-top: .75rem;
+}
+
+/* ─────────────────────────────────────────
+   PROFESSIONAL LOCKED CONTENT OVERLAY
+───────────────────────────────────────── */
+
+.post-media-overlay{
+  position:absolute;
+  inset:0;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  background:
+  linear-gradient(
+    to bottom,
+    rgba(0,0,0,.18),
+    rgba(0,0,0,.55)
+  );
+
+  padding:1.5rem;
+}
+
+.locked-card{
+  width:min(100%, 340px);
+
+  background:
+  rgba(10,10,12,.68);
+
+  backdrop-filter:blur(18px);
+
+  border:
+  1px solid rgba(255,255,255,.08);
+
+  border-radius:24px;
+
+  padding:1.5rem;
+
+  text-align:center;
+
+  box-shadow:
+  0 20px 60px rgba(0,0,0,.45);
+
+  animation:lockedReveal .35s ease;
+}
+
+@keyframes lockedReveal{
+  from{
+    opacity:0;
+    transform:translateY(12px) scale(.96);
+  }
+
+  to{
+    opacity:1;
+    transform:translateY(0) scale(1);
+  }
+}
+
+.lock-icon{
+  font-size:2.2rem;
+  margin-bottom:.75rem;
+}
+
+.locked-title{
+  font-family:var(--font-head);
+  font-size:1.15rem;
+  color:var(--text);
+
+  margin-bottom:.45rem;
+}
+
+.locked-text{
+  font-size:.82rem;
+  line-height:1.6;
+
+  color:var(--text2);
+
+  margin-bottom:1.2rem;
+}
+
+/* PREMIUM BUTTON */
+
+.premium-unlock-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+
+  gap:.45rem;
+
+  width:100%;
+
+  padding:.95rem 1rem;
+
+  border-radius:16px;
+
+  font-size:.82rem;
+  font-weight:600;
+  letter-spacing:.03em;
+
+  text-decoration:none;
+
+  color:#0a0a0c !important;
+
+  background:
+  linear-gradient(
+    135deg,
+    var(--accent),
+    rgba(255,255,255,.22)
+  );
+
+  box-shadow:
+  0 12px 30px var(--accent-glow);
+
+  transition:
+  transform .25s,
+  box-shadow .25s,
+  opacity .25s;
+}
+
+.premium-unlock-btn:hover{
+  transform:translateY(-2px) scale(1.02);
+
+  box-shadow:
+  0 18px 40px var(--accent-glow);
+
+  opacity:.95;
+}
+
+/* ─────────────────────────────────────────
+   CREATOR DETAILS
+───────────────────────────────────────── */
+
+.creator-meta-item{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+
+  padding:.9rem 0;
+
+  border-bottom:1px solid var(--border);
+}
+
+.creator-meta-item:last-child{
+  border-bottom:none;
+  padding-bottom:0;
+}
+
+.creator-meta-item span{
+  font-size:.78rem;
+  color:var(--text3);
+
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+
+.creator-meta-item strong{
+  font-size:.85rem;
+  color:var(--text);
+
+  font-weight:600;
+}
+
+.comment-name-input {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text);
+  font-family: var(--font-body); font-size: .8rem;
+  padding: .45rem .75rem; outline: none; width: 130px; flex-shrink: 0;
+}
+.comment-text-input {
+  flex: 1; background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 100px; color: var(--text);
+  font-family: var(--font-body); font-size: .82rem;
+  padding: .5rem 1rem; outline: none; resize: none; height: 36px;
+  transition: border-color .2s;
+}
+.comment-text-input:focus { border-color: var(--accent); }
+.emoji-row { display: flex; gap: .25rem; flex-wrap: wrap; margin-bottom: .5rem; }
+.emoji-pick { font-size: 1.1rem; cursor: pointer; padding: 2px; border-radius: 4px; transition: transform .15s; }
+.emoji-pick:hover { transform: scale(1.3); }
+.comment-send-btn {
+  background: var(--accent); color: #0a0a0c;
+  border: none; border-radius: 100px; padding: 6px 16px;
+  font-size: .78rem; font-weight: 500; cursor: pointer;
+  transition: opacity .2s, transform .2s; flex-shrink: 0;
+}
+.comment-send-btn:hover { opacity: .9; transform: scale(1.04); }
+
+/* ── SIDEBAR ──────────────────────────────────────────────────────────────── */
+.profile-sidebar { display: flex; flex-direction: column; gap: 1.5rem; }
+.sidebar-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; overflow: hidden;
+}
+.sidebar-card-head {
+  padding: .9rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-head); font-size: .95rem; color: var(--text);
+  background: var(--bg2);
+}
+.sidebar-card-body { padding: 1.25rem; }
+.profile-bio { font-size: .86rem; color: var(--text2); line-height: 1.75; }
+
+/* Suggested profiles */
+.suggested-profile {
+  display: flex; align-items: center; gap: .75rem;
+  padding: .6rem 0; border-bottom: 1px solid var(--border);
+  text-decoration: none; transition: opacity .15s;
+}
+.suggested-profile:last-child { border-bottom: none; }
+.suggested-profile:hover { opacity: .8; }
+.sug-avatar {
+  width: 40px; height: 40px; border-radius: 50%; object-fit: cover;
+  flex-shrink: 0;
+}
+.sug-avatar-placeholder {
+  width: 40px; height: 40px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .9rem; color: #0a0a0c; font-family: var(--font-head);
+  flex-shrink: 0;
+}
+.sug-name  { font-size: .88rem; color: var(--text); font-weight: 500; }
+.sug-posts { font-size: .72rem; color: var(--text3); }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Cover -->
+<div class="profile-cover animate__animated animate__fadeIn">
+  {% if profile.cover_filename %}
+  <img src="{{ url_for('serve_profile_media', filename=profile.cover_filename) }}" alt="{{ profile.name }} cover">
+  {% else %}
+  <div class="profile-cover-placeholder"></div>
+  {% endif %}
+</div>
+
+<!-- Profile info bar -->
+<div class="profile-info-bar animate__animated animate__fadeInUp">
+  <!-- Avatar with online dot overlay -->
+  <div style="position:relative;display:inline-block;flex-shrink:0;">
+    {% if profile.avatar_filename %}
+    <img class="profile-avatar-lg" id="profile-avatar-img"
+         src="{{ url_for('serve_profile_media', filename=profile.avatar_filename) }}"
+         alt="{{ profile.name }}"
+         style="border:3px solid transparent;transition:border-color .4s;">
+    {% else %}
+    <div class="profile-avatar-lg-placeholder" id="profile-avatar-img">{{ profile.name[0].upper() }}</div>
+    {% endif %}
+    <!-- Green online dot — shown/hidden by JS -->
+    <span id="avatar-online-dot"
+          style="display:none;position:absolute;bottom:4px;right:4px;
+                 width:16px;height:16px;border-radius:50%;background:#22c55e;
+                 border:2.5px solid #0a0a0c;box-shadow:0 0 8px #22c55e;
+                 animation:online-pulse 2s infinite;z-index:10;"></span>
+  </div>
+  <style>
+    @keyframes online-pulse{0%,100%{box-shadow:0 0 6px #22c55e}50%{box-shadow:0 0 14px #22c55e,0 0 20px #22c55e}}
+  </style>
+
+  <div class="profile-text">
+    <div class="profile-name">
+      {{ profile.name }}
+      {% if profile.is_verified %}
+      <span class="verified-bdge" title="Verified">✔️</span>
+      {% endif %}
+    </div>
+    <div class="profile-handle">@{{ profile.username }}</div>
+    {% if profile.category %}
+    <span class="profile-category-badge">{{ profile.category }}</span>
+    {% endif %}
+    {% if profile.tagline %}
+    <div class="profile-tagline">{{ profile.tagline }}</div>
+    {% endif %}
+    <div class="profile-stats-row">
+      <div class="psr-item"><span class="psr-num">{{ posts|length }}</span><span class="psr-label">Posts</span></div>
+      <div class="psr-item"><span class="psr-num" id="follower-count">{{ follower_count or 0 }}</span><span class="psr-label">Followers</span></div>
+      <div class="psr-item"><span class="psr-num" id="sub-count">{{ subscriber_count or 0 }}</span><span class="psr-label">Subscribers</span></div>
+      <div class="psr-item"><span class="psr-num" id="profile-like-count">{{ like_count or 0 }}</span><span class="psr-label">Likes</span></div>
+      {% if profile.country_code %}
+      <div class="psr-item">
+        <span class="psr-num" style="font-size:1.5rem;">{{ COUNTRY_FLAGS.get(profile.country_code, '🌍') }}</span>
+        <span class="psr-label">{{ COUNTRY_NAMES.get(profile.country_code, profile.country_code) }}</span>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Online status -->
+    <div id="online-status-bar" style="display:none;align-items:center;gap:.4rem;margin-top:.4rem;">
+      <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#2ecc71;box-shadow:0 0 7px #2ecc71;animation:pg 2s infinite;flex-shrink:0;"></span>
+      <span style="font-size:.78rem;color:#2ecc71;font-weight:500;">{{ profile.name }} is online now</span>
+    </div>
+    <div id="last-seen-bar" style="font-size:.73rem;color:var(--text3);margin-top:.25rem;display:none;"></div>
+    <style>@keyframes pg{0%,100%{opacity:1}50%{opacity:.45}}</style>
+
+    <!-- Action buttons -->
+    <!-- Admin is a platform moderator, not a creator/subscriber: these
+         engagement actions are hidden entirely when is_admin_viewer is true. -->
+    {% if not is_admin_viewer %}
+    <div style="display:flex;gap:.45rem;flex-wrap:wrap;margin-top:.85rem;">
+      <button id="follow-btn" onclick="toggleFollow()"
+        style="display:inline-flex;align-items:center;gap:.3rem;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border:none;padding:.5rem 1.1rem;border-radius:100px;cursor:pointer;font-size:.82rem;font-weight:600;transition:all .2s;">
+        ➕ Follow
+      </button>
+      <button id="like-profile-btn" onclick="toggleProfileLike()"
+        style="display:inline-flex;align-items:center;gap:.3rem;background:none;border:1.5px solid #ff4757;color:#ff4757;padding:.5rem 1rem;border-radius:100px;cursor:pointer;font-size:.82rem;transition:all .2s;">
+        🤍 Like
+      </button>
+      <button onclick="openDMModal()"
+        style="display:inline-flex;align-items:center;gap:.3rem;background:linear-gradient(135deg,#0ea5e9,#2563eb);color:#fff;border:none;padding:.5rem 1rem;border-radius:100px;cursor:pointer;font-size:.82rem;font-weight:600;transition:all .2s;">
+        ✉️ Message
+      </button>
+      <button id="sub-btn" onclick="openSubscribeModal()"
+        style="display:inline-flex;align-items:center;gap:.3rem;background:linear-gradient(135deg,#c9a84c,#f59e0b);color:#0a0a0c;border:none;padding:.5rem 1.1rem;border-radius:100px;cursor:pointer;font-size:.82rem;font-weight:700;transition:all .2s;">
+        ⭐ Subscribe
+      </button>
+      <!-- Go Live button — only shown to the creator's own manager (true owner), never to admin -->
+      {% if is_owner and not is_admin_viewer %}
+      <button onclick="openGoLiveModal()"
+        style="display:inline-flex;align-items:center;gap:.3rem;
+               background:linear-gradient(135deg,#dc2626,#ff4757);
+               color:#fff;border:none;padding:.5rem 1.2rem;
+               border-radius:100px;cursor:pointer;font-size:.82rem;
+               font-weight:700;transition:all .2s;
+               box-shadow:0 4px 20px rgba(220,38,38,.4);
+               animation:live-pulse 2s infinite;">
+        🔴 Go Live
+      </button>
+      <style>
+        @keyframes live-pulse{0%,100%{box-shadow:0 4px 20px rgba(220,38,38,.4)}
+        50%{box-shadow:0 4px 32px rgba(220,38,38,.75)}}
+      </style>
+      {% endif %}
+      <button onclick="shareProfile()"
+        style="display:inline-flex;align-items:center;gap:.3rem;background:none;border:1px solid #333;color:#888;padding:.5rem 1rem;border-radius:100px;cursor:pointer;font-size:.82rem;transition:all .2s;">
+        🔗 Share
+      </button>
+    </div>
+    {% else %}
+    <!-- Admin viewing as moderator: no creator engagement actions, view/moderate only -->
+    <div style="display:flex;align-items:center;gap:.5rem;margin-top:.85rem;">
+      <span style="display:inline-flex;align-items:center;gap:.35rem;background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.3);color:#a78bfa;padding:.45rem 1rem;border-radius:100px;font-size:.78rem;font-weight:600;">
+        🛡️ Viewing as Admin — Moderation Mode
+      </span>
+      <button onclick="shareProfile()"
+        style="display:inline-flex;align-items:center;gap:.3rem;background:none;border:1px solid #333;color:#888;padding:.5rem 1rem;border-radius:100px;cursor:pointer;font-size:.82rem;transition:all .2s;">
+        🔗 Share
+      </button>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="creator-tabs-wrapper">
+  <div class="creator-tabs">
+    <button class="active" onclick="switchProfileTab(this,'all')">Posts</button>
+    <button onclick="switchProfileTab(this,'photo')">Photos</button>
+    <button onclick="switchProfileTab(this,'video')">Videos</button>
+    <button onclick="switchProfileTab(this,'premium')">Premium</button>
+  </div>
+</div>
+
+<!-- Main layout -->
+<div class="profile-layout">
+
+  <!-- ── Posts feed ──────────────────────────────────────────────────────── -->
+  <div class="posts-feed">
+    {% if posts %}
+    {% for post in posts %}
+    <div class="post-card" data-type="{{ post.post_type }}" data-premium="{{ 'yes' if post.blur_strength > 0 else 'no' }}" style="animation-delay:{{ loop.index0 * 0.1 }}s;">
+
+      <!-- Post header -->
+      <div class="post-card-header">
+        {% if profile.avatar_filename %}
+        <img class="post-mini-avatar" src="{{ url_for('serve_profile_media', filename=profile.avatar_filename) }}" alt="">
+        {% else %}
+        <div class="post-mini-avatar-placeholder" style="background:{{ profile.accent_color }};">{{ profile.name[0].upper() }}</div>
+        {% endif %}
+        <div>
+          <div class="post-header-name">{{ profile.name }}</div>
+          <div style="font-size:.7rem;color:var(--text3);">@{{ profile.username }}</div>
+        </div>
+        <div class="post-header-time">{{ post.created_at.strftime('%b %d, %Y') }}</div>
+      </div>
+
+      <!-- Media -->
+      <div class="post-media">
+        {% set blur = 0 if (is_owner or post.is_owner_view) else post.blur_strength %}
+
+        {% if post.media_filename %}
+
+          {% if post.post_type == 'video' %}
+          <video class="blur-media"
+                style="filter:blur({{ blur }}px) brightness({{ 0.9 - blur*0.02 }});"
+                muted autoplay loop playsinline>
+            <source src="{{ url_for('serve_post_media', filename=post.media_filename) }}"
+                    type="video/mp4">
+          </video>
+
+          {% else %}
+          <img class="blur-media"
+              style="filter:blur({{ blur }}px) brightness({{ 0.9 - blur*0.02 }});"
+              src="{{ url_for('serve_post_media', filename=post.media_filename) }}"
+              alt="{{ post.title }}"
+              loading="lazy">
+          {% endif %}
+
+        {% elif post.photo_id and post.linked_photo %}
+
+          <img class="blur-media"
+              style="filter:blur({{ blur }}px) brightness({{ 0.9 - blur*0.02 }});"
+              src="{{ url_for('serve_preview', photo_id=post.linked_photo.id) }}"
+              alt="{{ post.title }}"
+              loading="lazy">
+
+        {% elif post.video_id and post.linked_video %}
+          <video class="blur-media"
+                style="filter:blur({{ blur }}px) brightness({{ 0.9 - blur*0.02 }});"
+                muted {% if blur == 0 %}autoplay loop{% endif %} playsinline
+                preload="metadata">
+            <source src="{{ url_for('serve_video_stream', video_id=post.linked_video.id) }}" type="video/mp4">
+          </video>
+
+        {% endif %}
+
+        {% if blur > 0 %}
+        <div class="post-media-overlay">
+
+          <div class="locked-card">
+
+            <div class="lock-icon">🔒</div>
+
+            <div class="locked-title">
+              Exclusive Content
+            </div>
+
+            <div class="locked-text">
+              Unlock to continue viewing this premium content.
+            </div>
+
+            {% if post.linked_photo %}
+            <a href="{{ url_for('photo_detail', photo_id=post.linked_photo.id) }}"
+              class="post-unlock-cta premium-unlock-btn">
+
+              🔓 Unlock Full Image —
+              ${{ '%.2f'|format(post.linked_photo.unlock_price) }}
+
+            </a>
+
+            {% elif post.linked_video %}
+            <a href="{{ url_for('video_detail', video_id=post.linked_video.id) }}"
+              class="post-unlock-cta premium-unlock-btn">
+
+              ▶ Unlock Full Video —
+              ${{ '%.2f'|format(post.linked_video.unlock_price) }}
+
+            </a>
+            {% endif %}
+
+          </div>
+
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Post body -->
+      <div class="post-body">
+        {% if post.title %}<div class="post-title">{{ post.title }}</div>{% endif %}
+        {% if post.caption %}<div class="post-caption">{{ post.caption }}</div>{% endif %}
+        {% if post.photo_id and post.linked_photo and post.blur_strength == 0 %}
+        <a href="{{ url_for('photo_detail', photo_id=post.linked_photo.id) }}"
+           class="post-unlock-cta" style="background:{{ profile.accent_color }};">
+          🔓 Unlock Full Image — ${{ '%.2f'|format(post.linked_photo.unlock_price) }}
+        </a>
+        {% elif post.video_id and post.linked_video and post.blur_strength == 0 %}
+        <a href="{{ url_for('video_detail', video_id=post.linked_video.id) }}"
+           class="post-unlock-cta" style="background:{{ profile.accent_color }};">
+          ▶ Unlock Full Video — ${{ '%.2f'|format(post.linked_video.unlock_price) }}
+        </a>
+        {% endif %}
+      </div>
+
+      <!-- Engage -->
+      <div class="post-engage">
+        <button class="post-like-btn {% if post.i_liked %}liked{% endif %}"
+                data-post="{{ post.id }}"
+                onclick="togglePostLike(this, {{ post.id }})">
+          <span class="like-heart">{% if post.i_liked %}♥{% else %}♡{% endif %}</span>
+          <span class="like-num">{{ post.like_count }}</span>
+        </button>
+        <button class="post-comment-toggle" onclick="toggleComments({{ post.id }})">
+          💬 <span class="comment-num-{{ post.id }}">{{ post.comment_count }}</span>
+        </button>
+        <span class="post-views">👁 {{ post.view_count }}</span>
+      </div>
+
+      <!-- Comments -->
+      <div class="post-comments" id="comments-{{ post.id }}">
+        <!-- Emoji bar -->
+        <div class="emoji-row" id="emoji-row-{{ post.id }}">
+          {% for em in ['😍','🔥','💯','👏','😮','❤️','🎉','👌'] %}
+          <span class="emoji-pick" onclick="quickEmoji({{ post.id }}, '{{ em }}')">{{ em }}</span>
+          {% endfor %}
+        </div>
+        <!-- Comment list loaded via JS -->
+        <div id="comment-list-{{ post.id }}"></div>
+        <!-- Input -->
+        <div class="comment-input-wrap">
+          <input class="comment-name-input" id="name-{{ post.id }}" placeholder="Your name" maxlength="60">
+          <input class="comment-text-input" id="text-{{ post.id }}" placeholder="Say something…" maxlength="500"
+                 onkeydown="if(event.key==='Enter')sendComment({{ post.id }})">
+          <button class="comment-send-btn" onclick="sendComment({{ post.id }})">Send</button>
+        </div>
+      </div>
+
+    </div>
+    {% endfor %}
+
+    {% else %}
+    <div style="text-align:center;padding:4rem 2rem;color:var(--text3);">
+      <div style="font-size:3rem;opacity:.3;margin-bottom:1rem;">📭</div>
+      <p>No posts yet. Check back soon!</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ── Sidebar ─────────────────────────────────────────────────────────── -->
+  <aside class="profile-sidebar animate__animated animate__fadeInRight">
+
+    <!-- Bio -->
+    {% if profile.bio %}
+    <div class="sidebar-card">
+      <div class="sidebar-card-head">About {{ profile.name }}</div>
+      <div class="sidebar-card-body">
+        <div class="profile-bio">{{ profile.bio }}</div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Creator Details -->
+    <div class="sidebar-card">
+      <div class="sidebar-card-head">Creator Details</div>
+
+      <div class="sidebar-card-body">
+
+        <div class="creator-meta-item">
+          <span>Subscription</span>
+          <strong>$9.99/month</strong>
+        </div>
+
+        <div class="creator-meta-item">
+          <span>Content</span>
+          <strong>{{ posts|length }} posts</strong>
+        </div>
+
+        <div class="creator-meta-item">
+          <span>Joined</span>
+          <strong>{{ profile.created_at.strftime('%b %Y') if profile.created_at else '—' }}</strong>
+        </div>
+
+        {% if profile.country_code %}
+        <div class="creator-meta-item">
+          <span>Country</span>
+          <strong>
+            {{ COUNTRY_FLAGS.get(profile.country_code, '🌍') }}
+            {{ COUNTRY_NAMES.get(profile.country_code, profile.country_code) }}
+          </strong>
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+
+    <!-- Other profiles -->
+    {% if others %}
+    <div class="sidebar-card">
+      <div class="sidebar-card-head">More Creators</div>
+
+      <div class="sidebar-card-body" style="padding:.5rem .75rem;">
+
+        {% for other in others %}
+        <a class="suggested-profile"
+          href="{{ url_for('profile_page', username=other.username) }}">
+
+          {% if other.avatar_filename %}
+          <img class="sug-avatar"
+              src="{{ url_for('serve_profile_media', filename=other.avatar_filename) }}"
+              alt="">
+          {% else %}
+          <div class="sug-avatar-placeholder"
+              style="background:{{ other.accent_color }};color:#0a0a0c;">
+            {{ other.name[0].upper() }}
+          </div>
+          {% endif %}
+
+          <div>
+            <div class="sug-name">{{ other.name }}</div>
+            <div class="sug-posts">@{{ other.username }}</div>
+          </div>
+
+        </a>
+        {% endfor %}
+
+        <a href="{{ url_for('public_profiles') }}"
+          style="display:block;text-align:center;font-size:.78rem;color:var(--text3);margin-top:.75rem;">
+
+          View all creators →
+
+        </a>
+
+      </div>
+      <div class="sidebar-card">
+        <div class="sidebar-card-head">Social Links</div>
+
+        <div class="sidebar-card-body social-links" style="display:flex;gap:1rem;flex-wrap:wrap;">
+          <a href="#">Instagram</a>
+          <a href="#">Twitter</a>
+          <a href="#">TikTok</a>
+        </div>
+          <!-- Social link icons would go here -->
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+  </aside>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const ACCENT = '{{ profile.accent_color }}';
+
+// ── Profile tab switching ───────────────────────────────────────────────────
+function switchProfileTab(btn, filter) {
+  document.querySelectorAll('.creator-tabs button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.post-card').forEach(card => {
+    const type    = card.dataset.type;
+    const premium = card.dataset.premium;
+    let show = false;
+    if (filter === 'all') show = true;
+    else if (filter === 'photo') show = (type === 'photo');
+    else if (filter === 'video') show = (type === 'video');
+    else if (filter === 'premium') show = (premium === 'yes');
+    card.style.display = show ? '' : 'none';
+  });
+}
+
+// ── Toggle like ────────────────────────────────────────────────────────────
+function togglePostLike(btn, postId) {
+  fetch('/api/post/' + postId + '/like', {method:'POST'})
+    .then(r => r.json())
+    .then(d => {
+      btn.querySelector('.like-num').textContent  = d.count;
+      btn.querySelector('.like-heart').textContent = d.liked ? '♥' : '♡';
+      d.liked ? btn.classList.add('liked') : btn.classList.remove('liked');
+      btn.style.transform = 'scale(1.3)';
+      setTimeout(() => btn.style.transform = 'scale(1)', 250);
+    }).catch(() => {});
+}
+
+// ── Toggle comments panel ──────────────────────────────────────────────────
+const openComments = {};
+function toggleComments(postId) {
+  const panel = document.getElementById('comments-' + postId);
+  if (!panel) return;
+  if (openComments[postId]) {
+    panel.classList.remove('open');
+    openComments[postId] = false;
+  } else {
+    panel.classList.add('open');
+    openComments[postId] = true;
+    loadComments(postId);
+  }
+}
+
+// ── Load comments ──────────────────────────────────────────────────────────
+function loadComments(postId) {
+  fetch('/api/post/' + postId + '/comments')
+    .then(r => r.json())
+    .then(comments => {
+      const list = document.getElementById('comment-list-' + postId);
+      if (!list) return;
+      list.innerHTML = '';
+      if (!comments.length) {
+        list.innerHTML = '<div style="font-size:.78rem;color:var(--text3);padding:.25rem 0;">No comments yet — be the first!</div>';
+        return;
+      }
+      comments.forEach(c => {
+        const el = document.createElement('div');
+        el.className = 'comment-item';
+        el.innerHTML = '<div class="comment-bubble-avatar" style="border-color:' + ACCENT + '33;">' +
+          esc(c.author_name.charAt(0).toUpperCase()) + '</div>' +
+          '<div class="comment-bubble">' +
+            '<strong>' + (c.emoji ? '<span class="comment-emoji">' + c.emoji + '</span>' : '') + esc(c.author_name) + ' · ' + c.created_at + '</strong>' +
+            esc(c.body) +
+            (c.is_mine ? '<br><span style="font-size:.68rem;color:var(--text3);cursor:pointer;" onclick="deleteComment(' + c.id + ',this)">delete</span>' : '') +
+          '</div>';
+        list.appendChild(el);
+      });
+    }).catch(() => {});
+}
+
+// ── Send comment ───────────────────────────────────────────────────────────
+function sendComment(postId) {
+  const name = document.getElementById('name-' + postId).value.trim();
+  const text = document.getElementById('text-' + postId).value.trim();
+  if (!text) return;
+  fetch('/api/post/' + postId + '/comment', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({author_name: name || 'Anonymous', body: text})
+  }).then(r => r.json()).then(d => {
+    if (d.error) { alert(d.error); return; }
+    document.getElementById('text-' + postId).value = '';
+    loadComments(postId);
+    // Update count badge
+    const cn = document.querySelector('.comment-num-' + postId);
+    if (cn) cn.textContent = parseInt(cn.textContent || 0) + 1;
+  }).catch(() => {});
+}
+
+// ── Quick emoji comment ────────────────────────────────────────────────────
+function quickEmoji(postId, emoji) {
+  fetch('/api/post/' + postId + '/comment', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({author_name: 'Visitor', body: emoji, emoji: emoji})
+  }).then(r => r.json()).then(d => {
+    if (!d.error) loadComments(postId);
+  }).catch(() => {});
+}
+
+function deleteComment(id, el) {
+  fetch('/api/comment/' + id + '/delete', {method:'POST'})
+    .then(r => r.json()).then(d => { if (d.deleted) el.closest('.comment-item').remove(); });
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Video hover preview on profile post cards (5 sec then blur restores) ─────
+(function() {
+  var ppTimers = {};
+  document.querySelectorAll('.post-media').forEach(function(el) {
+    var vid = el.querySelector('video.blur-media');
+    if (!vid) return;
+    var origFilter = vid.style.filter;
+    el.addEventListener('mouseenter', function() {
+      vid.style.transition = 'filter .5s ease';
+      vid.style.filter = 'blur(2px) brightness(.85)';
+      vid.muted = true;
+      vid.currentTime = 0;
+      vid.play().catch(function(){});
+      var key = el.dataset.id || Math.random();
+      ppTimers[key] = setTimeout(function() {
+        vid.style.filter = origFilter;
+      }, 5000);
+      el._ppKey = key;
+    });
+    el.addEventListener('mouseleave', function() {
+      vid.pause();
+      vid.style.filter = origFilter;
+      clearTimeout(ppTimers[el._ppKey]);
+    });
+  });
+})();
+
+// ── Creator stats & interactive buttons ──────────────────────────────────────
+var PROFILE_ID = parseInt('{{ profile.id }}');
+
+function loadCreatorStats() {
+  fetch('/api/creator/' + PROFILE_ID + '/stats')
+    .then(function(r){ return r.json(); })
+    .then(function(d) {
+      var fc = document.getElementById('follower-count');
+      var sc = document.getElementById('sub-count');
+      var lc = document.getElementById('profile-like-count');
+      var df = document.getElementById('detail-followers');
+      var ds = document.getElementById('detail-subs');
+      if (fc) fc.textContent = d.followers;
+      if (sc) sc.textContent = d.subscribers;
+      if (lc) lc.textContent = d.likes;
+      if (df) df.textContent = d.followers;
+      if (ds) ds.textContent = d.subscribers;
+      var fb = document.getElementById('follow-btn');
+      if (fb) {
+        fb.textContent = d.i_follow ? '✅ Following' : '➕ Follow';
+        fb.style.background   = d.i_follow ? 'rgba(46,204,113,.15)' : 'none';
+        fb.style.borderColor  = d.i_follow ? '#2ecc71' : '';
+        fb.style.color        = d.i_follow ? '#2ecc71' : '';
+      }
+      var lb = document.getElementById('like-profile-btn');
+      if (lb) {
+        lb.textContent   = d.i_like ? '❤️ Liked' : '🤍 Like';
+        lb.style.borderColor = d.i_like ? '#ff4757' : '';
+        lb.style.color   = d.i_like ? '#ff4757' : '';
+      }
+      var sb = document.getElementById('sub-btn');
+      if (sb) {
+        sb.textContent = d.i_sub ? '⭐ Subscribed' : '⭐ Subscribe';
+        sb.style.opacity = d.i_sub ? '.7' : '1';
+      }
+    }).catch(function(){});
+}
+
+if (PROFILE_ID) loadCreatorStats();
+
+function toggleFollow() {
+  fetch('/api/creator/' + PROFILE_ID + '/follow', {method:'POST',headers:{'Content-Type':'application/json'},body:'{"name":"Visitor"}'})
+    .then(function(r){ return r.json(); }).then(function(d) {
+      var fb = document.getElementById('follow-btn');
+      var fc = document.getElementById('follower-count');
+      var df = document.getElementById('detail-followers');
+      if (fc) fc.textContent = d.count;
+      if (df) df.textContent = d.count;
+      if (fb) {
+        fb.textContent = d.followed ? '✅ Following' : '➕ Follow';
+        fb.style.background  = d.followed ? 'rgba(46,204,113,.15)' : 'none';
+        fb.style.borderColor = d.followed ? '#2ecc71' : '';
+        fb.style.color       = d.followed ? '#2ecc71' : '';
+      }
+    }).catch(function(){});
+}
+
+function toggleProfileLike() {
+  fetch('/api/creator/' + PROFILE_ID + '/like', {method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})
+    .then(function(r){ return r.json(); }).then(function(d) {
+      var lb = document.getElementById('like-profile-btn');
+      var lc = document.getElementById('profile-like-count');
+      if (lc) lc.textContent = d.count;
+      if (lb) {
+        lb.textContent   = d.liked ? '❤️ Liked' : '🤍 Like';
+        lb.style.borderColor = d.liked ? '#ff4757' : '';
+        lb.style.color   = d.liked ? '#ff4757' : '';
+      }
+    }).catch(function(){});
+}
+
+function shareProfile() {
+  if (navigator.share) {
+    navigator.share({title:'{{ profile.name }} on PhotoVault', url: window.location.href});
+  } else {
+    navigator.clipboard.writeText(window.location.href)
+      .then(function(){ alert('Profile link copied to clipboard!'); });
+  }
+}
+
+function openMessageModal() {
+  document.getElementById('msg-modal').style.display = 'flex';
+}
+function closeMessageModal() {
+  document.getElementById('msg-modal').style.display = 'none';
+}
+function sendMessage() {
+  var name    = document.getElementById('msg-name').value.trim();
+  var email   = document.getElementById('msg-email').value.trim();
+  var subject = document.getElementById('msg-subject').value.trim();
+  var body    = document.getElementById('msg-body').value.trim();
+  var btn     = document.getElementById('msg-send-btn');
+  if (!body)  { alert('Please write your message.'); return; }
+  btn.disabled = true; btn.textContent = 'Sending…';
+  fetch('/api/creator/' + PROFILE_ID + '/message', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({sender_name:name||'Anonymous', sender_email:email, subject:subject||'New Message', body:body})
+  }).then(function(r){ return r.json(); }).then(function(d) {
+    if (d.error) { alert(d.error); btn.disabled=false; btn.textContent='Send Message'; return; }
+    document.getElementById('msg-success').style.display = 'block';
+    document.getElementById('msg-form-inner').style.display = 'none';
+  }).catch(function(){ alert('Network error.'); btn.disabled=false; btn.textContent='Send Message'; });
+}
+
+function openSubscribeModal() {
+  var sb = document.getElementById('sub-btn');
+  if (sb && sb.textContent.includes('Subscribed')) { doSubscribe(); return; }
+  document.getElementById('sub-modal').style.display = 'flex';
+}
+function closeSubscribeModal() {
+  document.getElementById('sub-modal').style.display = 'none';
+}
+function doSubscribe() {
+  var name  = (document.getElementById('sub-name')||{}).value||'Visitor';
+  var email = (document.getElementById('sub-email')||{}).value||'';
+  var btn   = document.getElementById('sub-btn');
+  fetch('/api/creator/' + PROFILE_ID + '/subscribe', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({name:name, email:email})
+  }).then(function(r){ return r.json(); }).then(function(d) {
+    closeSubscribeModal();
+    if (btn) { btn.textContent = d.subscribed ? '⭐ Subscribed' : '⭐ Subscribe'; btn.style.opacity = d.subscribed?'.7':'1'; }
+    var sc = document.getElementById('sub-count');
+    var ds = document.getElementById('detail-subs');
+    if (sc) sc.textContent = d.count;
+    if (ds) ds.textContent = d.count;
+  }).catch(function(){});
+}
+</script>
+
+<!-- ─ Paid DM Modal ─ -->
+<div id="dm-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9500;align-items:center;justify-content:center;padding:1rem;" onclick="if(event.target===this)closeDMModal()">
+  <div style="background:#15151d;border:1px solid #2563eb44;border-radius:20px;width:min(100%,460px);overflow:hidden;animation:modalIn .25s ease;">
+    <div style="padding:1.25rem 1.5rem;background:linear-gradient(135deg,#0ea5e922,#2563eb22);border-bottom:1px solid #1e3a5f;display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div style="font-family:var(--font-head);font-size:1.1rem;color:#60a5fa;">✉️ Message {{ profile.name }}</div>
+        <div style="font-size:.73rem;color:#93c5fd;margin-top:.15rem;">$2.00 to send a DM directly to their inbox</div>
+      </div>
+      <button onclick="closeDMModal()" style="background:none;border:none;color:#888;font-size:1.2rem;cursor:pointer;">✕</button>
+    </div>
+    <div style="padding:1.5rem;">
+      <div id="dm-form">
+        <div style="margin-bottom:.85rem;"><label style="font-size:.75rem;color:#93c5fd;display:block;margin-bottom:.3rem;">Your Name</label><input id="dm-name" type="text" placeholder="Anonymous" maxlength="100" style="width:100%;box-sizing:border-box;background:#0a0a12;border:1px solid #1e3a5f;border-radius:10px;color:#fff;padding:.6rem .85rem;font-size:.85rem;outline:none;"></div>
+        <div style="margin-bottom:.85rem;"><label style="font-size:.75rem;color:#93c5fd;display:block;margin-bottom:.3rem;">Your Email <span style="opacity:.6;">(for receipt)</span></label><input id="dm-email" type="email" placeholder="you@example.com" style="width:100%;box-sizing:border-box;background:#0a0a12;border:1px solid #1e3a5f;border-radius:10px;color:#fff;padding:.6rem .85rem;font-size:.85rem;outline:none;"></div>
+        <div style="margin-bottom:1.1rem;"><label style="font-size:.75rem;color:#93c5fd;display:block;margin-bottom:.3rem;">Message *</label><textarea id="dm-body" rows="4" placeholder="Write your message to {{ profile.name }}…" maxlength="1000" style="width:100%;box-sizing:border-box;background:#0a0a12;border:1px solid #1e3a5f;border-radius:10px;color:#fff;padding:.6rem .85rem;font-size:.85rem;outline:none;resize:vertical;font-family:inherit;"></textarea></div>
+        <div style="background:#1e3a5f44;border:1px solid #2563eb33;border-radius:12px;padding:.85rem;margin-bottom:1.1rem;font-size:.8rem;color:#93c5fd;">
+          💳 You will be charged <strong style="color:#60a5fa;">$2.00</strong> to unlock this creator's DM inbox and deliver your message.
+        </div>
+        <button id="dm-pay-btn" onclick="initDM()"
+          style="width:100%;padding:.88rem;background:linear-gradient(135deg,#0ea5e9,#2563eb);color:#fff;border:none;border-radius:12px;font-size:.92rem;font-weight:600;cursor:pointer;">
+          💌 Pay $2.00 &amp; Send Message
+        </button>
+      </div>
+      <div id="dm-success" style="display:none;text-align:center;padding:2rem 1rem;">
+        <div style="font-size:3rem;margin-bottom:.5rem;">✅</div>
+        <div style="font-family:var(--font-head);font-size:1.2rem;color:#60a5fa;margin-bottom:.4rem;">Message Delivered!</div>
+        <div style="font-size:.83rem;color:#93c5fd;margin-bottom:1.25rem;">{{ profile.name }} received your message in their DM inbox.</div>
+        <button onclick="closeDMModal()" style="padding:.6rem 1.5rem;background:linear-gradient(135deg,#0ea5e9,#2563eb);color:#fff;border:none;border-radius:10px;font-size:.85rem;font-weight:600;cursor:pointer;">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─ Subscribe Modal ─ -->
+<div id="sub-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9500;align-items:center;justify-content:center;padding:1rem;" onclick="if(event.target===this)closeSubscribeModal()">
+  <div style="background:#15151d;border:1px solid #c9a84c44;border-radius:20px;width:min(100%,420px);overflow:hidden;animation:modalIn .25s ease;">
+    <div style="padding:1.25rem 1.5rem;background:linear-gradient(135deg,#c9a84c22,#f59e0b22);border-bottom:1px solid #c9a84c33;display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-family:var(--font-head);font-size:1.1rem;color:var(--accent);">⭐ Subscribe to {{ profile.name }}</div>
+      <button onclick="closeSubscribeModal()" style="background:none;border:none;color:#888;font-size:1.2rem;cursor:pointer;">✕</button>
+    </div>
+    <div style="padding:1.5rem;">
+      <p style="font-size:.85rem;opacity:.7;margin-bottom:1.1rem;">Get notified about new exclusive content from <strong>{{ profile.name }}</strong>.</p>
+      <div style="margin-bottom:.85rem;"><label style="font-size:.75rem;color:#888;display:block;margin-bottom:.3rem;">Name</label><input id="sub-name" type="text" placeholder="Your name" style="width:100%;box-sizing:border-box;background:#0a0a0c;border:1px solid #222;border-radius:10px;color:#fff;padding:.6rem .85rem;font-size:.85rem;outline:none;"></div>
+      <div style="margin-bottom:1.1rem;"><label style="font-size:.75rem;color:#888;display:block;margin-bottom:.3rem;">Email *</label><input id="sub-email" type="email" placeholder="you@example.com" style="width:100%;box-sizing:border-box;background:#0a0a0c;border:1px solid #222;border-radius:10px;color:#fff;padding:.6rem .85rem;font-size:.85rem;outline:none;"></div>
+      <button onclick="doSubscribe()" style="width:100%;padding:.85rem;background:linear-gradient(135deg,#c9a84c,#f59e0b);color:#0a0a0c;border:none;border-radius:12px;font-size:.92rem;font-weight:600;cursor:pointer;">⭐ Subscribe Now</button>
+    </div>
+  </div>
+</div>
+
+<style>
+@keyframes modalIn { from{transform:scale(.92);opacity:0} to{transform:scale(1);opacity:1} }
+</style>
+
+<script>
+var PROFILE_ID = parseInt('{{ profile.id }}');
+
+// ── Online status ────────────────────────────────────────────────────────────
+(function(){
+  fetch('/api/creator/' + PROFILE_ID + '/online-status')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      var ob   = document.getElementById('online-status-bar');
+      var lb   = document.getElementById('last-seen-bar');
+      var dot  = document.getElementById('avatar-online-dot');
+      var img  = document.getElementById('profile-avatar-img');
+      if(d.online){
+        if(ob){ ob.style.display = 'flex'; }
+        if(dot){ dot.style.display = 'block'; }
+        if(img){ img.style.borderColor = '#22c55e'; img.style.boxShadow = '0 0 0 3px rgba(34,197,94,.25)'; }
+      } else {
+        if(lb && d.last_seen){ lb.textContent = '🕓 Last seen ' + d.last_seen; lb.style.display = 'block'; }
+      }
+    }).catch(function(){});
+  // Re-check every 90 seconds
+  setInterval(function(){
+    fetch('/api/creator/' + PROFILE_ID + '/online-status')
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        var ob  = document.getElementById('online-status-bar');
+        var dot = document.getElementById('avatar-online-dot');
+        var img = document.getElementById('profile-avatar-img');
+        var lb  = document.getElementById('last-seen-bar');
+        if(d.online){
+          if(ob) ob.style.display='flex';
+          if(dot) dot.style.display='block';
+          if(img){ img.style.borderColor='#22c55e'; img.style.boxShadow='0 0 0 3px rgba(34,197,94,.25)'; }
+          if(lb) lb.style.display='none';
+        } else {
+          if(ob) ob.style.display='none';
+          if(dot) dot.style.display='none';
+          if(img){ img.style.borderColor='transparent'; img.style.boxShadow=''; }
+          if(lb && d.last_seen){ lb.textContent='🕓 Last seen ' + d.last_seen; lb.style.display='block'; }
+        }
+      }).catch(function(){});
+  }, 90000);
+})();
+
+// ── Load creator stats ───────────────────────────────────────────────────────
+(function(){
+  fetch('/api/creator/' + PROFILE_ID + '/stats')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      var fc = document.getElementById('follower-count');
+      var sc = document.getElementById('sub-count');
+      var lc = document.getElementById('profile-like-count');
+      if(fc) fc.textContent = d.followers;
+      if(sc) sc.textContent = d.subscribers;
+      if(lc) lc.textContent = d.likes;
+      var fb = document.getElementById('follow-btn');
+      if(fb && d.i_follow){
+        fb.style.background = 'linear-gradient(135deg,#16a34a,#22c55e)';
+        fb.textContent = '✅ Following';
+      }
+      var lb2 = document.getElementById('like-profile-btn');
+      if(lb2 && d.i_like){
+        lb2.style.background = 'rgba(255,71,87,.15)';
+        lb2.innerHTML = '❤️ <span id="like-profile-txt">Liked</span>';
+      }
+      var sb = document.getElementById('sub-btn');
+      if(sb && d.i_sub){
+        sb.style.opacity = '.7';
+        sb.textContent = '⭐ Subscribed';
+      }
+    }).catch(function(){});
+})();
+
+// ── Follow ───────────────────────────────────────────────────────────────────
+function toggleFollow(){
+  fetch('/api/creator/'+PROFILE_ID+'/follow',{method:'POST',headers:{'Content-Type':'application/json'},body:'{"name":"Visitor"}'})
+    .then(function(r){ return r.json(); }).then(function(d){
+      var fb = document.getElementById('follow-btn');
+      var fc = document.getElementById('follower-count');
+      if(fc) fc.textContent = d.count;
+      if(fb){
+        if(d.followed){ fb.style.background='linear-gradient(135deg,#16a34a,#22c55e)'; fb.textContent='✅ Following'; }
+        else { fb.style.background='linear-gradient(135deg,#4f46e5,#7c3aed)'; fb.textContent='➕ Follow'; }
+      }
+    }).catch(function(){});
+}
+
+// ── Profile like ─────────────────────────────────────────────────────────────
+function toggleProfileLike(){
+  fetch('/api/creator/'+PROFILE_ID+'/like',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})
+    .then(function(r){ return r.json(); }).then(function(d){
+      var lb = document.getElementById('like-profile-btn');
+      var lc = document.getElementById('profile-like-count');
+      if(lc) lc.textContent = d.count;
+      if(lb){
+        if(d.liked){ lb.style.background='rgba(255,71,87,.15)'; lb.innerHTML='❤️ <span>Liked</span>'; }
+        else { lb.style.background='none'; lb.innerHTML='🤍 <span>Like</span>'; }
+      }
+    }).catch(function(){});
+}
+
+// ── Share ────────────────────────────────────────────────────────────────────
+function shareProfile(){
+  if(navigator.share) navigator.share({title:'{{ profile.name }} on PhotoVault', url:window.location.href});
+  else navigator.clipboard.writeText(window.location.href).then(function(){ alert('Link copied!'); });
+}
+
+// ── Paid DM ──────────────────────────────────────────────────────────────────
+function openDMModal(){ document.getElementById('dm-modal').style.display='flex'; }
+function closeDMModal(){ document.getElementById('dm-modal').style.display='none'; }
+
+function initDM(){
+  var name  = document.getElementById('dm-name').value.trim()||'Anonymous';
+  var email = document.getElementById('dm-email').value.trim();
+  var body  = document.getElementById('dm-body').value.trim();
+  var btn   = document.getElementById('dm-pay-btn');
+  if(!body){ alert('Please write your message.'); return; }
+  btn.disabled = true; btn.textContent = '⏳ Processing…';
+  fetch('/api/creator/'+PROFILE_ID+'/dm/initiate',{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({sender_name:name, sender_email:email, body:body})
+  }).then(function(r){ return r.json(); }).then(function(d){
+    if(d.error){ alert(d.error); btn.disabled=false; btn.innerHTML='💌 Pay $2.00 &amp; Send Message'; return; }
+    // Simulate payment confirmation (in real app → payment gateway redirect)
+    return fetch('/api/dm/'+d.dm_id+'/confirm',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({payment_ref:'demo_'+Date.now()})
+    });
+  }).then(function(r){ return r && r.json(); }).then(function(d){
+    if(d && d.ok){
+      document.getElementById('dm-form').style.display='none';
+      document.getElementById('dm-success').style.display='block';
+    }
+  }).catch(function(){ alert('Network error. Please try again.'); btn.disabled=false; btn.innerHTML='💌 Pay $2.00 &amp; Send Message'; });
+}
+
+// ── Subscribe ────────────────────────────────────────────────────────────────
+function openSubscribeModal(){ document.getElementById('sub-modal').style.display='flex'; }
+function closeSubscribeModal(){ document.getElementById('sub-modal').style.display='none'; }
+function doSubscribe(){
+  var name  = document.getElementById('sub-name').value.trim()||'Visitor';
+  var email = document.getElementById('sub-email').value.trim();
+  fetch('/api/creator/'+PROFILE_ID+'/subscribe',{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({name:name, email:email})
+  }).then(function(r){ return r.json(); }).then(function(d){
+    closeSubscribeModal();
+    var sb = document.getElementById('sub-btn');
+    var sc = document.getElementById('sub-count');
+    if(sb){ sb.textContent = d.subscribed?'⭐ Subscribed':'⭐ Subscribe'; sb.style.opacity=d.subscribed?'.7':'1'; }
+    if(sc) sc.textContent = d.count;
+    if(d.subscribed) alert('Subscribed to {{ profile.name }}!');
+  }).catch(function(){});
+}
+
+// ── Video hover preview on profile post cards ────────────────────────────────
+(function(){
+  document.querySelectorAll('.post-media').forEach(function(el){
+    var vid = el.querySelector('video');
+    if(!vid) return;
+    var origF = vid.style.filter;
+    el.addEventListener('mouseenter', function(){
+      vid.style.transition = 'filter .5s ease';
+      vid.style.filter = 'blur(3px) brightness(.85)';
+      vid.muted = true; vid.currentTime = 0;
+      vid.play().catch(function(){});
+      el._pt = setTimeout(function(){
+        vid.style.filter = origF;
+        vid.pause();
+      }, 3000);
+    });
+    el.addEventListener('mouseleave', function(){
+      clearTimeout(el._pt);
+      vid.pause();
+      vid.style.filter = origF;
+    });
+  });
+})();
+
+// ── Online creator popup ──────────────────────────────────────────────────────
+(function(){
+  function checkOnline(){
+    fetch('/api/online-creators').then(function(r){ return r.json(); }).then(function(list){
+      // Filter to only actually-online creators
+      var onlineList = list.filter(function(c){ return c.online === true; });
+      if(!onlineList.length) return;
+      var shown = sessionStorage.getItem('online_popup_shown');
+      if(shown) return;
+      sessionStorage.setItem('online_popup_shown','1');
+      var c = onlineList[0];
+      // Build profile URL from username (the API returns 'username', not 'url')
+      var profileUrl = '/creator/' + (c.username || '');
+      if(!c.username) return; // safety: never navigate to /creator/undefined
+      var popup = document.createElement('div');
+      popup.style.cssText = 'position:fixed;bottom:1.5rem;right:1.5rem;z-index:9999;' +
+        'background:#15151d;border:1px solid #2ecc71;border-radius:16px;' +
+        'padding:1rem 1.25rem;max-width:290px;' +
+        'box-shadow:0 8px 32px rgba(0,0,0,.6);animation:modalIn .3s ease;';
+      popup.innerHTML =
+        '<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem;">' +
+          '<span style="width:9px;height:9px;border-radius:50%;background:#2ecc71;' +
+                'display:inline-block;animation:pg 2s infinite;flex-shrink:0;"></span>' +
+          '<strong style="color:#2ecc71;font-size:.88rem;">' + c.name + ' is online!</strong>' +
+        '</div>' +
+        '<p style="font-size:.78rem;color:#aaa;margin:0 0 .75rem;">Your favourite creator is live right now</p>' +
+        '<a href="' + profileUrl + '" style="display:inline-block;' +
+          'background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;' +
+          'border-radius:8px;padding:.4rem 1rem;font-size:.78rem;font-weight:600;' +
+          'text-decoration:none;">View Profile →</a>' +
+        '<button onclick="this.closest(\'div\').remove()" ' +
+          'style="position:absolute;top:.5rem;right:.65rem;background:none;' +
+          'border:none;color:#888;cursor:pointer;font-size:.9rem;">✕</button>';
+      document.body.appendChild(popup);
+      setTimeout(function(){ if(popup.parentNode) popup.remove(); }, 8000);
+    }).catch(function(){});
+  }
+  setTimeout(checkOnline, 2000);
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════
+     GO LIVE MODAL  (only rendered when is_owner is True)
+════════════════════════════════════════════════════════ -->
+{% if is_owner %}
+<div id="go-live-modal"
+     style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);
+            z-index:9600;align-items:center;justify-content:center;padding:1rem;"
+     onclick="if(event.target===this)closeGoLiveModal()">
+  <div style="background:#15151d;border:1px solid #dc262644;border-radius:20px;
+              width:min(100%,480px);overflow:hidden;animation:modalIn .25s ease;">
+
+    <!-- Header -->
+    <div style="padding:1.25rem 1.5rem;
+                background:linear-gradient(135deg,rgba(220,38,38,.18),rgba(255,71,87,.1));
+                border-bottom:1px solid #dc262633;
+                display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div style="font-size:1.1rem;font-weight:700;color:#ff6b6b;letter-spacing:.02em;">
+          🔴 Go Live — {{ profile.name }}
+        </div>
+        <div style="font-size:.73rem;color:#f87171;margin-top:.15rem;">
+          Start a live stream for your subscribers
+        </div>
+      </div>
+      <button onclick="closeGoLiveModal()"
+              style="background:none;border:none;color:#888;font-size:1.2rem;cursor:pointer;">✕</button>
+    </div>
+
+    <!-- Body -->
+    <div style="padding:1.5rem;" id="live-form">
+
+      <!-- Live title -->
+      <div style="margin-bottom:1rem;">
+        <label style="display:block;font-size:.75rem;color:#f87171;margin-bottom:.35rem;
+                      text-transform:uppercase;letter-spacing:.06em;">Stream Title</label>
+        <input id="live-title" type="text" placeholder="What's happening today?" maxlength="120"
+               style="width:100%;box-sizing:border-box;background:#0a0a12;border:1px solid #3a1a1a;
+                      border-radius:10px;color:#fff;padding:.65rem .9rem;font-size:.9rem;outline:none;">
+      </div>
+
+      <!-- Entry price -->
+      <div style="margin-bottom:1rem;">
+        <label style="display:block;font-size:.75rem;color:#f87171;margin-bottom:.35rem;
+                      text-transform:uppercase;letter-spacing:.06em;">Entry Price (USD — 0 = free)</label>
+        <input id="live-price" type="number" min="0" step="0.50" value="0" placeholder="0.00"
+               style="width:100%;box-sizing:border-box;background:#0a0a12;border:1px solid #3a1a1a;
+                      border-radius:10px;color:#fff;padding:.65rem .9rem;font-size:.9rem;outline:none;">
+      </div>
+
+      <!-- Hourly price increase -->
+      <div style="margin-bottom:1.25rem;">
+        <label style="display:block;font-size:.75rem;color:#f87171;margin-bottom:.35rem;
+                      text-transform:uppercase;letter-spacing:.06em;">Price increase per hour (USD)</label>
+        <input id="live-price-inc" type="number" min="0" step="0.50" value="1" placeholder="1.00"
+               style="width:100%;box-sizing:border-box;background:#0a0a12;border:1px solid #3a1a1a;
+                      border-radius:10px;color:#fff;padding:.65rem .9rem;font-size:.9rem;outline:none;">
+      </div>
+
+      <!-- Info box -->
+      <div style="background:rgba(220,38,38,.1);border:1px solid #dc262633;
+                  border-radius:12px;padding:.9rem;margin-bottom:1.25rem;font-size:.8rem;color:#f87171;">
+        🎙 Your camera and microphone will be requested when you start.<br>
+        👥 Viewers without a ticket will see blurred stream + live interactions.<br>
+        💰 Revenue split: <strong>60% you · 40% platform</strong>
+      </div>
+
+      <button onclick="startLiveStream()"
+              style="width:100%;padding:.9rem;
+                     background:linear-gradient(135deg,#dc2626,#ff4757);
+                     color:#fff;border:none;border-radius:12px;
+                     font-size:.95rem;font-weight:700;cursor:pointer;
+                     letter-spacing:.03em;transition:opacity .2s;">
+        🔴 Start Live Now
+      </button>
+    </div>
+
+    <!-- Live active panel (shown after stream starts) -->
+    <div id="live-active-panel" style="display:none;padding:1.5rem;text-align:center;">
+      <div style="font-size:2.5rem;margin-bottom:.5rem;">🔴</div>
+      <div style="font-size:1.1rem;font-weight:700;color:#ff6b6b;margin-bottom:.25rem;">You are LIVE!</div>
+      <div id="live-viewer-count" style="font-size:.85rem;color:#aaa;margin-bottom:1rem;">
+        0 viewers watching
+      </div>
+      <div id="live-duration" style="font-size:.75rem;color:#666;margin-bottom:1.25rem;">00:00</div>
+      <button onclick="endLiveStream()"
+              style="background:#dc2626;color:#fff;border:none;border-radius:10px;
+                     padding:.7rem 1.75rem;font-size:.9rem;font-weight:600;cursor:pointer;">
+        ⏹ End Live
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+var LIVE_START_TIME = null;
+var LIVE_TIMER = null;
+
+function openGoLiveModal(){
+  document.getElementById('go-live-modal').style.display = 'flex';
+}
+function closeGoLiveModal(){
+  document.getElementById('go-live-modal').style.display = 'none';
+}
+
+function startLiveStream(){
+  var title    = document.getElementById('live-title').value.trim() || '{{ profile.name }} Live';
+  var price    = parseFloat(document.getElementById('live-price').value) || 0;
+  var priceInc = parseFloat(document.getElementById('live-price-inc').value) || 1;
+
+  // Tell server the creator is going live
+  fetch('/api/creator/{{ profile.id }}/go-live', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({title: title, entry_price: price, hourly_increase: priceInc})
+  }).then(function(r){ return r.json(); }).then(function(d){
+    if(d.error){ alert(d.error); return; }
+
+    // Show live active panel
+    document.getElementById('live-form').style.display = 'none';
+    document.getElementById('live-active-panel').style.display = 'block';
+
+    // Update profile avatar border to red pulsing
+    var img = document.getElementById('profile-avatar-img');
+    if(img){ img.style.borderColor='#dc2626'; img.style.boxShadow='0 0 0 3px rgba(220,38,38,.4)'; }
+
+    // Start duration timer
+    LIVE_START_TIME = Date.now();
+    LIVE_TIMER = setInterval(function(){
+      var s = Math.floor((Date.now() - LIVE_START_TIME) / 1000);
+      var m = Math.floor(s / 60);
+      var h = Math.floor(m / 60);
+      m = m % 60; s = s % 60;
+      document.getElementById('live-duration').textContent =
+        (h > 0 ? pad(h)+':' : '') + pad(m) + ':' + pad(s);
+      // Update viewer count from server every 15 s
+      if(s % 15 === 0){
+        fetch('/api/creator/{{ profile.id }}/live-viewers')
+          .then(function(r){ return r.json(); })
+          .then(function(d){
+            document.getElementById('live-viewer-count').textContent =
+              (d.viewers || 0) + ' viewer' + (d.viewers !== 1 ? 's' : '') + ' watching';
+          }).catch(function(){});
+      }
+    }, 1000);
+
+    // Show red "LIVE" dot on avatar
+    var dot = document.getElementById('avatar-online-dot');
+    if(dot){ dot.style.background='#dc2626'; dot.style.display='block'; }
+
+  }).catch(function(){ alert('Could not start live stream. Please try again.'); });
+}
+
+function endLiveStream(){
+  if(!confirm('End your live stream?')) return;
+  clearInterval(LIVE_TIMER);
+  fetch('/api/creator/{{ profile.id }}/end-live', {method:'POST'})
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      closeGoLiveModal();
+      // Reset avatar
+      var img = document.getElementById('profile-avatar-img');
+      if(img){ img.style.borderColor='transparent'; img.style.boxShadow=''; }
+      var dot = document.getElementById('avatar-online-dot');
+      if(dot){ dot.style.display='none'; }
+      // Reset modal for next time
+      document.getElementById('live-form').style.display = 'block';
+      document.getElementById('live-active-panel').style.display = 'none';
+      alert('✅ Live ended. Thanks for streaming!');
+    }).catch(function(){});
+}
+
+function pad(n){ return n < 10 ? '0'+n : ''+n; }
+</script>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,125 @@
+{% extends 'creator_base.html' %}
+{% block title %}Application Status{% endblock %}
+{% block content %}
+<div class="mgr-wrap">
+
+  <div style="margin-bottom:1.5rem;">
+    <a href="{{ url_for('creator_dashboard') }}" style="font-size:.82rem;color:var(--text3);text-decoration:none;">← Back to Dashboard</a>
+    <h1 style="font-size:1.5rem;font-weight:700;margin:.5rem 0 .25rem;">📋 Application Status</h1>
+    <p style="color:var(--text3);font-size:.88rem;">Track your Junior Creator application and graduation progress.</p>
+  </div>
+
+  {% if not app_record %}
+  <div class="mgr-card" style="text-align:center;padding:2.5rem;">
+    <div style="font-size:2.5rem;margin-bottom:.75rem;">📭</div>
+    <div style="font-weight:600;color:var(--text2);font-size:1rem;">No application found</div>
+    <div style="color:var(--text3);font-size:.85rem;margin-top:.4rem;">
+      No application is linked to your account email ({{ user.email }}).
+    </div>
+  </div>
+
+  {% else %}
+
+  <!-- Status banner -->
+  {% set status_colors = {
+    'pending':      ('rgba(251,191,36,.12)', '#fbbf24', '⏳'),
+    'under_review': ('rgba(139,92,246,.12)', '#a78bfa', '🔍'),
+    'approved':     ('rgba(34,197,94,.12)',  '#4ade80', '✅'),
+    'rejected':     ('rgba(239,68,68,.12)',  '#f87171', '❌')
+  } %}
+  {% set sc = status_colors.get(app_record.status, ('rgba(201,168,76,.08)','#C9A84C','📋')) %}
+  <div style="background:{{ sc[0] }};border:1px solid {{ sc[1] }}40;border-radius:14px;
+              padding:1.25rem 1.5rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem;">
+    <div style="font-size:2rem;">{{ sc[2] }}</div>
+    <div>
+      <div style="font-weight:700;color:{{ sc[1] }};font-size:1rem;text-transform:capitalize;">
+        {{ app_record.status.replace('_', ' ') }}
+      </div>
+      <div style="color:var(--text3);font-size:.82rem;margin-top:.2rem;">
+        Applied {{ app_record.created_at.strftime('%B %d, %Y') }}
+      </div>
+    </div>
+  </div>
+
+  <!-- Progress stages -->
+  <div class="mgr-card" style="margin-bottom:1rem;">
+    <div style="font-size:.92rem;font-weight:700;color:var(--mgr);margin-bottom:1.25rem;">🚀 Journey to Full Creator</div>
+
+    {% set stages = [
+      ('Application Submitted',    'Your application has been received by the VaultX team.'),
+      ('Under Review',             'The OPS team is reviewing your profile and details.'),
+      ('Demo Account Issued',      'You\'ve been given a Junior Creator demo account to get started.'),
+      ('First Upload',             'Upload your first piece of content to your assigned creator profile.'),
+      ('Content Milestone',        'Reach the content and engagement milestones set by the platform.'),
+      ('Revenue Milestone',        'Hit the minimum earnings threshold to qualify for graduation.'),
+      ('Full Creator (Graduated)', 'Congratulations — you now earn 70% of all your content sales!')
+    ] %}
+
+    {% set current_stage = app_record.stage if app_record.stage else 1 %}
+
+    {% for i, (title, desc) in enumerate(stages, 1) %}
+    <div style="display:flex;gap:1rem;padding:.85rem 0;
+                {% if not loop.last %}border-bottom:1px solid var(--border);{% endif %}">
+      <!-- Stage indicator -->
+      <div style="flex-shrink:0;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;
+        {% if i < current_stage %}
+          background:rgba(34,197,94,.2);color:#4ade80;border:2px solid #4ade80;
+        {% elif i == current_stage %}
+          background:rgba(201,168,76,.2);color:#C9A84C;border:2px solid #C9A84C;
+        {% else %}
+          background:var(--surface2);color:var(--text3);border:2px solid var(--border);
+        {% endif %}">
+        {% if i < current_stage %}✓{% else %}{{ i }}{% endif %}
+      </div>
+      <div style="flex:1;">
+        <div style="font-weight:600;font-size:.88rem;
+          {% if i == current_stage %}color:var(--text);
+          {% elif i < current_stage %}color:var(--text2);
+          {% else %}color:var(--text3);{% endif %}">
+          {{ title }}
+          {% if i == current_stage %}<span style="font-size:.72rem;color:#C9A84C;margin-left:.5rem;">← You are here</span>{% endif %}
+        </div>
+        <div style="font-size:.78rem;color:var(--text3);margin-top:.2rem;">{{ desc }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Assigned profile -->
+  {% if profile %}
+  <div class="mgr-card" style="margin-bottom:1rem;">
+    <div style="font-size:.92rem;font-weight:700;color:var(--mgr);margin-bottom:1rem;">👤 Your Assigned Creator Profile</div>
+    <div style="display:flex;align-items:center;gap:1rem;">
+      {% if profile.avatar_filename %}
+      <img src="{{ url_for('serve_profile_media', filename=profile.avatar_filename) }}"
+           style="width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid var(--mgr);">
+      {% else %}
+      <div style="width:52px;height:52px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:1.5rem;">👤</div>
+      {% endif %}
+      <div>
+        <div style="font-weight:700;font-size:1rem;">{{ profile.name }}</div>
+        <div style="color:var(--text3);font-size:.82rem;">@{{ profile.username }}</div>
+      </div>
+      <div style="margin-left:auto;">
+        <a href="{{ url_for('creator_dashboard') }}"
+           style="background:#C9184A;color:#fff;padding:.45rem 1rem;border-radius:8px;
+                  text-decoration:none;font-size:.82rem;font-weight:600;">
+          Open Dashboard →
+        </a>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Rejection reason if rejected -->
+  {% if app_record.status == 'rejected' and app_record.rejection_reason %}
+  <div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1rem;">
+    <div style="font-weight:700;color:#f87171;font-size:.85rem;margin-bottom:.4rem;">❌ Rejection Reason</div>
+    <div style="color:var(--text2);font-size:.85rem;">{{ app_record.rejection_reason }}</div>
+  </div>
+  {% endif %}
+
+  {% endif %}
+
+</div>
+{% endblock %}

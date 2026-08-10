@@ -1,0 +1,58 @@
+{% extends 'vx_base.html' %}
+{% block title %}Create Creator Account{% endblock %}
+{% block navbar %}
+<div class="navbar">
+  <div class="brand">Vault<span>X</span></div>
+  <nav><a href="/admin/vaultx">← Dashboard</a></nav>
+</div>
+{% endblock %}
+{% block content %}
+<div class="container" style="max-width:600px">
+  <div class="page-header">
+    <h1>✨ Create Creator Account</h1>
+    <p>Link a user login to an existing creator profile. They accept terms on first login.</p>
+  </div>
+  <div class="card">
+    <form method="POST">
+      <div class="form-group">
+        <label>Link to Profile</label>
+        <select name="profile_id" required>
+          <option value="">— Select Profile —</option>
+          {% for p in available_profiles %}
+          <option value="{{p.id}}">{{p.name}} (@{{p.username}})</option>
+          {% endfor %}
+        </select>
+        {% if not available_profiles %}
+        <div style="font-size:.82rem;color:var(--amber);margin-top:.3rem">⚠️ All profiles already have creator accounts. <a href="/admin/profiles/create">Create a new profile first →</a></div>
+        {% endif %}
+      </div>
+      <div class="form-group"><label>Creator Login Email</label><input type="email" name="email" required placeholder="creator@email.com"/></div>
+      <div class="form-group"><label>Password</label><input type="password" name="password" required minlength="6" placeholder="Temporary password"/></div>
+      <div class="form-group">
+        <label>Assign Creator Manager <span style="color:var(--muted)">(optional)</span></label>
+        <select name="creator_manager_id">
+          <option value="">— None —</option>
+          {% for cm in creator_managers %}
+          <option value="{{cm.id}}">{{cm.name}} ({{cm.user.email}})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div style="background:#1a1a30;border-radius:9px;padding:1rem;margin-bottom:1rem">
+        <div style="font-size:.88rem;font-weight:700;color:var(--gold);margin-bottom:.75rem">📢 Telegram Channels</div>
+        <div class="form-group" style="margin-bottom:.5rem">
+          <label>Admin + Creator Channel URL <span style="color:var(--muted)">(where admin meets creator)</span></label>
+          <input type="url" name="telegram_creator_channel" placeholder="https://t.me/joinchat/…"/>
+        </div>
+        <div class="form-group" style="margin:0">
+          <label>Subscriber Channel URL <span style="color:var(--muted)">(where creator meets fans)</span></label>
+          <input type="url" name="telegram_subscriber_channel" placeholder="https://t.me/joinchat/…"/>
+        </div>
+      </div>
+      <button class="btn btn-rose" type="submit" style="width:100%">✨ Create Creator Account</button>
+    </form>
+    <div style="margin-top:1rem;background:#1a1a30;border-radius:9px;padding:.9rem;font-size:.84rem;color:var(--muted)">
+      Creator will be prompted to accept Terms &amp; Conditions on their first login. Telegram channels will be shown automatically after acceptance.
+    </div>
+  </div>
+</div>
+{% endblock %}

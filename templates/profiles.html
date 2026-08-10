@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+
+{% block title %}Creators — PhotoVault{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 3rem 1rem;">
+
+  <div style="margin-bottom:2rem;">
+    <h1 style="font-size:2.2rem;font-weight:700;">Creators</h1>
+    <p style="opacity:.7;">Discover creators and premium content.</p>
+  </div>
+
+  {% if profiles %}
+  <div style="
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+      gap:1.5rem;
+  ">
+
+    {% for profile in profiles %}
+    <a href="{{ url_for('profile_page', username=profile.username) }}"
+       style="
+          text-decoration:none;
+          color:inherit;
+       ">
+
+      <div style="
+          background:#111;
+          border:1px solid #222;
+          border-radius:20px;
+          overflow:hidden;
+          transition:.3s;
+      ">
+
+        <!-- Cover -->
+        <div style="height:180px;overflow:hidden;">
+          {% if profile.cover_filename %}
+          <img
+            src="{{ url_for('serve_profile_media', filename=profile.cover_filename) }}"
+            style="width:100%;height:100%;object-fit:cover;"
+          >
+          {% else %}
+          <div style="
+              width:100%;
+              height:100%;
+              background:#222;
+          "></div>
+          {% endif %}
+        </div>
+
+        <!-- Content -->
+        <div style="padding:1.2rem;">
+
+          <!-- Avatar -->
+          <div style="margin-top:-55px;margin-bottom:1rem;">
+            {% if profile.avatar_filename %}
+            <img
+              src="{{ url_for('serve_profile_media', filename=profile.avatar_filename) }}"
+              style="
+                  width:90px;
+                  height:90px;
+                  border-radius:50%;
+                  border:4px solid #111;
+                  object-fit:cover;
+              "
+            >
+            {% endif %}
+          </div>
+
+          <h2 style="margin:0;font-size:1.2rem;">
+            {{ profile.name }}
+
+            {% if profile.is_verified %}
+            ✔️
+            {% endif %}
+          </h2>
+
+          <div style="opacity:.6;font-size:.9rem;">
+            @{{ profile.username }}
+          </div>
+
+          {% if profile.category %}
+          <div style="
+              margin-top:.7rem;
+              display:inline-block;
+              padding:.3rem .8rem;
+              border-radius:999px;
+              background:rgba(255,255,255,.08);
+              font-size:.75rem;
+          ">
+            {{ profile.category }}
+          </div>
+          {% endif %}
+
+          {% if profile.tagline %}
+          <p style="
+              margin-top:1rem;
+              opacity:.8;
+              line-height:1.5;
+          ">
+            {{ profile.tagline }}
+          </p>
+          {% endif %}
+
+        </div>
+      </div>
+
+    </a>
+    {% endfor %}
+
+  </div>
+
+  {% else %}
+
+  <div style="
+      text-align:center;
+      padding:4rem 2rem;
+      opacity:.6;
+  ">
+    <h2>No creators found</h2>
+  </div>
+
+  {% endif %}
+</div>
+{% endblock %}

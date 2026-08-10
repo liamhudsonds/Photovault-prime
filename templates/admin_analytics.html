@@ -1,0 +1,387 @@
+{% extends 'base.html' %}
+{% block title %}Analytics — Admin{% endblock %}
+
+{% block head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+.chart-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.chart-card-head {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-head);
+  font-size: 1rem;
+  color: var(--text);
+  background: var(--bg2);
+  display: flex; align-items: center; gap: .5rem;
+}
+.chart-card-body { padding: 1.25rem; position: relative; min-height: 240px; }
+canvas { max-height: 240px; }
+
+/* KPI strip */
+.kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+.kpi-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+  display: flex; flex-direction: column; gap: .25rem;
+}
+.kpi-label { font-size: .72rem; color: var(--text3); letter-spacing: .1em; text-transform: uppercase; }
+.kpi-value { font-family: var(--font-head); font-size: 2rem; color: var(--gold); }
+.kpi-sub   { font-size: .75rem; color: var(--text3); }
+
+/* Top photos table */
+.top-table th { font-size: .72rem; letter-spacing: .08em; }
+.top-photo-thumb {
+  width: 44px; height: 36px; object-fit: cover;
+  border-radius: 6px; filter: blur(3px) brightness(.75);
+}
+.rank-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; border-radius: 50%;
+  font-size: .75rem; font-weight: 700;
+  background: var(--gold-dim); color: var(--gold);
+}
+.rank-badge.gold   { background: rgba(255,200,50,.15); color: #ffc832; }
+.rank-badge.silver { background: rgba(192,192,192,.15); color: #c0c0c0; }
+.rank-badge.bronze { background: rgba(205,127,50,.15);  color: #cd7f32; }
+
+/* Profile performance cards */
+.profile-perf-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+.profile-perf-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; padding: 1.25rem;
+  display: flex; flex-direction: column; align-items: center; gap: .5rem;
+  text-align: center;
+}
+.ppc-avatar {
+  width: 52px; height: 52px; border-radius: 50%; object-fit: cover;
+  border: 2px solid var(--gold-dim);
+}
+.ppc-avatar-ph {
+  width: 52px; height: 52px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-head); font-size: 1.2rem; color: #0a0a0c;
+}
+.ppc-name  { font-family: var(--font-head); font-size: .95rem; color: var(--text); }
+.ppc-stats { display: flex; gap: 1rem; }
+.ppc-stat  { display: flex; flex-direction: column; align-items: center; }
+.ppc-stat .n { font-family: var(--font-head); font-size: 1rem; color: var(--gold); }
+.ppc-stat .l { font-size: .62rem; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; }
+.ppc-bar-wrap { width: 100%; background: var(--border); border-radius: 4px; height: 4px; margin-top: .25rem; }
+.ppc-bar      { height: 4px; border-radius: 4px; transition: width 1s ease; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+  <aside class="admin-sidebar">
+    <div class="admin-sidebar-brand">⬡ PhotoVault<br>
+      <small style="font-family:var(--font-body);font-size:.75rem;color:var(--text3);">Admin Panel</small>
+    </div>
+    <nav class="admin-nav">
+      <a href="{{ url_for('admin_dashboard') }}">📊 Dashboard</a>
+      <div class="admin-nav-section">Creators</div>
+      <div class="admin-nav-section">Content</div>
+      <a href="{{ url_for('admin_categories') }}">🗂 Categories</a>
+      <div class="admin-nav-section">Engagement</div>
+      <a href="{{ url_for('admin_inbox') }}">✉️ DM Inbox</a>
+      <a href="{{ url_for('admin_comments') }}">💬 Comments</a>
+      <a href="{{ url_for('admin_analytics') }}">📊 Analytics</a>
+      <a href="{{ url_for('admin_revenue') }}">💰 Revenue</a>
+      <div class="admin-nav-section">Site</div>
+      <a href="{{ url_for('admin_settings') }}" class="active">
+        ⚙️ Settings
+      </a>
+      <a href="{{ url_for('index') }}" target="_blank">
+        🌐 View Site
+      </a>
+      <a href="{{ url_for('logout') }}" style="color:var(--red);">
+        🚪 Logout
+      </a>
+
+    </nav>
+  </aside>
+
+  <div class="admin-content">
+    <div class="admin-header">
+      <h1>Analytics</h1>
+      <p>Revenue, engagement, and performance data across your entire vault.</p>
+    </div>
+
+    <!-- ── KPI Strip ────────────────────────────────────────────────────────── -->
+    <div class="kpi-strip">
+      <div class="kpi-card">
+        <span class="kpi-label">Total Revenue</span>
+        <span class="kpi-value">${{ '%.0f'|format(total_revenue) }}</span>
+        <span class="kpi-sub">All gateways</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Top Gateway</span>
+        <span class="kpi-value" style="font-size:1.3rem;">
+          {% if by_gateway %}{{ by_gateway|dictsort(by='value', reverse=True)|first|first|title }}{% else %}—{% endif %}
+        </span>
+        <span class="kpi-sub">Most used</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Top Tier</span>
+        <span class="kpi-value" style="font-size:1.3rem;">
+          {% if by_tier %}{{ by_tier|dictsort(by='value',reverse=True)|first|first|title }}{% else %}—{% endif %}
+        </span>
+        <span class="kpi-sub">Most purchased</span>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Active Profiles</span>
+        <span class="kpi-value">{{ profile_stats|length }}</span>
+        <span class="kpi-sub">Creator profiles</span>
+      </div>
+    </div>
+
+    <!-- ── Profile Performance ─────────────────────────────────────────────── -->
+    {% if profile_stats %}
+    <div style="margin-bottom:1rem;">
+      <div class="table-title" style="margin-bottom:1rem;">👤 Profile Performance</div>
+      {% set max_views = profile_stats[0].views if profile_stats else 1 %}
+      <div class="profile-perf-grid">
+        {% for prf in profile_stats %}
+        <div class="profile-perf-card">
+          {% if prf.avatar %}
+          <img class="ppc-avatar" src="{{ url_for('serve_profile_media', filename=prf.avatar) }}" alt="">
+          {% else %}
+          <div class="ppc-avatar-ph" style="background:{{ prf.accent }};">{{ prf.name[0].upper() }}</div>
+          {% endif %}
+          <div class="ppc-name">{{ prf.name }}</div>
+          <div style="font-size:.72rem;color:var(--text3);">@{{ prf.username }}</div>
+          <div class="ppc-stats">
+            <div class="ppc-stat"><span class="n">{{ prf.views }}</span><span class="l">Views</span></div>
+            <div class="ppc-stat"><span class="n">{{ prf.likes }}</span><span class="l">Likes</span></div>
+            <div class="ppc-stat"><span class="n">{{ prf.posts }}</span><span class="l">Posts</span></div>
+          </div>
+          <div class="ppc-bar-wrap">
+            <div class="ppc-bar" style="width:{{ [(prf.views / (max_views or 1)) * 100, 100]|min }}%;background:{{ prf.accent }};"></div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- ── Charts Grid ──────────────────────────────────────────────────────── -->
+    <div class="analytics-grid">
+
+      <!-- Monthly Revenue -->
+      <div class="chart-card" style="grid-column:1/-1;">
+        <div class="chart-card-head">📅 Monthly Revenue (Last 6 Months)</div>
+        <div class="chart-card-body" style="min-height:280px;">
+          <canvas id="chart-monthly"></canvas>
+        </div>
+      </div>
+
+      <!-- Revenue by Gateway (Doughnut) -->
+      <div class="chart-card">
+        <div class="chart-card-head">💳 Revenue by Payment Gateway</div>
+        <div class="chart-card-body">
+          <canvas id="chart-gateway"></canvas>
+        </div>
+      </div>
+
+      <!-- Sales by Tier (Bar) -->
+      <div class="chart-card">
+        <div class="chart-card-head">🏷 Sales by Tier</div>
+        <div class="chart-card-body">
+          <canvas id="chart-tier"></canvas>
+        </div>
+      </div>
+
+      <!-- Revenue by Category (Horizontal bar) -->
+      <div class="chart-card" style="grid-column:1/-1;">
+        <div class="chart-card-head">🗂 Revenue by Category</div>
+        <div class="chart-card-body" style="min-height:260px;">
+          <canvas id="chart-category"></canvas>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── Top Selling Photos ───────────────────────────────────────────────── -->
+    {% if top_photos %}
+    <div class="table-wrap">
+      <div class="table-title">🏆 Top Selling Photos</div>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Preview</th>
+            <th>Title</th>
+            <th>Tier</th>
+            <th>Category</th>
+            <th>Views</th>
+            <th>Sales</th>
+            <th>Revenue</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for photo, sales in top_photos %}
+          <tr>
+            <td>
+              <span class="rank-badge {% if loop.index == 1 %}gold{% elif loop.index == 2 %}silver{% elif loop.index == 3 %}bronze{% endif %}">
+                {{ loop.index }}
+              </span>
+            </td>
+            <td>
+              <img class="top-photo-thumb" src="{{ url_for('serve_preview', photo_id=photo.id) }}" alt="">
+            </td>
+            <td style="font-weight:500;">{{ photo.title }}</td>
+            <td><span class="badge tier-{{ photo.tier }}">{{ photo.tier|title }}</span></td>
+            <td style="color:var(--text3);">{{ photo.category or '—' }}</td>
+            <td>{{ photo.view_count }}</td>
+            <td style="color:var(--gold);font-weight:600;">{{ sales }}</td>
+            <td style="color:var(--green);">${{ '%.2f'|format(photo.unlock_price * sales) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const gold    = '#C9A84C';
+const gold2   = '#e8c96e';
+const blue    = '#5b8af5';
+const purple  = '#9f6ef5';
+const green   = '#4caf7d';
+const red     = '#e05555';
+const teal    = '#00D2C8';
+const text3   = '#5a5660';
+
+const chartDefaults = {
+  plugins: {
+    legend: { labels: { color: '#9a9490', font: { family: 'DM Sans', size: 12 } } }
+  },
+  scales: {
+    x: { ticks: { color: '#5a5660' }, grid: { color: 'rgba(255,255,255,0.04)' } },
+    y: { ticks: { color: '#5a5660' }, grid: { color: 'rgba(255,255,255,0.04)' } }
+  }
+};
+
+// ── Monthly Revenue ────────────────────────────────────────────────────────
+const monthlyData = {{ monthly|tojson }};
+new Chart(document.getElementById('chart-monthly'), {
+  type: 'bar',
+  data: {
+    labels: monthlyData.map(d => d.label),
+    datasets: [{
+      label: 'Revenue ($)',
+      data: monthlyData.map(d => d.revenue),
+      backgroundColor: monthlyData.map((_, i) =>
+        i === monthlyData.length - 1 ? gold : 'rgba(201,168,76,0.25)'),
+      borderColor: gold,
+      borderWidth: 1.5,
+      borderRadius: 6,
+      borderSkipped: false
+    }]
+  },
+  options: {
+    ...chartDefaults,
+    plugins: {
+      ...chartDefaults.plugins,
+      legend: { display: false }
+    }
+  }
+});
+
+// ── Revenue by Gateway ─────────────────────────────────────────────────────
+const gatewayData = {{ by_gateway|tojson }};
+const gwLabels = Object.keys(gatewayData);
+const gwValues = Object.values(gatewayData);
+new Chart(document.getElementById('chart-gateway'), {
+  type: 'doughnut',
+  data: {
+    labels: gwLabels.map(g => g.charAt(0).toUpperCase() + g.slice(1)),
+    datasets: [{
+      data: gwValues,
+      backgroundColor: [gold, blue, purple, teal, green],
+      borderColor: '#111116',
+      borderWidth: 3,
+      hoverOffset: 8
+    }]
+  },
+  options: {
+    plugins: {
+      legend: { position: 'bottom', labels: { color: '#9a9490', padding: 16, font: { size: 12 } } }
+    },
+    cutout: '65%'
+  }
+});
+
+// ── Sales by Tier ──────────────────────────────────────────────────────────
+const tierData = {{ by_tier|tojson }};
+const tierOrder = ['basic', 'advanced', 'premium'];
+const tierColors = [blue, gold, purple];
+new Chart(document.getElementById('chart-tier'), {
+  type: 'bar',
+  data: {
+    labels: tierOrder.map(t => t.charAt(0).toUpperCase() + t.slice(1)),
+    datasets: [{
+      label: 'Sales',
+      data: tierOrder.map(t => tierData[t] || 0),
+      backgroundColor: tierColors,
+      borderRadius: 8,
+      borderSkipped: false
+    }]
+  },
+  options: {
+    ...chartDefaults,
+    plugins: { ...chartDefaults.plugins, legend: { display: false } }
+  }
+});
+
+// ── Revenue by Category ────────────────────────────────────────────────────
+const catData = {{ by_category|tojson }};
+new Chart(document.getElementById('chart-category'), {
+  type: 'bar',
+  data: {
+    labels: catData.map(c => c[0]),
+    datasets: [{
+      label: 'Revenue ($)',
+      data: catData.map(c => c[1]),
+      backgroundColor: catData.map((_, i) =>
+        [gold, blue, purple, teal, green, red, '#f8be50', '#ff6b9d'][i % 8]),
+      borderRadius: 6,
+      borderSkipped: false
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    ...chartDefaults,
+    plugins: { ...chartDefaults.plugins, legend: { display: false } }
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends 'vx_base.html' %}
+{% block title %}Create Operations Manager{% endblock %}
+{% block navbar %}
+<div class="navbar">
+  <div class="brand">Vault<span>X</span></div>
+  <nav><a href="/admin/vaultx">← Dashboard</a></nav>
+</div>
+{% endblock %}
+{% block content %}
+<div class="container" style="max-width:520px">
+  <div class="page-header">
+    <h1>🏢 Create Operations Manager</h1>
+    <p>Ops Managers handle creator operations — no revenue access.</p>
+  </div>
+  <div class="card">
+    <form method="POST">
+      <div class="form-group"><label>Full Name</label><input type="text" name="name" required placeholder="Jane Doe"/></div>
+      <div class="form-group"><label>Email</label><input type="email" name="email" required placeholder="ops@vaultx.com"/></div>
+      <div class="form-group"><label>Password</label><input type="password" name="password" required minlength="8" placeholder="Min 8 characters"/></div>
+      <button class="btn btn-rose" type="submit" style="width:100%">Create Operations Manager</button>
+    </form>
+    <div style="margin-top:1rem;background:#1a1a30;border-radius:9px;padding:.9rem;font-size:.85rem;color:var(--muted)">
+      ⚠️ Operations Managers <strong>cannot</strong> view revenue, access payments, approve withdrawals, or change commission rates.
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends 'vx_base.html' %}
+{% block title %}Telegram Channels{% endblock %}
+{% block navbar %}
+<div class="navbar">
+  <div class="brand">Vault<span>X</span></div>
+  <nav><a href="/admin/vaultx">← Dashboard</a></nav>
+</div>
+{% endblock %}
+{% block content %}
+<div class="container" style="max-width:700px">
+  <div class="page-header">
+    <h1>📢 Telegram Channels</h1>
+    <p>Manage channels shown to creators after first login and to subscribers after purchase.</p>
+  </div>
+
+  <div class="card" style="margin-bottom:1.5rem">
+    <div class="card-title">➕ Add Channel</div>
+    <form method="POST">
+      <div class="form-row">
+        <div class="form-group"><label>Channel Name</label><input type="text" name="name" required placeholder="VaultX Creators Hub"/></div>
+        <div class="form-group">
+          <label>Channel Type</label>
+          <select name="channel_type">
+            <option value="subscriber">Subscriber (shown after purchase)</option>
+            <option value="creator">Creator (shown after first login)</option>
+            <option value="admin">Admin Internal</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label>Telegram Invite URL</label><input type="url" name="channel_url" required placeholder="https://t.me/joinchat/…"/></div>
+      <button class="btn btn-rose" type="submit">Add Channel</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Active Channels</div>
+    {% if not channels %}
+    <div style="text-align:center;color:var(--muted);padding:2rem">No channels yet.</div>
+    {% else %}
+    <table class="table">
+      <thead><tr><th>Name</th><th>Type</th><th>URL</th><th>Action</th></tr></thead>
+      <tbody>
+      {% for ch in channels %}
+      <tr>
+        <td style="font-weight:600">{{ch.name}}</td>
+        <td>
+          {% if ch.channel_type == 'subscriber' %}<span class="badge badge-green">Subscriber</span>
+          {% elif ch.channel_type == 'creator' %}<span class="badge badge-rose">Creator</span>
+          {% else %}<span class="badge badge-amber">Admin</span>{% endif %}
+        </td>
+        <td><a href="{{ch.channel_url}}" target="_blank" style="font-size:.82rem;font-family:monospace">{{ch.channel_url[:45]}}{% if ch.channel_url|length > 45 %}…{% endif %}</a></td>
+        <td>
+          <form method="POST" action="/admin/vaultx/telegram-channels/{{ch.id}}/delete" style="display:inline">
+            <button class="btn btn-danger btn-sm" onclick="return confirm('Delete this channel?')">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </div>
+
+  <div class="card" style="margin-top:1rem">
+    <div class="card-title">ℹ️ How Channels Work</div>
+    <div style="font-size:.88rem;color:var(--muted);line-height:1.8">
+      <strong style="color:#e8e8f0">Creator channels</strong> — Shown as a popup modal when a creator logs in for the first time (after accepting terms). Creators see a list of join buttons.<br/>
+      <strong style="color:#e8e8f0">Subscriber channels</strong> — Shown on the <code>/post-purchase-telegram</code> page after any successful purchase. Redirect subscribers there after payment success.<br/>
+      <strong style="color:#e8e8f0">Admin internal</strong> — Stored for reference, not shown publicly.
+    </div>
+  </div>
+</div>
+{% endblock %}

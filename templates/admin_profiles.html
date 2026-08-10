@@ -1,0 +1,501 @@
+{% extends 'base.html' %}
+{% block title %}Creators — Admin{% endblock %}
+
+{% block head %}
+<style>
+:root {
+  --rose:#e8547a; --rose-dim:rgba(232,84,122,0.15);
+  --rose-glow:rgba(232,84,122,0.07); --rose-border:rgba(232,84,122,0.25);
+}
+
+/* ── TABS ── */
+.admin-section-tabs { display:flex; gap:.25rem; border-bottom:1px solid var(--border); margin-bottom:2rem; }
+.ast-btn {
+  background:none; border:none; border-bottom:2px solid transparent;
+  color:var(--text3); font-family:var(--font-body); font-size:.85rem;
+  padding:.7rem 1.4rem; cursor:pointer; transition:all .2s; margin-bottom:-1px;
+}
+.ast-btn:hover { color:var(--text); }
+.ast-btn.active { color:var(--rose); border-bottom-color:var(--rose); }
+.ast-panel { display:none; }
+.ast-panel.active { display:block; }
+
+/* ── CREATE FORM ── */
+.create-form-card {
+  background:var(--surface); border:1px solid var(--rose-border);
+  border-radius:16px; overflow:hidden; margin-bottom:2rem;
+}
+.create-form-card-head {
+  padding:1rem 1.5rem; background:linear-gradient(135deg,var(--rose-glow),transparent);
+  border-bottom:1px solid var(--border);
+  font-family:var(--font-head); font-size:1.05rem; color:var(--rose); font-style:italic;
+  display:flex; align-items:center; gap:.5rem;
+}
+.create-form-card-body { padding:1.5rem; }
+.form-row-2 { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+.form-row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem; }
+@media(max-width:640px){ .form-row-2,.form-row-3{ grid-template-columns:1fr; } }
+
+/* ── CREATOR GRID ── */
+.creator-grid {
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:1.25rem;
+}
+
+/* ── CREATOR CARD ── */
+.creator-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:16px; overflow:hidden;
+  transition:transform .3s cubic-bezier(.22,.68,0,1.2), box-shadow .3s, border-color .3s;
+}
+.creator-card:hover {
+  transform:translateY(-4px);
+  box-shadow:0 16px 48px rgba(0,0,0,.5);
+  border-color:var(--rose-border);
+}
+.creator-card-cover {
+  height:80px; overflow:hidden; position:relative;
+}
+.creator-card-cover img { width:100%; height:100%; object-fit:cover; }
+.creator-card-cover-ph { width:100%; height:100%; }
+.creator-card-avatar-wrap {
+  display:flex; justify-content:center;
+  margin-top:-28px; position:relative; z-index:2;
+}
+.creator-card-avatar {
+  width:56px; height:56px; border-radius:50%;
+  object-fit:cover; border:3px solid var(--surface);
+}
+.creator-card-avatar-ph {
+  width:56px; height:56px; border-radius:50%;
+  border:3px solid var(--surface);
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-head); font-size:1.2rem; color:#07070a;
+}
+.creator-card-body { padding:.6rem 1rem 1rem; text-align:center; }
+.creator-card-name {
+  font-family:var(--font-head); font-size:1rem; color:var(--text); margin-bottom:.1rem;
+}
+.creator-card-handle { font-size:.7rem; color:var(--text3); margin-bottom:.3rem; }
+.creator-card-flag { font-size:.85rem; }
+.creator-card-tagline {
+  font-size:.75rem; color:var(--text2); line-height:1.45;
+  margin:.3rem 0 .6rem;
+  overflow:hidden; display:-webkit-box;
+  -webkit-line-clamp:2; -webkit-box-orient:vertical;
+}
+.creator-card-stats {
+  display:flex; justify-content:center; gap:1rem;
+  padding:.5rem 0; border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border); margin-bottom:.65rem;
+}
+.creator-card-stats .n { display:block; font-family:var(--font-head); font-size:.95rem; color:var(--rose); }
+.creator-card-stats .l { display:block; font-size:.58rem; color:var(--text3); text-transform:uppercase; letter-spacing:.06em; }
+.creator-card-actions {
+  display:flex; gap:.35rem; padding:.6rem 1rem;
+  border-top:1px solid var(--border); background:var(--bg2);
+}
+.cca-btn {
+  flex:1; padding:.4rem .3rem; border-radius:8px;
+  border:1px solid var(--border); background:none;
+  color:var(--text2); font-size:.72rem; cursor:pointer;
+  text-decoration:none; text-align:center; transition:all .18s;
+  font-family:var(--font-body); display:flex; align-items:center;
+  justify-content:center; gap:.25rem;
+}
+.cca-btn:hover { background:rgba(255,255,255,.04); color:var(--text); }
+.cca-btn.rose  { border-color:var(--rose-dim); color:var(--rose); }
+.cca-btn.rose:hover { background:var(--rose-glow); }
+.cca-btn.danger:hover { border-color:rgba(224,85,85,.3); color:var(--red); background:rgba(224,85,85,.06); }
+
+/* ── TIER BADGES ── */
+.tier-standard { background:rgba(91,138,245,.1); color:#7ba7f7; border:1px solid rgba(91,138,245,.2); }
+.tier-verified  { background:rgba(76,175,125,.1); color:#4caf7d; border:1px solid rgba(76,175,125,.2); }
+.tier-elite     { background:rgba(201,168,76,.1);  color:#c9a84c; border:1px solid rgba(201,168,76,.2); }
+
+/* ── UPLOAD ZONE ── */
+.upload-zone-sm {
+  border:2px dashed var(--rose-border); border-radius:10px; padding:1.25rem;
+  text-align:center; cursor:pointer; transition:all .2s;
+  background:var(--rose-glow); position:relative; overflow:hidden;
+}
+.upload-zone-sm:hover { border-color:var(--rose); }
+.upload-zone-sm input[type=file] {
+  position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%;
+}
+.upload-zone-sm .preview-img { width:100%; height:80px; object-fit:cover; border-radius:6px; margin-top:.5rem; display:none; }
+
+/* ── COLOR SWATCHES ── */
+.color-swatches { display:flex; gap:.4rem; flex-wrap:wrap; margin-top:.4rem; }
+.color-swatch {
+  width:28px; height:28px; border-radius:50%; cursor:pointer;
+  border:2px solid transparent; transition:transform .15s, border-color .15s;
+}
+.color-swatch:hover, .color-swatch.active { transform:scale(1.2); border-color:var(--text); }
+
+/* ── COUNTRY FLAG MAP ── */
+{% set FLAG_MAP = {'KE':'🇰🇪','NG':'🇳🇬','ZA':'🇿🇦','GH':'🇬🇭','ET':'🇪🇹','TZ':'🇹🇿','UG':'🇺🇬','RW':'🇷🇼','US':'🇺🇸','GB':'🇬🇧','FR':'🇫🇷','DE':'🇩🇪','IT':'🇮🇹','ES':'🇪🇸','BR':'🇧🇷','MX':'🇲🇽','IN':'🇮🇳','CN':'🇨🇳','JP':'🇯🇵','AU':'🇦🇺','CA':'🇨🇦','AE':'🇦🇪','SA':'🇸🇦','EG':'🇪🇬','MA':'🇲🇦','SN':'🇸🇳','CI':'🇨🇮','CM':'🇨🇲','ZW':'🇿🇼','ZM':'🇿🇲'} %}
+
+/* ── DELETE MODAL ── */
+.del-modal {
+  position:fixed; inset:0; z-index:999;
+  background:rgba(0,0,0,.8); backdrop-filter:blur(8px);
+  display:flex; align-items:center; justify-content:center; padding:1rem;
+}
+.del-modal-box {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:16px; padding:2rem; max-width:360px; width:100%; text-align:center;
+}
+.del-modal-box h3 { font-family:var(--font-head); font-size:1.2rem; margin-bottom:.5rem; }
+.del-modal-box p  { color:var(--text2); font-size:.85rem; margin-bottom:1.25rem; }
+
+/* ── PAGE HEADER ── */
+.page-hdr { display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:2rem; flex-wrap:wrap; gap:1rem; }
+.page-hdr h1 { font-family:var(--font-head); font-size:1.9rem; font-style:italic; color:var(--text); }
+.page-hdr h1 span { color:var(--rose); }
+.rose-btn {
+  display:inline-flex; align-items:center; gap:.5rem;
+  background:linear-gradient(135deg,var(--rose),#c2185b);
+  color:#fff; border:none; border-radius:100px;
+  padding:.65rem 1.5rem; font-size:.85rem; font-weight:600;
+  cursor:pointer; text-decoration:none; transition:all .25s;
+  box-shadow:0 4px 16px rgba(232,84,122,0.3);
+}
+.rose-btn:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(232,84,122,0.4); color:#fff; }
+
+/* Empty */
+.empty-creators { text-align:center; padding:4rem 2rem; color:var(--text3); grid-column:1/-1; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="admin-sidebar">
+    <div class="admin-sidebar-brand">💕 Velvet Vault<br>
+      <small style="font-size:.72rem;color:var(--text3);">Admin Panel</small>
+    </div>
+    <nav class="admin-nav">
+      <a href="{{ url_for('admin_dashboard') }}">📊 Dashboard</a>
+      <a href="{{ url_for('admin_profiles') }}" class="active" style="color:var(--rose);background:var(--rose-glow);border-color:var(--rose-dim);">👤 Creators</a>
+      <a href="{{ url_for('admin_categories') }}">🗂 Categories</a>
+      <a href="{{ url_for('admin_comments') }}">💬 Comments</a>
+      <a href="{{ url_for('admin_analytics') }}">📈 Analytics</a>
+      <a href="{{ url_for('admin_revenue') }}">💰 Revenue</a>
+      <a href="{{ url_for('admin_settings') }}">⚙️ Settings</a>
+      <a href="{{ url_for('index') }}" target="_blank">🌐 View Site</a>
+      <a href="{{ url_for('logout') }}" style="color:var(--red);">🚪 Logout</a>
+    </nav>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="admin-content">
+
+    <div class="page-hdr">
+      <div>
+        <h1>Creator <span>Profiles</span></h1>
+        <p style="color:var(--text2);font-size:.88rem;margin-top:.25rem;">
+          Manage all creators — {{ profiles|length }} total. Add posts, photos and videos under each creator.
+        </p>
+      </div>
+      <button class="rose-btn" onclick="switchSection('add',this)">💕 Add New Creator</button>
+      <a href="{{ url_for('admin_managers') }}"
+         style="display:inline-flex;align-items:center;gap:.4rem;background:rgba(167,139,250,.15);
+                color:#a78bfa;border:1px solid rgba(167,139,250,.3);border-radius:8px;
+                padding:.55rem 1.1rem;font-size:.85rem;text-decoration:none;margin-left:.5rem;
+                transition:background .15s;"
+         onmouseover="this.style.background='rgba(167,139,250,.25)'"
+         onmouseout="this.style.background='rgba(167,139,250,.15)'">
+        👥 Manage Managers
+      </a>
+    </div>
+
+    <!-- SECTION TABS -->
+    <div class="admin-section-tabs">
+      <button class="ast-btn active" onclick="switchSection('list',this)">
+        👤 All Creators ({{ profiles|length }})
+      </button>
+      <button class="ast-btn" onclick="switchSection('add',this)">
+        ➕ Add Creator
+      </button>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         PANEL 1: CREATOR LIST
+    ═══════════════════════════════════════════════════════════ -->
+    <div id="section-list" class="ast-panel active">
+      <div class="creator-grid">
+        {% for profile in profiles %}
+        <div class="creator-card">
+          <!-- Cover -->
+          <div class="creator-card-cover">
+            {% if profile.cover_filename %}
+            <img src="{{ url_for('serve_profile_media', filename=profile.cover_filename) }}" alt="">
+            {% else %}
+            <div class="creator-card-cover-ph"
+                 style="background:linear-gradient(135deg,{{ profile.accent_color }}33,#111118,{{ profile.accent_color }}11);"></div>
+            {% endif %}
+          </div>
+
+          <!-- Avatar -->
+          <div class="creator-card-avatar-wrap">
+            {% if profile.avatar_filename %}
+            <img class="creator-card-avatar"
+                 src="{{ url_for('serve_profile_media', filename=profile.avatar_filename) }}"
+                 style="box-shadow:0 0 0 3px {{ profile.accent_color }}60;" alt="">
+            {% else %}
+            <div class="creator-card-avatar-ph"
+                 style="background:{{ profile.accent_color }};box-shadow:0 0 0 3px {{ profile.accent_color }}40;">
+              {{ profile.name[0].upper() }}
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- Body -->
+          <div class="creator-card-body">
+            <div style="margin-bottom:.35rem;">
+              <span class="badge tier-{{ profile.membership_tier or 'standard' }}" style="font-size:.6rem;padding:2px 8px;">
+                {% if profile.membership_tier == 'elite' %}💎 Elite
+                {% elif profile.membership_tier == 'verified' %}✅ Verified
+                {% else %}🌸 Standard{% endif %}
+              </span>
+              {% if not profile.is_active %}
+              <span class="badge" style="font-size:.6rem;background:rgba(224,85,85,.1);color:var(--red);border:1px solid rgba(224,85,85,.2);">Hidden</span>
+              {% endif %}
+            </div>
+            <div class="creator-card-name">{{ profile.name }}</div>
+            <div class="creator-card-handle">@{{ profile.username }}</div>
+            {% if profile.country_code %}
+            <div class="creator-card-flag">
+              {{ {'KE':'🇰🇪','NG':'🇳🇬','ZA':'🇿🇦','GH':'🇬🇭','ET':'🇪🇹','TZ':'🇹🇿','UG':'🇺🇬','RW':'🇷🇼','US':'🇺🇸','GB':'🇬🇧','FR':'🇫🇷','DE':'🇩🇪','IT':'🇮🇹','ES':'🇪🇸','BR':'🇧🇷','MX':'🇲🇽','IN':'🇮🇳','CN':'🇨🇳','JP':'🇯🇵','AU':'🇦🇺','CA':'🇨🇦','AE':'🇦🇪','SA':'🇸🇦','EG':'🇪🇬','MA':'🇲🇦','SN':'🇸🇳','CI':'🇨🇮','CM':'🇨🇲','ZW':'🇿🇼','ZM':'🇿🇲'}.get(profile.country_code,'🌍') }}
+              <span style="font-size:.68rem;color:var(--text3);">{{ profile.category }}</span>
+            </div>
+            {% endif %}
+            {% if profile.tagline %}
+            <div class="creator-card-tagline">{{ profile.tagline }}</div>
+            {% endif %}
+            <!-- Manager assignment display -->
+            <div style="margin:.35rem 0;font-size:.72rem;">
+              {% if profile.manager %}
+                <span style="background:rgba(167,139,250,.15);color:#a78bfa;border:1px solid rgba(167,139,250,.3);
+                             border-radius:20px;padding:.15rem .55rem;display:inline-flex;align-items:center;gap:.3rem;">
+                  👤 {{ profile.manager.email }}
+                </span>
+              {% else %}
+                <span style="background:var(--bg3);color:var(--text3);border:1px solid var(--border);
+                             border-radius:20px;padding:.15rem .55rem;">No manager</span>
+              {% endif %}
+            </div>
+          </div><!-- /creator-card-body -->
+
+          <!-- Stats -->
+          <div class="creator-card-stats">
+            <div><span class="n">{{ profile.post_count or 0 }}</span><span class="l">Posts</span></div>
+            <div><span class="n">{{ profile.total_likes or 0 }}</span><span class="l">Likes</span></div>
+            {% if profile.is_online %}
+            <div><span class="n" style="color:#2ecc71;">🟢</span><span class="l">Online</span></div>
+            {% endif %}
+          </div>
+
+          <!-- Actions -->
+          <div class="creator-card-actions">
+            <a href="{{ url_for('admin_edit_profile', profile_id=profile.id) }}" class="cca-btn rose">✏️ Edit</a>
+            <a href="{{ url_for('admin_creator_inbox', profile_id=profile.id) }}" class="cca-btn" style="background:rgba(232,84,122,.1);color:#e8547a;border-color:rgba(232,84,122,.25);">✉️ Inbox</a>
+            <a href="{{ url_for('profile_page', username=profile.username) }}" target="_blank" class="cca-btn">👁 View</a>
+            <button class="cca-btn danger" onclick="confirmDel({{ profile.id }},'{{ profile.name|e }}')">🗑</button>
+          </div>
+        </div>
+        {% else %}
+        <div class="empty-creators">
+          <div style="font-size:3rem;opacity:.3;margin-bottom:1rem;">💕</div>
+          <h3 style="font-family:var(--font-head);font-size:1.2rem;margin-bottom:.5rem;">No Creators Yet</h3>
+          <p style="font-size:.85rem;margin-bottom:1rem;">Click "Add Creator" above to create your first profile.</p>
+          <button class="rose-btn" onclick="switchSection('add',this)">💕 Add First Creator</button>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         PANEL 2: ADD CREATOR FORM
+    ═══════════════════════════════════════════════════════════ -->
+    <div id="section-add" class="ast-panel">
+      <div class="create-form-card">
+        <div class="create-form-card-head">💕 Create New Creator Profile</div>
+        <div class="create-form-card-body">
+          <form method="POST" action="{{ url_for('admin_create_profile') }}" enctype="multipart/form-data" id="add-creator-form">
+
+            <!-- Identity -->
+            <div class="form-row-2" style="margin-bottom:1rem;">
+              <div class="form-group" style="margin:0;">
+                <label>Display Name *</label>
+                <input type="text" name="name" placeholder="e.g. Amara Rose" required>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Username * <span style="font-size:.7rem;color:var(--text3);">(letters, numbers, underscores)</span></label>
+                <input type="text" name="username" placeholder="amara_rose" required
+                       oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9_]/g,'')">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Tagline</label>
+              <input type="text" name="tagline" placeholder="A short romantic description for their card…" maxlength="200">
+            </div>
+
+            <div class="form-group">
+              <label>Bio</label>
+              <textarea name="bio" rows="3" placeholder="Their story, passion, what makes them unique…"></textarea>
+            </div>
+
+            <div class="form-row-3" style="margin-bottom:1rem;">
+              <div class="form-group" style="margin:0;">
+                <label>Category</label>
+                <input type="text" name="category" placeholder="Fine Art, Fashion, Travel…">
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Country</label>
+                <select name="country_code" onchange="document.getElementById('flag-live').textContent=this.options[this.selectedIndex].dataset.flag||'🌍'">
+                  <option value="">— Select —</option>
+                  {% for code,flag,cname in [('KE','🇰🇪','Kenya'),('NG','🇳🇬','Nigeria'),('ZA','🇿🇦','South Africa'),('GH','🇬🇭','Ghana'),('ET','🇪🇹','Ethiopia'),('TZ','🇹🇿','Tanzania'),('UG','🇺🇬','Uganda'),('RW','🇷🇼','Rwanda'),('US','🇺🇸','United States'),('GB','🇬🇧','United Kingdom'),('FR','🇫🇷','France'),('DE','🇩🇪','Germany'),('IT','🇮🇹','Italy'),('ES','🇪🇸','Spain'),('BR','🇧🇷','Brazil'),('MX','🇲🇽','Mexico'),('IN','🇮🇳','India'),('CN','🇨🇳','China'),('JP','🇯🇵','Japan'),('AU','🇦🇺','Australia'),('CA','🇨🇦','Canada'),('AE','🇦🇪','UAE'),('SA','🇸🇦','Saudi Arabia'),('EG','🇪🇬','Egypt'),('MA','🇲🇦','Morocco'),('SN','🇸🇳','Senegal'),('CI','🇨🇮','Ivory Coast'),('CM','🇨🇲','Cameroon'),('ZW','🇿🇼','Zimbabwe'),('ZM','🇿🇲','Zambia')] %}
+                  <option value="{{ code }}" data-flag="{{ flag }}">{{ flag }} {{ cname }}</option>
+                  {% endfor %}
+                </select>
+                <span id="flag-live" style="font-size:1.5rem;margin-top:.35rem;display:block;">🌍</span>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Tier</label>
+                <select name="membership_tier">
+                  <option value="standard">🌸 Standard</option>
+                  <option value="verified">✅ Verified</option>
+                  <option value="elite">💎 Elite</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Media uploads -->
+            <div class="form-row-2" style="margin-bottom:1rem;">
+              <div>
+                <label style="display:block;font-size:.82rem;color:var(--text2);margin-bottom:.4rem;">Avatar Photo</label>
+                <div class="upload-zone-sm">
+                  <input type="file" name="avatar" accept=".jpg,.jpeg,.png,.webp"
+                         onchange="previewZone(this,'av-preview')">
+                  <div>🤳 Upload Avatar</div>
+                  <div style="font-size:.72rem;color:var(--text3);">JPG/PNG/WEBP</div>
+                  <img id="av-preview" class="preview-img" alt="">
+                </div>
+              </div>
+              <div>
+                <label style="display:block;font-size:.82rem;color:var(--text2);margin-bottom:.4rem;">Cover Banner</label>
+                <div class="upload-zone-sm">
+                  <input type="file" name="cover" accept=".jpg,.jpeg,.png,.webp"
+                         onchange="previewZone(this,'cv-preview')">
+                  <div>🖼 Upload Cover</div>
+                  <div style="font-size:.72rem;color:var(--text3);">JPG/PNG/WEBP, 16:9</div>
+                  <img id="cv-preview" class="preview-img" alt="">
+                </div>
+              </div>
+            </div>
+
+            <!-- Accent color -->
+            <div class="form-group">
+              <label>Accent Colour</label>
+              <div class="color-swatches" id="color-swatches">
+                {% for c in ['#e8547a','#f48fb1','#e91e63','#c2185b','#ad1457','#ff6b9d','#ff4081','#9c27b0','#673ab7','#3f51b5','#c9a84c','#ff9800','#4caf50','#00bcd4'] %}
+                <div class="color-swatch {% if loop.first %}active{% endif %}"
+                     style="background:{{ c }};" onclick="pickColor('{{ c }}',this)"></div>
+                {% endfor %}
+              </div>
+              <div style="display:flex;align-items:center;gap:.75rem;margin-top:.5rem;">
+                <input type="color" name="accent_color" id="accent-pick" value="#e8547a"
+                       style="width:40px;height:32px;border:none;background:none;cursor:pointer;border-radius:6px;"
+                       oninput="document.getElementById('accent-hex').textContent=this.value">
+                <code id="accent-hex" style="font-size:.8rem;color:var(--text3);">#e8547a</code>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Sort Order <span style="font-size:.72rem;color:var(--text3);">(lower = appears first)</span></label>
+              <input type="number" name="sort_order" value="0" min="0" style="max-width:120px;">
+            </div>
+
+            <div style="display:flex;gap:.75rem;margin-top:1.25rem;flex-wrap:wrap;">
+              <button type="submit" class="rose-btn">💕 Create Creator</button>
+              <button type="button" class="btn btn-ghost" onclick="switchSection('list',null)">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /admin-content -->
+</div><!-- /admin-layout -->
+
+<!-- DELETE MODAL -->
+<div class="del-modal" id="del-modal" style="display:none;">
+  <div class="del-modal-box">
+    <div style="font-size:2rem;margin-bottom:.5rem;">🗑</div>
+    <h3>Delete Creator?</h3>
+    <p id="del-msg"></p>
+    <form method="POST" id="del-form">
+      <div style="display:flex;gap:.75rem;justify-content:center;">
+        <button type="submit" class="btn btn-danger">Delete</button>
+        <button type="button" class="btn btn-ghost" onclick="document.getElementById('del-modal').style.display='none'">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── Tab switching ─────────────────────────────────────────────────────────────
+function switchSection(name, btn) {
+  document.querySelectorAll('.ast-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.ast-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('section-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+  else {
+    const tabs = document.querySelectorAll('.ast-btn');
+    if (name === 'list') tabs[0].classList.add('active');
+    else tabs[1].classList.add('active');
+  }
+}
+
+// ── Delete modal ──────────────────────────────────────────────────────────────
+function confirmDel(id, name) {
+  document.getElementById('del-msg').textContent =
+    'Delete "' + name + '" and all their posts? This cannot be undone.';
+  document.getElementById('del-form').action = '/admin/profiles/' + id + '/delete';
+  document.getElementById('del-modal').style.display = 'flex';
+}
+document.getElementById('del-modal').addEventListener('click', function(e) {
+  if (e.target === this) this.style.display = 'none';
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.getElementById('del-modal').style.display = 'none';
+});
+
+// ── Image preview ─────────────────────────────────────────────────────────────
+function previewZone(input, previewId) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = document.getElementById(previewId);
+    img.src = e.target.result;
+    img.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── Color picker ──────────────────────────────────────────────────────────────
+function pickColor(hex, el) {
+  document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('accent-pick').value = hex;
+  document.getElementById('accent-hex').textContent = hex;
+}
+</script>
+{% endblock %}

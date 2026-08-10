@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="admin-page">
+
+  <h1>Creator Verification</h1>
+
+  <div class="admin-card">
+
+    {% for creator in creators %}
+
+    <div style="
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:1rem;
+      border-bottom:1px solid rgba(255,255,255,.06);
+    ">
+
+      <div>
+        <strong>{{ creator.name }}</strong>
+        <div>@{{ creator.username }}</div>
+      </div>
+
+      <div>
+
+        {% if creator.is_verified %}
+          <span style="color:gold;">✔ Verified</span>
+        {% else %}
+          <span style="color:#999;">Not Verified</span>
+        {% endif %}
+
+      </div>
+
+    </div>
+
+    {% endfor %}
+
+  </div>
+
+</div>
+
+{% endblock %}

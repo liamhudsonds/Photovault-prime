@@ -1,0 +1,59 @@
+{% extends 'vx_base.html' %}
+{% block title %}Request Withdrawal — VaultX{% endblock %}
+{% block navbar %}
+<div class="navbar">
+  <div class="brand">Vault<span>X</span></div>
+  <nav>
+    <a href="/creator/home">← Dashboard</a>
+    <a href="/creator/withdrawal-history">History</a>
+  </nav>
+</div>
+{% endblock %}
+{% block content %}
+<div class="container" style="max-width:580px">
+  <div class="withdrawal-window" style="margin-bottom:1.5rem;padding:1.2rem">
+    <div style="font-size:1.3rem;font-weight:800;color:var(--green)">💚 Withdrawal Window Open</div>
+    <div style="color:#ccc;font-size:.9rem;margin-top:.25rem">Today is a withdrawal day. Submit your request below.</div>
+  </div>
+
+  <div class="stat-grid" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:1.5rem">
+    <div class="stat-card"><div class="val" style="color:var(--green)">${{"%.2f"|format(available)}}</div><div class="lbl">Available</div></div>
+    <div class="stat-card"><div class="val" style="color:var(--amber)">${{"%.2f"|format(pending)}}</div><div class="lbl">Pending</div></div>
+    <div class="stat-card"><div class="val">${{"%.2f"|format(lifetime)}}</div><div class="lbl">Lifetime</div></div>
+  </div>
+
+  {% if not methods %}
+  <div class="card" style="text-align:center;padding:2rem">
+    <div style="font-size:1.5rem;margin-bottom:.5rem">🏦</div>
+    <div style="color:var(--muted);margin-bottom:1rem">You need to add a payout method before you can withdraw.</div>
+    <a href="/creator/payout-methods" class="btn btn-rose">Add Payout Method</a>
+  </div>
+  {% else %}
+  <div class="card">
+    <div class="card-title">💸 Withdrawal Request</div>
+    <form method="POST">
+      <div class="form-group">
+        <label>Amount (USD)</label>
+        <input type="number" name="amount" min="1" max="{{available}}" step="0.01" placeholder="0.00" required/>
+        <div style="font-size:.78rem;color:var(--muted);margin-top:.25rem">Maximum: ${{"{:.2f}".format(available)}}</div>
+      </div>
+      <div class="form-group">
+        <label>Payout Method</label>
+        <select name="payout_method_id" required>
+          <option value="">Select method…</option>
+          {% for m in methods %}
+          <option value="{{m.id}}" {{'selected' if m.is_default}}>
+            {{m.method_type | upper}}{% if m.mpesa_number %} — {{m.mpesa_number}}{% endif %}{% if m.paypal_email %} — {{m.paypal_email}}{% endif %}{% if m.bank_name %} — {{m.bank_name}}{% endif %}{% if m.crypto_wallet %} — {{m.crypto_type}}: {{m.crypto_wallet[:20]}}...{% endif %}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <button class="btn btn-rose" type="submit" style="width:100%">💸 Submit Withdrawal Request</button>
+    </form>
+    <div style="margin-top:1rem;background:#1a1a30;border-radius:9px;padding:.9rem;font-size:.85rem;color:var(--muted)">
+      ⚠️ Requests enter <strong>Pending</strong> status. Admin approves and processes within 24–72 hours. Once paid, status changes to <strong>Paid</strong>.
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

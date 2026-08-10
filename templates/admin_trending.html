@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% block title %}Trending & Engagement — Admin{% endblock %}
+{% block content %}
+<div class="admin-layout">
+
+  <!-- Sidebar (reuse pattern from other admin pages) -->
+  <aside class="admin-sidebar">
+    <div class="admin-sidebar-brand">⬡ PhotoVault<br>
+      <small style="font-family:var(--font-body);font-size:.75rem;color:var(--text3);">Admin Panel</small>
+    </div>
+    <nav class="admin-nav">
+      <a href="{{ url_for('admin_dashboard') }}" class="single-link">📊 Dashboard</a>
+      <a href="{{ url_for('admin_trending') }}" class="single-link" style="color:var(--gold)">🔥 Trending</a>
+      <a href="{{ url_for('admin_analytics') }}" class="single-link">📈 Analytics</a>
+      <a href="{{ url_for('admin_comments') }}" class="single-link">💬 Comments</a>
+    </nav>
+  </aside>
+
+  <div class="admin-main">
+
+    <!-- Header -->
+    <div style="display:flex;justify-content:space-between;align-items:center;
+                border-bottom:1px solid var(--border);padding-bottom:1rem;margin-bottom:1.5rem">
+      <div>
+        <h1 style="font-size:1.4rem;font-family:var(--font-serif)">🔥 Trending & Engagement</h1>
+        <p style="color:var(--text3);font-size:.85rem;margin-top:.2rem">
+          Live engagement scores: Views×1 · Likes×2 · Comments×3 · Unlocks×5
+        </p>
+      </div>
+      <form method="POST" action="{{ url_for('admin_recalculate_all') }}">
+        <button type="submit" class="btn btn-primary btn-sm">↻ Recalculate All</button>
+      </form>
+    </div>
+
+    <!-- Creator Leaderboard -->
+    <h2 style="font-size:1rem;font-weight:600;margin-bottom:.75rem">⭐ Creator Leaderboard</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.75rem;margin-bottom:2rem">
+      {% for profile, score, post_count in creator_scores %}
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;
+                  padding:.85rem;display:flex;flex-direction:column;gap:.4rem">
+        <div style="display:flex;align-items:center;gap:.6rem">
+          {% if profile.avatar_filename %}
+            <img src="/static/uploads/profiles/{{ profile.avatar_filename }}"
+                 style="width:36px;height:36px;border-radius:50%;object-fit:cover">
+          {% else %}
+            <div style="width:36px;height:36px;border-radius:50%;background:var(--surface2);
+                        display:flex;align-items:center;justify-content:center">👤</div>
+          {% endif %}
+          <div>
+            <div style="font-weight:600;font-size:.88rem">{{ profile.name }}</div>
+            <div style="font-size:.72rem;color:var(--text3)">{{ post_count }} post{{ 's' if post_count != 1 }}</div>
+          </div>
+        </div>
+        <div style="font-size:1.1rem;font-weight:700;color:var(--gold)">⚡ {{ score|int }}</div>
+        <div style="font-size:.72rem;color:var(--text3)">Total engagement score</div>
+      </div>
+      {% else %}
+      <p style="color:var(--text3)">No engagement data yet. Trigger recalculate to populate.</p>
+      {% endfor %}
+    </div>
+
+    <!-- Top Posts Table -->
+    <h2 style="font-size:1rem;font-weight:600;margin-bottom:.75rem">🔥 Top Posts by Score</h2>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:.85rem">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border);color:var(--text3)">
+            <th style="text-align:left;padding:.5rem .75rem">#</th>
+            <th style="text-align:left;padding:.5rem .75rem">Post</th>
+            <th style="text-align:left;padding:.5rem .75rem">Creator</th>
+            <th style="text-align:center;padding:.5rem .75rem">Score</th>
+            <th style="text-align:center;padding:.5rem .75rem">👁 Views</th>
+            <th style="text-align:center;padding:.5rem .75rem">❤️ Likes</th>
+            <th style="text-align:center;padding:.5rem .75rem">💬 Comments</th>
+            <th style="text-align:center;padding:.5rem .75rem">🔓 Unlocks</th>
+            <th style="padding:.5rem .75rem"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for post, eng, profile in rows %}
+          <tr style="border-bottom:1px solid var(--border);{% if loop.index <= 3 %}background:rgba(201,168,76,.04){% endif %}">
+            <td style="padding:.6rem .75rem;color:var(--text3)">
+              {% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{% else %}{{ loop.index }}{% endif %}
+            </td>
+            <td style="padding:.6rem .75rem;max-width:200px">
+              <div style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+                {{ post.title or 'Untitled' }}
+              </div>
+              <div style="font-size:.72rem;color:var(--text3)">{{ post.post_type|upper }}</div>
+            </td>
+            <td style="padding:.6rem .75rem">
+              <span
+                 style="color:var(--text);text-decoration:none">{{ profile.name }}</a>
+            </td>
+            <td style="padding:.6rem .75rem;text-align:center">
+              <span style="background:rgba(201,168,76,.15);color:var(--gold);
+                           font-weight:700;padding:2px 8px;border-radius:20px">
+                {{ eng.score|int }}
+              </span>
+            </td>
+            <td style="padding:.6rem .75rem;text-align:center">{{ eng.view_count }}</td>
+            <td style="padding:.6rem .75rem;text-align:center">{{ eng.like_count }}</td>
+            <td style="padding:.6rem .75rem;text-align:center">{{ eng.comment_count }}</td>
+            <td style="padding:.6rem .75rem;text-align:center">{{ eng.unlock_count }}</td>
+            <td style="padding:.6rem .75rem">
+              <form method="POST" action="{{ url_for('admin_recalculate_engagement', post_id=post.id) }}" style="display:inline">
+                <button type="submit" style="background:none;border:1px solid var(--border);
+                  color:var(--text3);font-size:.72rem;padding:2px 8px;border-radius:4px;cursor:pointer">↻</button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="9" style="padding:1.5rem;text-align:center;color:var(--text3)">
+            No engagement data yet. Click "Recalculate All" to populate.
+          </td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

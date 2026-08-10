@@ -1,0 +1,132 @@
+{% extends 'vx_base.html' %}
+{% block title %}My Dashboard — VaultX{% endblock %}
+{% block navbar %}
+<div class="navbar">
+  <div class="brand">Vault<span>X</span></div>
+  <nav>
+    <a href="/my/dashboard" class="active">My Dashboard</a>
+    <a href="/">🏠 Browse</a>
+    <a href="/gallery">📷 Photos</a>
+    <a href="/videos">🎬 Videos</a>
+    <a href="/profiles">👤 Creators</a>
+    <a href="/logout" style="color:var(--muted)">Logout</a>
+  </nav>
+</div>
+{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <h1>👤 My Dashboard</h1>
+    <p>Your spending, subscriptions, and activity.</p>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card"><div class="val" style="color:var(--gold)">${{"%.2f"|format(total_spent)}}</div><div class="lbl">Total Spent</div></div>
+    <div class="stat-card"><div class="val" style="color:var(--rose-light)">${{"%.2f"|format(this_month)}}</div><div class="lbl">This Month</div></div>
+    <div class="stat-card"><div class="val">{{photos_bought}}</div><div class="lbl">Photos Bought</div></div>
+    <div class="stat-card"><div class="val">{{videos_bought}}</div><div class="lbl">Videos Bought</div></div>
+    <div class="stat-card"><div class="val">{{dm_purchases}}</div><div class="lbl">DM Unlocks</div></div>
+    <div class="stat-card"><div class="val">{{subs_count}}</div><div class="lbl">Subscriptions</div></div>
+    <div class="stat-card"><div class="val">{{tips_sent}}</div><div class="lbl">Tips Sent</div></div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem">
+    <div class="card">
+      <div class="card-title">⭐ Favorite Creators</div>
+      {% if fav_creators %}
+      {% for profile, cnt in fav_creators %}
+      <div style="display:flex;align-items:center;gap:.75rem;padding:.5rem 0;border-bottom:1px solid #1e1e38">
+        <img src="{{profile.avatar_filename or '/static/default_avatar.png'}}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid var(--rose)"/>
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:.9rem">{{profile.name}}</div>
+          <div style="color:var(--muted);font-size:.78rem">@{{profile.username}}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:.78rem;color:var(--muted)">{{cnt}} purchases</div>
+          <a href="/dm/{{profile.username}}" class="btn btn-sm btn-outline" style="font-size:.72rem;padding:.2rem .5rem">💬 DM</a>
+        </div>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div style="color:var(--muted);text-align:center;padding:1.5rem">No purchases yet.</div>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <div class="card-title">💎 Active Subscriptions</div>
+      {% if active_subs %}
+      {% for sub in active_subs %}
+      <div style="display:flex;align-items:center;gap:.75rem;padding:.5rem 0;border-bottom:1px solid #1e1e38">
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:.9rem">{{sub.profile.name}}</div>
+          <div style="font-size:.78rem;color:var(--muted)">Expires: {{sub.expires_at.strftime('%b %d, %Y') if sub.expires_at else 'Active'}}</div>
+        </div>
+        <div style="color:var(--gold);font-weight:700">${{"%.2f"|format(sub.monthly_price)}}/mo</div>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div style="color:var(--muted);text-align:center;padding:1.5rem">No active subscriptions.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:1rem">
+    <div class="card">
+      <div class="card-title">🔄 Recent Purchases</div>
+      {% if recent_txs %}
+      <table class="table">
+        <thead><tr><th>Type</th><th>Creator</th><th>Amount</th><th>Date</th></tr></thead>
+        <tbody>
+        {% for tx in recent_txs %}
+        <tr>
+          <td><span class="badge badge-rose">{{tx.content_type}}</span></td>
+          <td style="font-size:.88rem">{{tx.profile.name if tx.profile else '—'}}</td>
+          <td style="color:var(--gold);font-weight:700">${{"%.2f"|format(tx.gross_amount)}}</td>
+          <td style="color:var(--muted);font-size:.8rem">{{tx.created_at.strftime('%b %d')}}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div style="color:var(--muted);text-align:center;padding:1.5rem">No purchases yet. <a href="/">Browse creators →</a></div>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <div class="card-title">💬 Recent Messages</div>
+      {% if threads %}
+      {% for thread in threads %}
+      <a href="/dm/{{thread.profile.username}}" style="display:block;text-decoration:none;padding:.5rem 0;border-bottom:1px solid #1e1e38">
+        <div style="font-weight:600;font-size:.9rem;color:#e8e8f0">{{thread.profile.name}}</div>
+        <div style="font-size:.78rem;color:var(--muted)">{{thread.last_message_at.strftime('%b %d %H:%M')}}</div>
+      </a>
+      {% endfor %}
+      {% else %}
+      <div style="color:var(--muted);text-align:center;padding:1.5rem;font-size:.88rem">No messages yet.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Telegram Community -->
+  {% if subscriber_channels %}
+  <div class="card" style="margin-top:1rem">
+    <div class="card-title">📢 Join Our Telegram Community</div>
+    <p style="color:var(--muted);font-size:.88rem;margin-bottom:1rem">Stay updated with the latest creator announcements and exclusive promotions.</p>
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+      {% for ch in subscriber_channels %}
+      <a href="{{ch.channel_url}}" target="_blank" class="btn btn-rose">📢 {{ch.name}}</a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Quick Links -->
+  <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1.5rem;padding-top:1rem;border-top:1px solid #2e2e52">
+    <a href="/" class="btn btn-outline btn-sm">🏠 Browse Creators</a>
+    <a href="/gallery" class="btn btn-outline btn-sm">📷 Photo Gallery</a>
+    <a href="/videos" class="btn btn-outline btn-sm">🎬 Video Gallery</a>
+    <a href="/profiles" class="btn btn-outline btn-sm">👤 All Creators</a>
+    <a href="/logout" class="btn btn-outline btn-sm" style="color:var(--muted);border-color:var(--muted)">🚪 Logout</a>
+  </div>
+</div>
+{% endblock %}

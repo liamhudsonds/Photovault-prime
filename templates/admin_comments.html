@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block title %}Comments — Admin{% endblock %}
+{% block content %}
+<div class="admin-layout">
+  <aside class="admin-sidebar">
+    <div class="admin-sidebar-brand">⬡ PhotoVault<br>
+      <small style="font-family:var(--font-body);font-size:.75rem;color:var(--text3);">Admin Panel</small>
+    </div>
+    <nav class="admin-nav">
+      <a href="{{ url_for('admin_dashboard') }}">📊 Dashboard</a>
+      <a href="{{ url_for('admin_comments') }}" class="active">💬 Comments</a>
+      <a href="{{ url_for('admin_revenue') }}">💰 Revenue</a>
+      <a href="{{ url_for('index') }}" target="_blank">🌐 View Site</a>
+      <a href="{{ url_for('logout') }}" style="color:var(--red);">🚪 Logout</a>
+    </nav>
+  </aside>
+
+  <div class="admin-content">
+    <div class="admin-header">
+      <h1>Comments</h1>
+      <p>Moderate all user comments across photos and videos.</p>
+    </div>
+
+    {% if comments %}
+    <div class="table-wrap">
+      <div class="table-title">All Comments ({{ comments|length }})</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Content ID</th>
+            <th>Author</th>
+            <th>Comment</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in comments %}
+          <tr>
+            <td style="white-space:nowrap;font-size:.8rem;">{{ c.created_at.strftime('%b %d, %Y') }}</td>
+            <td>
+              {% if c.content_type == 'video' %}
+              <span class="badge" style="background:rgba(159,110,245,0.15);color:#9f6ef5;border:1px solid rgba(159,110,245,0.3);">🎬 Video</span>
+              {% else %}
+              <span class="badge" style="background:rgba(201,168,76,0.12);color:#C9A84C;border:1px solid rgba(201,168,76,0.3);">📷 Photo</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if c.content_type == 'video' %}
+              <a href="{{ url_for('video_detail', video_id=c.content_id) }}" target="_blank" style="color:var(--text3);">#{{ c.content_id }}</a>
+              {% else %}
+              <a href="{{ url_for('photo_detail', photo_id=c.content_id) }}" target="_blank" style="color:var(--text3);">#{{ c.content_id }}</a>
+              {% endif %}
+            </td>
+            <td style="font-weight:500;">{{ c.author_name }}</td>
+            <td style="max-width:320px;word-break:break-word;font-size:.85rem;color:var(--text2);">{{ c.body }}</td>
+            <td>
+              {% if c.is_approved %}
+              <span class="badge badge-completed">Visible</span>
+              {% else %}
+              <span class="badge badge-failed">Hidden</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="td-actions">
+                <form method="POST" action="{{ url_for('admin_approve_comment', comment_id=c.id) }}" style="display:inline;">
+                  <button type="submit" class="btn btn-ghost" style="padding:.3rem .7rem;font-size:.75rem;">
+                    {{ 'Hide' if c.is_approved else 'Approve' }}
+                  </button>
+                </form>
+                <form method="POST" action="{{ url_for('admin_delete_comment', comment_id=c.id) }}" style="display:inline;">
+                  <button type="submit" class="btn btn-danger" style="padding:.3rem .7rem;font-size:.75rem;"
+                          onclick="return confirm('Delete this comment permanently?')">Delete</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:4rem 2rem;color:var(--text3);">
+      <div style="font-size:3rem;margin-bottom:1rem;">💬</div>
+      <p style="font-size:.9rem;">No comments yet. They will appear here once buyers start engaging.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

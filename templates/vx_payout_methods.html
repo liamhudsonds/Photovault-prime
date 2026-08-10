@@ -1,0 +1,80 @@
+{% extends 'vx_base.html' %}
+{% block title %}Payout Methods{% endblock %}
+{% block navbar %}
+<div class="navbar">
+  <div class="brand">Vault<span>X</span></div>
+  <nav><a href="/creator/home">← Dashboard</a></nav>
+</div>
+{% endblock %}
+{% block content %}
+<div class="container" style="max-width:600px">
+  <div class="page-header"><h1>🏦 Payout Methods</h1><p>Add your preferred withdrawal methods.</p></div>
+
+  {% if methods %}
+  <div class="card" style="margin-bottom:1.5rem">
+    <div class="card-title">Saved Methods</div>
+    {% for m in methods %}
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:.75rem;background:#1a1a30;border-radius:9px;margin-bottom:.5rem">
+      <div>
+        <span class="badge badge-rose">{{m.method_type|upper}}</span>
+        {% if m.is_default %}<span class="badge badge-green" style="margin-left:.4rem">Default</span>{% endif %}
+        <div style="font-size:.85rem;color:var(--muted);margin-top:.25rem">
+          {% if m.mpesa_number %}M-Pesa: {{m.mpesa_number}}{% endif %}
+          {% if m.bank_name %}Bank: {{m.bank_name}} / {{m.bank_account}}{% endif %}
+          {% if m.paypal_email %}PayPal: {{m.paypal_email}}{% endif %}
+          {% if m.crypto_wallet %}{{m.crypto_type}}: {{m.crypto_wallet}}{% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <div class="card-title">➕ Add Payout Method</div>
+    <form method="POST" id="payout-form">
+      <div class="form-group">
+        <label>Method Type</label>
+        <select name="method_type" id="method-select" onchange="showFields(this.value)">
+          <option value="mpesa">M-Pesa</option>
+          <option value="bank">Bank Transfer</option>
+          <option value="paypal">PayPal</option>
+          <option value="crypto">Crypto (USDT)</option>
+        </select>
+      </div>
+      <div id="fields-mpesa">
+        <div class="form-group"><label>M-Pesa Number</label><input type="text" name="mpesa_number" placeholder="+254700000000"/></div>
+      </div>
+      <div id="fields-bank" style="display:none">
+        <div class="form-row">
+          <div class="form-group"><label>Bank Name</label><input type="text" name="bank_name" placeholder="Equity Bank"/></div>
+          <div class="form-group"><label>Account Number</label><input type="text" name="bank_account" placeholder="0012345678"/></div>
+        </div>
+      </div>
+      <div id="fields-paypal" style="display:none">
+        <div class="form-group"><label>PayPal Email</label><input type="email" name="paypal_email" placeholder="paypal@email.com"/></div>
+      </div>
+      <div id="fields-crypto" style="display:none">
+        <div class="form-row">
+          <div class="form-group"><label>Crypto Type</label>
+            <select name="crypto_type">
+              <option value="USDT">USDT (TRC-20)</option>
+              <option value="USDT-ERC20">USDT (ERC-20)</option>
+              <option value="BTC">Bitcoin</option>
+              <option value="ETH">Ethereum</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Wallet Address</label><input type="text" name="crypto_wallet" placeholder="T..."/></div>
+        </div>
+      </div>
+      <button class="btn btn-rose" type="submit" style="width:100%">💾 Save Payout Method</button>
+    </form>
+  </div>
+</div>
+<script>
+function showFields(type){
+  ['mpesa','bank','paypal','crypto'].forEach(t=>document.getElementById('fields-'+t).style.display='none')
+  document.getElementById('fields-'+type).style.display='block'
+}
+</script>
+{% endblock %}

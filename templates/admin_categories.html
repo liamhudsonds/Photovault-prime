@@ -1,0 +1,371 @@
+{% extends 'base.html' %}
+{% block title %}Categories — Admin{% endblock %}
+
+{% block head %}
+<style>
+.cat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+.cat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: box-shadow .2s;
+}
+.cat-card:hover { box-shadow: 0 8px 30px rgba(0,0,0,0.4); }
+.cat-card-head {
+  padding: 1.1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  background: var(--bg2);
+}
+.cat-icon-big {
+  font-size: 1.8rem;
+  width: 44px; height: 44px;
+  background: var(--gold-dim);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.cat-card-title { font-family: var(--font-head); font-size: 1.05rem; color: var(--text); }
+.cat-card-slug  { font-size: .72rem; color: var(--text3); font-family: monospace; }
+.cat-card-body  { padding: 1rem 1.25rem; }
+.cat-counts {
+  display: flex; gap: 1rem; margin-bottom: .75rem;
+}
+.cat-count-item {
+  display: flex; flex-direction: column; align-items: center;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 8px; padding: .4rem .75rem; flex: 1;
+}
+.cat-count-num  { font-size: 1.1rem; font-weight: 700; color: var(--gold); font-family: var(--font-head); }
+.cat-count-label{ font-size: .65rem; color: var(--text3); letter-spacing: .08em; }
+.cat-desc { font-size: .82rem; color: var(--text2); margin-bottom: .75rem; line-height: 1.5; }
+.cat-type-badge {
+  display: inline-block;
+  font-size: .65rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: 2px 10px;
+  border-radius: 100px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  color: var(--text3);
+  margin-bottom: .75rem;
+}
+.cat-card-actions {
+  display: flex; gap: .5rem; flex-wrap: wrap;
+  padding: .75rem 1.25rem;
+  border-top: 1px solid var(--border);
+  background: var(--bg2);
+}
+
+/* Edit modal */
+.modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(6px);
+  z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+  padding: 1rem;
+}
+.modal-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  width: 100%; max-width: 480px;
+  padding: 2rem;
+  position: relative;
+  animation: modalIn .25s ease both;
+}
+@keyframes modalIn { from{opacity:0;transform:scale(.95)} to{opacity:1;transform:scale(1)} }
+.modal-close {
+  position: absolute; top: 1rem; right: 1rem;
+  background: none; border: none; color: var(--text3);
+  font-size: 1.1rem; cursor: pointer; line-height: 1;
+}
+.modal-close:hover { color: var(--text); }
+.modal-title { font-family: var(--font-head); font-size: 1.3rem; margin-bottom: 1.5rem; color: var(--text); }
+
+/* Create form card */
+.create-card {
+  background: var(--surface);
+  border: 1px solid var(--gold-dim);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+.create-card h3 {
+  font-family: var(--font-head);
+  font-size: 1.1rem;
+  color: var(--gold);
+  margin-bottom: 1.25rem;
+}
+.create-card-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 80px;
+  gap: 1rem;
+  align-items: end;
+}
+@media(max-width:640px){ .create-card-grid{grid-template-columns:1fr;} }
+
+/* Icon picker */
+.icon-options {
+  display: flex; gap: .4rem; flex-wrap: wrap; margin-top: .4rem;
+}
+.icon-opt {
+  width: 34px; height: 34px;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; cursor: pointer; transition: border-color .15s, transform .15s;
+}
+.icon-opt:hover  { border-color: var(--gold); transform: scale(1.1); }
+.icon-opt.chosen { border-color: var(--gold); background: var(--gold-dim); }
+
+.empty-cats {
+  text-align: center; padding: 3rem 2rem;
+  color: var(--text3); grid-column: 1/-1;
+}
+.empty-cats .empty-icon { font-size: 3rem; margin-bottom: .75rem; opacity: .4; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+  <aside class="admin-sidebar">
+    <div class="admin-sidebar-brand">⬡ PhotoVault<br>
+      <small style="font-family:var(--font-body);font-size:.75rem;color:var(--text3);">Admin Panel</small>
+    </div>
+    <nav class="admin-nav">
+      <a href="{{ url_for('admin_dashboard') }}">📊 Dashboard</a>
+      <a href="{{ url_for('admin_categories') }}" class="active">🗂 Categories</a>
+      <a href="{{ url_for('admin_comments') }}">💬 Comments</a>
+      <a href="{{ url_for('admin_revenue') }}">💰 Revenue</a>
+      <a href="{{ url_for('admin_settings') }}">⚙️ Settings</a>
+      <a href="{{ url_for('index') }}" target="_blank">🌐 View Site</a>
+      <a href="{{ url_for('logout') }}" style="color:var(--red);">🚪 Logout</a>
+    </nav>
+  </aside>
+
+  <div class="admin-content">
+    <div class="admin-header">
+      <h1>Categories</h1>
+      <p>Organise your photos and videos into browsable categories. Categories appear on the public site.</p>
+    </div>
+
+    <!-- ── CREATE CATEGORY ────────────────────────────────────────────────────── -->
+    <div class="create-card">
+      <h3>＋ Create New Category</h3>
+      <form method="POST" action="{{ url_for('admin_create_category') }}" id="create-form">
+        <div class="create-card-grid">
+          <div class="form-group" style="margin:0;">
+            <label>Name *</label>
+            <input type="text" name="name" id="cat-name-input" placeholder="Nature, Portraits, Events…" required
+                   oninput="updateSlugPreview(this.value)">
+            <div style="font-size:.7rem;color:var(--text3);margin-top:.3rem;">Slug: /<span id="slug-preview">…</span></div>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label>Applies to</label>
+            <select name="content_type">
+              <option value="both">📷🎬 Photos & Videos</option>
+              <option value="photo">📷 Photos only</option>
+              <option value="video">🎬 Videos only</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label>Order</label>
+            <input type="number" name="sort_order" value="0" min="0" style="text-align:center;">
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem;">
+          <div class="form-group" style="margin:0;">
+            <label>Description</label>
+            <input type="text" name="description" placeholder="Brief description for buyers…" maxlength="300">
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label>Icon (click to pick)</label>
+            <input type="hidden" name="icon" id="icon-input" value="📁">
+            <div class="icon-options">
+              {% for emoji in ['📁','🌿','🏙','👤','🎭','🐾','✈️','🎨','🌅','🌊','🏔','🎬','🌃','💡','🔥','⭐','🎵','🍃','🏛','💎'] %}
+              <div class="icon-opt {% if loop.first %}chosen{% endif %}"
+                   onclick="pickIcon('{{ emoji }}', this)">{{ emoji }}</div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="margin-top:1.25rem;">Create Category</button>
+      </form>
+    </div>
+
+    <!-- ── CATEGORY CARDS ─────────────────────────────────────────────────────── -->
+    <div class="cat-grid">
+      {% for cat in categories %}
+      <div class="cat-card">
+        <div class="cat-card-head">
+          <div class="cat-icon-big">{{ cat.icon }}</div>
+          <div>
+            <div class="cat-card-title">{{ cat.name }}</div>
+            <div class="cat-card-slug">/category/{{ cat.slug }}</div>
+          </div>
+          {% if not cat.is_active %}
+          <span style="margin-left:auto;font-size:.65rem;background:rgba(224,85,85,0.15);color:var(--red);padding:2px 8px;border-radius:100px;border:1px solid rgba(224,85,85,0.3);">Hidden</span>
+          {% endif %}
+        </div>
+
+        <div class="cat-card-body">
+          <div class="cat-counts">
+            <div class="cat-count-item">
+              <span class="cat-count-num">{{ cat.photo_count }}</span>
+              <span class="cat-count-label">Photos</span>
+            </div>
+            <div class="cat-count-item">
+              <span class="cat-count-num">{{ cat.video_count }}</span>
+              <span class="cat-count-label">Videos</span>
+            </div>
+          </div>
+          {% if cat.description %}
+          <div class="cat-desc">{{ cat.description }}</div>
+          {% endif %}
+          <span class="cat-type-badge">
+            {% if cat.content_type == 'photo' %}📷 Photos only
+            {% elif cat.content_type == 'video' %}🎬 Videos only
+            {% else %}📷🎬 All content
+            {% endif %}
+          </span>
+        </div>
+
+        <div class="cat-card-actions">
+          <a href="{{ url_for('category_detail', slug=cat.slug) }}" target="_blank"
+             class="btn btn-ghost" style="padding:.3rem .8rem;font-size:.75rem;">View →</a>
+          <button class="btn btn-ghost" style="padding:.3rem .8rem;font-size:.75rem;"
+                  onclick="openEditModal({{ cat.id }}, '{{ cat.name|e }}', '{{ cat.slug }}', '{{ cat.description|e }}', '{{ cat.icon }}', '{{ cat.content_type }}', {{ cat.sort_order }}, {{ 'true' if cat.is_active else 'false' }})">Edit</button>
+          <form method="POST" action="{{ url_for('admin_delete_category', cat_id=cat.id) }}" style="display:inline;margin-left:auto;">
+            <button type="submit" class="btn btn-danger" style="padding:.3rem .8rem;font-size:.75rem;"
+                    onclick="return confirm('Delete {{ cat.name }}? This only removes the category — content stays.')">Delete</button>
+          </form>
+        </div>
+      </div>
+      {% else %}
+      <div class="empty-cats">
+        <div class="empty-icon">🗂</div>
+        <p>No categories yet. Create your first one above.</p>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- ── HOW TO USE ──────────────────────────────────────────────────────────── -->
+    <div style="padding:1.25rem 1.5rem;background:var(--surface);border:1px solid var(--border);border-radius:12px;max-width:700px;">
+      <h3 style="font-size:.95rem;margin-bottom:.75rem;color:var(--text);">💡 How Categories Work</h3>
+      <ul style="font-size:.82rem;color:var(--text2);line-height:2;padding-left:1.2rem;margin:0;">
+        <li>Categories are browsable at <strong>/categories</strong> on the public site</li>
+        <li>Creators pick a category in the Creator Dashboard upload form — names must match an active category here exactly</li>
+        <li>The <strong>order</strong> number controls sorting (lower = appears first)</li>
+        <li>Deleting a category does <em>not</em> delete content — items just appear uncategorized</li>
+        <li>You can set categories to <strong>Photos only</strong>, <strong>Videos only</strong>, or <strong>Both</strong></li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── EDIT MODAL ──────────────────────────────────────────────────────────── -->
+<div class="modal-backdrop" id="edit-modal" style="display:none;" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title">Edit Category</div>
+    <form method="POST" id="edit-form">
+      <div class="form-group">
+        <label>Name</label>
+        <input type="text" name="name" id="edit-name" required>
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <input type="text" name="description" id="edit-desc" maxlength="300">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group">
+          <label>Applies to</label>
+          <select name="content_type" id="edit-ctype">
+            <option value="both">📷🎬 Both</option>
+            <option value="photo">📷 Photos</option>
+            <option value="video">🎬 Videos</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Sort Order</label>
+          <input type="number" name="sort_order" id="edit-order" min="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Icon</label>
+        <input type="hidden" name="icon" id="edit-icon-input">
+        <div class="icon-options" id="edit-icon-picker">
+          {% for emoji in ['📁','🌿','🏙','👤','🎭','🐾','✈️','🎨','🌅','🌊','🏔','🎬','🌃','💡','🔥','⭐','🎵','🍃','🏛','💎'] %}
+          <div class="icon-opt" onclick="pickEditIcon('{{ emoji }}', this)">{{ emoji }}</div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-check">
+          <input type="checkbox" name="is_active" id="edit-active" value="1"> Visible on public site
+        </label>
+      </div>
+      <div style="display:flex;gap:.75rem;margin-top:1.25rem;">
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function updateSlugPreview(name) {
+  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  document.getElementById('slug-preview').textContent = slug || '…';
+}
+
+function pickIcon(emoji, el) {
+  document.querySelectorAll('#create-form .icon-opt').forEach(e => e.classList.remove('chosen'));
+  el.classList.add('chosen');
+  document.getElementById('icon-input').value = emoji;
+}
+
+function pickEditIcon(emoji, el) {
+  document.querySelectorAll('#edit-icon-picker .icon-opt').forEach(e => e.classList.remove('chosen'));
+  el.classList.add('chosen');
+  document.getElementById('edit-icon-input').value = emoji;
+}
+
+function openEditModal(id, name, slug, desc, icon, ctype, order, active) {
+  document.getElementById('edit-form').action = '/admin/categories/' + id + '/edit';
+  document.getElementById('edit-name').value  = name;
+  document.getElementById('edit-desc').value  = desc;
+  document.getElementById('edit-ctype').value = ctype;
+  document.getElementById('edit-order').value = order;
+  document.getElementById('edit-icon-input').value = icon;
+  document.getElementById('edit-active').checked   = active;
+  // Highlight the current icon
+  document.querySelectorAll('#edit-icon-picker .icon-opt').forEach(el => {
+    el.classList.toggle('chosen', el.textContent.trim() === icon);
+  });
+  document.getElementById('edit-modal').style.display = 'flex';
+}
+
+function closeModal() {
+  document.getElementById('edit-modal').style.display = 'none';
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+</script>
+{% endblock %}

@@ -1,0 +1,257 @@
+{% extends 'base.html' %}
+{% block title %}Premium — PhotoVault{% endblock %}
+
+{% block head %}
+<style>
+/* ── Premium page layout ──────────────────────────────────────────────────── */
+.prem-hero {
+  text-align:center;
+  padding:4rem 1.5rem 2rem;
+  background:linear-gradient(180deg,rgba(139,85,180,.12) 0%,transparent 100%);
+  border-bottom:1px solid var(--border);
+}
+.prem-hero-label {
+  font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--purple);font-family:var(--font-mono);margin-bottom:.5rem;
+}
+.prem-hero h1 {
+  font-family:var(--font-head);font-size:clamp(2rem,5vw,3.4rem);
+  font-weight:300;color:var(--text);line-height:1.15;
+}
+.prem-hero h1 span { color:var(--purple); }
+.prem-hero p { color:var(--text3);font-size:.92rem;margin-top:.5rem; }
+.prem-tabs {
+  display:flex;gap:.5rem;justify-content:center;margin-top:1.5rem;
+}
+.prem-tab {
+  padding:.5rem 1.4rem;border-radius:100px;font-size:.84rem;font-weight:600;
+  border:1px solid var(--border);background:none;color:var(--text3);cursor:pointer;transition:all .2s;
+}
+.prem-tab.active {
+  background:var(--purple);color:#fff;border-color:var(--purple);
+}
+/* ── Cards grid ─────────────────────────────────────────────────────────────── */
+.prem-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:1.25rem;
+  max-width:1300px;margin:2rem auto 4rem;padding:0 1.5rem;
+}
+/* Photo card */
+.pc-card {
+  position:relative;border-radius:14px;overflow:hidden;
+  background:var(--surface);border:1px solid var(--border);
+  cursor:pointer;transition:transform .3s,box-shadow .3s;
+}
+.pc-card:hover { transform:translateY(-4px);box-shadow:0 12px 40px rgba(139,85,180,.2); }
+.pc-thumb {
+  position:relative;aspect-ratio:3/4;overflow:hidden;
+  background:#0f0f17;
+}
+.pc-thumb img {
+  width:100%;height:100%;object-fit:cover;filter:blur(var(--blur,0px));
+  transition:transform .4s,filter .4s;
+}
+.pc-card:hover .pc-thumb img { transform:scale(1.06); }
+.pc-lock-badge {
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:.5rem;
+  background:rgba(0,0,0,.45);backdrop-filter:blur(2px);
+}
+.pc-lock-badge .lock-icon { font-size:2rem; }
+.pc-lock-badge .lock-price {
+  background:var(--purple);color:#fff;border-radius:100px;
+  padding:.3rem .9rem;font-size:.8rem;font-weight:700;
+}
+.pc-foot {
+  padding:.75rem 1rem;display:flex;align-items:center;justify-content:space-between;
+}
+.pc-title { font-size:.88rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:65%; }
+.pc-tier { font-size:.68rem;padding:.2rem .6rem;border-radius:100px;font-weight:600;text-transform:uppercase; }
+.pc-tier.premium { background:rgba(139,85,180,.18);color:#a855f7; }
+/* Video card  */
+.vc-prem {
+  position:relative;border-radius:14px;overflow:hidden;
+  background:var(--surface);border:1px solid var(--border);
+  cursor:pointer;transition:transform .3s,box-shadow .3s;
+}
+.vc-prem:hover { transform:translateY(-4px);box-shadow:0 12px 40px rgba(139,85,180,.2); }
+.vc-prem-thumb {
+  position:relative;aspect-ratio:16/10;overflow:hidden;background:#0a0a0c;
+}
+.vc-prem-thumb video,
+.vc-prem-thumb img {
+  width:100%;height:100%;object-fit:cover;
+}
+.vc-prem-thumb video { filter:blur(16px) brightness(.55); transition:filter 1.5s ease; }
+.vc-prem-thumb video.unblurring { filter:blur(0px) brightness(1); }
+.vc-prem-overlay {
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:.4rem;
+  pointer-events:none;
+}
+.play-ring {
+  width:52px;height:52px;border-radius:50%;
+  background:rgba(139,85,180,.8);backdrop-filter:blur(4px);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.3rem;transition:transform .2s;
+}
+.vc-prem:hover .play-ring { transform:scale(1.12); }
+.vc-prem-price {
+  background:var(--purple);color:#fff;border-radius:100px;
+  padding:.3rem .9rem;font-size:.78rem;font-weight:700;
+}
+.vc-prem-foot {
+  padding:.75rem 1rem;display:flex;align-items:center;justify-content:space-between;
+}
+.prem-empty {
+  text-align:center;padding:4rem 1rem;color:var(--text3);
+  grid-column:1/-1;
+}
+/* Tab sections */
+.prem-section { display:none; }
+.prem-section.active { display:contents; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<div class="prem-hero">
+  <div class="prem-hero-label">Exclusive Access</div>
+  <h1>⭐ <span>Premium</span> Collection</h1>
+  <p>{{ total }} piece{% if total != 1 %}s{% endif %} of exclusive premium content — photos &amp; videos</p>
+
+  <div class="prem-tabs">
+    <button class="prem-tab active" onclick="switchPremTab(this,'all')">
+      🌟 All ({{ total }})
+    </button>
+    <button class="prem-tab" onclick="switchPremTab(this,'photos')">
+      📸 Photos ({{ photos|length }})
+    </button>
+    <button class="prem-tab" onclick="switchPremTab(this,'videos')">
+      🎬 Videos ({{ videos|length }})
+    </button>
+  </div>
+</div>
+
+<!-- Grid -->
+<div class="prem-grid" id="prem-grid">
+
+  {% if not photos and not videos %}
+  <div class="prem-empty">
+    <div style="font-size:3rem;margin-bottom:1rem;">⭐</div>
+    <div style="font-size:1.1rem;font-weight:600;color:var(--text);">No premium content yet</div>
+    <div style="font-size:.85rem;margin-top:.4rem;">Check back soon — exclusive content drops regularly.</div>
+  </div>
+  {% endif %}
+
+  {# ── PHOTO CARDS ── #}
+  {% for photo in photos %}
+  <div class="pc-card prem-item prem-photo"
+       onclick="location.href='{{ url_for('photo_detail', photo_id=photo.id) }}'">
+    <div class="pc-thumb" style="--blur:{{ photo.blur_strength|default(16) }}px;">
+      {% if photo.preview_filename %}
+      <img src="{{ url_for('serve_preview', photo_id=photo.id) }}" alt="{{ photo.title }}" loading="lazy">
+      {% else %}
+      <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+                  background:linear-gradient(135deg,#1a0820,#0a080c);font-size:3rem;opacity:.3;">📸</div>
+      {% endif %}
+      {% if not photo.unlocked %}
+      <div class="pc-lock-badge">
+        <span class="lock-icon">🔒</span>
+        <span class="lock-price">${{ '%.2f'|format(photo.current_price) }}</span>
+      </div>
+      {% endif %}
+    </div>
+    <div class="pc-foot">
+      <span class="pc-title">{{ photo.title }}</span>
+      <span class="pc-tier premium">Premium</span>
+    </div>
+  </div>
+  {% endfor %}
+
+  {# ── VIDEO CARDS ── #}
+  {% for video in videos %}
+  <div class="vc-prem prem-item prem-video"
+       data-vid-id="{{ video.id }}"
+       onclick="location.href='{{ url_for('video_detail', video_id=video.id) }}'">
+    <div class="vc-prem-thumb" id="vthumb-{{ video.id }}">
+      {% if video.thumbnail_filename %}
+      <img src="{{ url_for('serve_video_thumb', video_id=video.id) }}" alt="{{ video.title }}" loading="lazy">
+      {% else %}
+      <video id="vprev-{{ video.id }}" muted preload="none"
+             style="filter:blur(16px) brightness(.55);">
+        <source src="{{ url_for('serve_video_stream', video_id=video.id) }}" type="video/mp4">
+      </video>
+      {% endif %}
+      <div class="vc-prem-overlay">
+        <div class="play-ring">▶</div>
+        {% if not video.unlocked %}
+        <div class="vc-prem-price">🔒 ${{ '%.2f'|format(video.unlock_price) }}</div>
+        {% else %}
+        <div class="vc-prem-price" style="background:#16a34a;">✓ Unlocked</div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="vc-prem-foot">
+      <span style="font-size:.88rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:75%;">{{ video.title }}</span>
+      <span class="pc-tier premium">Premium</span>
+    </div>
+  </div>
+  {% endfor %}
+
+</div><!-- /prem-grid -->
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── Tab switching ─────────────────────────────────────────────────────────────
+function switchPremTab(btn, filter) {
+  document.querySelectorAll('.prem-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.prem-item').forEach(card => {
+    if (filter === 'all') card.style.display = '';
+    else if (filter === 'photos') card.style.display = card.classList.contains('prem-photo') ? '' : 'none';
+    else if (filter === 'videos') card.style.display = card.classList.contains('prem-video') ? '' : 'none';
+  });
+}
+
+// ── Video hover preview — play 3-5s then slow blur back in ───────────────────
+document.querySelectorAll('.vc-prem').forEach(function(card) {
+  var vidId = card.dataset.vidId;
+  var video = document.getElementById('vprev-' + vidId);
+  if (!video) return;
+
+  var timer = null;
+  var blurTimer = null;
+
+  card.addEventListener('mouseenter', function() {
+    clearTimeout(timer);
+    clearTimeout(blurTimer);
+    video.currentTime = 0;
+    video.play().catch(function(){});
+    // Remove blur slowly to tease content
+    video.style.transition = 'filter 1.2s ease';
+    video.style.filter = 'blur(4px) brightness(.75)';
+
+    // After 4 seconds start blurring back
+    timer = setTimeout(function() {
+      video.style.transition = 'filter 1.8s ease';
+      video.style.filter = 'blur(16px) brightness(.55)';
+      blurTimer = setTimeout(function() {
+        video.pause();
+        video.currentTime = 0;
+      }, 1800);
+    }, 4000);
+  });
+
+  card.addEventListener('mouseleave', function() {
+    clearTimeout(timer);
+    clearTimeout(blurTimer);
+    video.style.transition = 'filter .8s ease';
+    video.style.filter = 'blur(16px) brightness(.55)';
+    setTimeout(function(){ video.pause(); video.currentTime = 0; }, 800);
+  });
+});
+</script>
+{% endblock %}

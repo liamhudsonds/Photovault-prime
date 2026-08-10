@@ -1,0 +1,65 @@
+{% extends 'vx_base.html' %}
+{% block title %}Manager Dashboard{% endblock %}
+{% block navbar %}
+<div class="navbar">
+  <div class="brand">Vault<span>X</span></div>
+  <nav>
+    <a href="/manager/dashboard" class="active">Dashboard</a>
+    <a href="/manager/withdraw">Withdraw</a>
+    <a href="/manager/login" style="color:var(--muted)">Logout</a>
+    
+  </nav>
+</div>
+{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <h1>👔 Manager Dashboard</h1>
+    <p>{{cmp.name if cmp else 'Manager'}} — Manage your assigned creators.</p>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card"><div class="val" style="color:var(--amber)">${{"%.2f"|format(pending)}}</div><div class="lbl">Pending Balance</div></div>
+    <div class="stat-card"><div class="val" style="color:var(--green)">${{"%.2f"|format(available)}}</div><div class="lbl">Available</div></div>
+    <div class="stat-card"><div class="val">${{"%.2f"|format(lifetime)}}</div><div class="lbl">Lifetime Commission</div></div>
+    <div class="stat-card"><div class="val">{{creator_stats|length}}</div><div class="lbl">Creators Managed</div></div>
+  </div>
+
+  <div style="margin-bottom:1rem">
+    {% if withdrawal_open %}
+    <a href="/manager/withdraw" class="btn btn-gold">💸 Request Withdrawal</a>
+    {% else %}
+    <div class="withdrawal-closed" style="padding:.6rem 1.2rem;display:inline-block;font-size:.88rem">
+      🔒 Next withdrawal: <strong>{{next_window}}</strong>
+    </div>
+    {% endif %}
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+    <div class="card">
+      <div class="card-title">📊 Commission by Source</div>
+      {% for type, amount in breakdown.items() %}
+      <div style="display:flex;justify-content:space-between;padding:.45rem 0;border-bottom:1px solid #1e1e38">
+        <span style="color:var(--muted)">{{type|title}}</span>
+        <span style="color:var(--gold);font-weight:700">${{"%.2f"|format(amount)}}</span>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="card">
+      <div class="card-title">🌟 Your Creators</div>
+      {% for item in creator_stats %}
+      {% set ca = item.ca %}
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem 0;border-bottom:1px solid #1e1e38">
+        <div>
+          <div style="font-weight:600">{{ca.profile.name}}</div>
+          <div style="font-size:.78rem;color:var(--muted)">@{{ca.profile.username}}</div>
+        </div>
+        <div style="color:var(--gold);font-weight:700">${{"%.2f"|format(item.lifetime)}}</div>
+      </div>
+      {% else %}
+      <div style="color:var(--muted);text-align:center;padding:1.5rem">No creators assigned yet.</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,274 @@
+{% extends 'base.html' %}
+{% block title %}{{ cat.name }} — PhotoVault{% endblock %}
+
+{% block head %}
+<style>
+.cat-hero {
+  position: relative; background: linear-gradient(135deg, #111118 0%, #1a1a2e 100%);
+  padding: 3.5rem 1.5rem 2.5rem; text-align: center; overflow: hidden;
+  border-bottom: 1px solid var(--border);
+}
+.cat-hero::before {
+  content:''; position:absolute; inset:0;
+  background: radial-gradient(ellipse at 60% 40%, rgba(201,168,76,.08) 0%, transparent 70%);
+}
+.cat-hero h1 { font-family: var(--font-head); font-size: clamp(1.8rem,4vw,2.8rem); margin:.5rem 0; }
+.cat-hero p  { color: var(--text2); max-width:560px; margin:.5rem auto 0; }
+
+.media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.25rem;
+}
+
+/* ── Media card ── */
+.mcard {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+  overflow: hidden; cursor: pointer; transition: transform .25s, border-color .25s, box-shadow .25s;
+  position: relative;
+}
+.mcard:hover { transform: translateY(-4px); box-shadow: 0 16px 50px rgba(0,0,0,.5); border-color: #333; }
+
+.mcard-thumb {
+  position: relative; aspect-ratio: 4/3; overflow: hidden; background: #0a0a0c;
+}
+.mcard-thumb img,
+.mcard-thumb video {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+  transition: filter .4s ease, transform .4s ease;
+}
+/* Default blur for locked */
+.mcard-thumb .locked-media { filter: blur(var(--blur-px, 14px)) brightness(.7); transform: scale(1.05); }
+/* Hover preview: reduce blur for 5 seconds */
+.mcard-thumb.previewing .locked-media { filter: blur(2px) brightness(.85); transform: scale(1.0); }
+
+.mcard-play {
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  pointer-events:none;
+}
+.mcard-play-icon {
+  width:52px; height:52px; border-radius:50%;
+  background:rgba(0,0,0,.65); backdrop-filter:blur(8px);
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.4rem; border: 2px solid rgba(255,255,255,.2);
+  transition: transform .2s, background .2s;
+}
+.mcard:hover .mcard-play-icon { transform: scale(1.12); background: rgba(0,0,0,.8); }
+
+.mcard-lock-badge {
+  position:absolute; top:.6rem; right:.6rem;
+  background:rgba(0,0,0,.7); backdrop-filter:blur(6px);
+  border:1px solid rgba(255,255,255,.12); border-radius:100px;
+  color:#fff; font-size:.68rem; padding:.25rem .6rem; letter-spacing:.04em;
+}
+.mcard-unlocked-badge {
+  position:absolute; top:.6rem; right:.6rem;
+  background:rgba(46,204,113,.2); backdrop-filter:blur(6px);
+  border:1px solid #2ecc71; border-radius:100px;
+  color:#2ecc71; font-size:.68rem; padding:.25rem .6rem;
+}
+.mcard-duration {
+  position:absolute; bottom:.5rem; right:.6rem;
+  background:rgba(0,0,0,.75); border-radius:6px;
+  color:#fff; font-size:.7rem; padding:.15rem .45rem;
+}
+
+.mcard-body { padding: .9rem 1rem; }
+.mcard-title { font-size:.92rem; font-weight:600; color:var(--text); margin-bottom:.25rem;
+               white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.mcard-meta  { display:flex; align-items:center; gap:.5rem; font-size:.75rem; color:var(--text3); flex-wrap:wrap; }
+.mcard-price { color: var(--accent); font-weight:700; font-size:.88rem; margin-left:auto; }
+
+.section-head {
+  display:flex; align-items:center; gap:.75rem; margin-bottom:1.25rem; margin-top:2rem;
+}
+.section-head h2 { font-family:var(--font-head); font-size:1.35rem; margin:0; }
+.section-head-count {
+  background:rgba(201,168,76,.12); color:var(--accent); border:1px solid rgba(201,168,76,.25);
+  border-radius:100px; font-size:.72rem; padding:.2rem .65rem;
+}
+
+.tabs-bar { display:flex; gap:.5rem; margin-bottom:1.75rem; }
+.tab-pill {
+  padding:.45rem 1.1rem; border-radius:100px; font-size:.82rem; font-weight:500; cursor:pointer;
+  border:1px solid var(--border); background:none; color:var(--text2); transition:all .2s;
+}
+.tab-pill.active { background:var(--accent); color:#0a0a0c; border-color:transparent; }
+
+.empty-state { text-align:center; padding:4rem 2rem; opacity:.4; }
+.empty-state .es-icon { font-size:3.5rem; margin-bottom:1rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Hero -->
+<div class="cat-hero">
+  <div style="font-size:2.8rem;margin-bottom:.5rem;">{{ cat.icon or '🗂' }}</div>
+  <h1>{{ cat.name }}</h1>
+  {% if cat.description %}
+  <p>{{ cat.description }}</p>
+  {% endif %}
+  <div style="display:flex;gap:1rem;justify-content:center;margin-top:1rem;font-size:.8rem;color:var(--text3);">
+    <span>📷 {{ photos|length }} photo{% if photos|length != 1 %}s{% endif %}</span>
+    <span>🎬 {{ videos|length }} video{% if videos|length != 1 %}s{% endif %}</span>
+  </div>
+</div>
+
+<div class="container" style="padding:2rem 1rem 4rem;">
+
+  <!-- Tab filter -->
+  <div class="tabs-bar" id="cat-tabs">
+    <button class="tab-pill active" onclick="switchTab('all',this)">All</button>
+    <button class="tab-pill" onclick="switchTab('photos',this)">📷 Photos</button>
+    <button class="tab-pill" onclick="switchTab('videos',this)">🎬 Videos</button>
+  </div>
+
+  <!-- ── Photos ── -->
+  {% if photos %}
+  <div id="section-photos" class="tab-section">
+    <div class="section-head">
+      <h2>Photos</h2>
+      <span class="section-head-count">{{ photos|length }}</span>
+    </div>
+    <div class="media-grid">
+      {% for photo in photos %}
+      <div class="mcard" onclick="window.location='{{ url_for('photo_detail', photo_id=photo.id) }}'">
+        <div class="mcard-thumb" id="pthumb-{{ photo.id }}">
+          <img class="{{ 'locked-media' if not photo.unlocked else '' }}"
+               src="{{ url_for('serve_preview', photo_id=photo.id) }}"
+               alt="{{ photo.title }}"
+               style="--blur-px: {{ blur_photo }}px;"
+               loading="lazy">
+          {% if photo.unlocked %}
+          <span class="mcard-unlocked-badge">✓ Unlocked</span>
+          {% else %}
+          <span class="mcard-lock-badge">🔒 Locked</span>
+          {% endif %}
+        </div>
+        <div class="mcard-body">
+          <div class="mcard-title">{{ photo.title or 'Untitled' }}</div>
+          <div class="mcard-meta">
+            {% if photo.category %}<span>{{ photo.category }}</span>{% endif %}
+            <span class="badge tier-{{ photo.tier }}" style="font-size:.65rem;">{{ photo.tier|title }}</span>
+            <span class="mcard-price">${{ '%.2f'|format(photo.current_price) }}</span>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ── Videos ── -->
+  {% if videos %}
+  <div id="section-videos" class="tab-section">
+    <div class="section-head">
+      <h2>Videos</h2>
+      <span class="section-head-count">{{ videos|length }}</span>
+    </div>
+    <div class="media-grid">
+      {% for video in videos %}
+      <div class="mcard"
+           onmouseenter="startVideoPreview(this, {{ video.id }})"
+           onmouseleave="stopVideoPreview(this, {{ video.id }})"
+           onclick="window.location='{{ url_for('video_detail', video_id=video.id) }}'">
+        <div class="mcard-thumb" id="vthumb-{{ video.id }}">
+
+          {% if video.thumbnail_filename %}
+          <!-- Thumbnail + hover-to-preview video -->
+          <img class="locked-media thumb-img" id="vimg-{{ video.id }}"
+               src="{{ url_for('serve_video_thumb', video_id=video.id) }}"
+               alt="{{ video.title }}"
+               style="--blur-px: {{ blur_video }}px;">
+          <video id="vprev-{{ video.id }}" muted loop playsinline
+                 style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+                        opacity:0;transition:opacity .4s;pointer-events:none;
+                        filter:blur({{ blur_video }}px) brightness(.7);">
+            <source src="{{ url_for('serve_video_stream', video_id=video.id) }}" type="video/mp4">
+          </video>
+          {% else %}
+          <div style="width:100%;height:100%;background:#111118;display:flex;align-items:center;justify-content:center;">
+            <span style="font-size:3rem;opacity:.3;">🎬</span>
+          </div>
+          {% endif %}
+
+          <div class="mcard-play"><div class="mcard-play-icon">▶</div></div>
+          {% if video.duration_seconds %}
+          <span class="mcard-duration">{{ '%d:%02d'|format(video.duration_seconds//60, video.duration_seconds%60) }}</span>
+          {% endif %}
+          <span class="mcard-lock-badge">🔒 Locked</span>
+        </div>
+        <div class="mcard-body">
+          <div class="mcard-title">{{ video.title or 'Untitled' }}</div>
+          <div class="mcard-meta">
+            {% if video.category %}<span>{{ video.category }}</span>{% endif %}
+            <span class="badge tier-{{ video.tier }}" style="font-size:.65rem;">{{ video.tier|title }}</span>
+            <span class="mcard-price">${{ '%.2f'|format(video.unlock_price) }}</span>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if not photos and not videos %}
+  <div class="empty-state">
+    <div class="es-icon">📭</div>
+    <h2>No content yet</h2>
+    <p>Check back soon — new content is being added.</p>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── Tab switching ────────────────────────────────────────────────────────────
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-pill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.tab-section').forEach(s => {
+    if (tab === 'all') s.style.display = '';
+    else if (tab === 'photos') s.style.display = (s.id === 'section-photos') ? '' : 'none';
+    else if (tab === 'videos') s.style.display = (s.id === 'section-videos') ? '' : 'none';
+  });
+}
+
+// ── Video hover preview (5 seconds then blur reloads) ────────────────────────
+const previewTimers = {};
+
+function startVideoPreview(card, videoId) {
+  const thumb = document.getElementById('vthumb-' + videoId);
+  const vid   = document.getElementById('vprev-' + videoId);
+  const img   = document.getElementById('vimg-'  + videoId);
+  if (!vid) return;
+
+  thumb.classList.add('previewing');
+  vid.currentTime = 0;
+  vid.play().catch(() => {});
+  vid.style.opacity = '1';
+  if (img) img.style.opacity = '0';
+
+  // After 5 seconds restore blur
+  previewTimers[videoId] = setTimeout(() => {
+    vid.pause();
+    vid.style.opacity = '0';
+    if (img) img.style.opacity = '1';
+    thumb.classList.remove('previewing');
+  }, 5000);
+}
+
+function stopVideoPreview(card, videoId) {
+  clearTimeout(previewTimers[videoId]);
+  const thumb = document.getElementById('vthumb-' + videoId);
+  const vid   = document.getElementById('vprev-' + videoId);
+  const img   = document.getElementById('vimg-'  + videoId);
+  if (vid) { vid.pause(); vid.style.opacity = '0'; }
+  if (img) img.style.opacity = '1';
+  if (thumb) thumb.classList.remove('previewing');
+}
+</script>
+{% endblock %}

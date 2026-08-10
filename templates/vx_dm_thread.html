@@ -1,0 +1,85 @@
+{% extends 'vx_base.html' %}
+{% block title %}DM — {{profile.name}}{% endblock %}
+{% block navbar %}
+<div class="navbar">
+  <div class="brand">Vault<span>X</span></div>
+  <nav>
+    <a href="/my/dashboard">← Dashboard</a>
+    <a href="/{{profile.username}}">{{profile.name}}</a>
+  </nav>
+</div>
+{% endblock %}
+{% block content %}
+<div class="container" style="max-width:680px">
+  <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1rem">
+    <img src="{{profile.avatar_filename or '/static/default_avatar.png'}}" style="width:48px;height:48px;border-radius:50%;border:2px solid var(--rose);object-fit:cover"/>
+    <div>
+      <div style="font-weight:700">{{profile.name}}</div>
+      <div style="font-size:.82rem;color:var(--muted)">@{{profile.username}}</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="dm-container" id="dm-box">
+      {% if not messages %}
+      <div style="text-align:center;color:var(--muted);padding:2rem;margin:auto">Send a message to start the conversation. First message is free! 💬</div>
+      {% endif %}
+      {% for msg in messages %}
+        {% if msg.is_admin_notice %}
+        <div class="admin-notice">
+          <div class="header">━━━━━━━━━━━━━━━━━<br/>ADMIN NOTICE<br/>━━━━━━━━━━━━━━━━━</div>
+          <div class="divider"></div>
+          <div style="font-size:.92rem">{{msg.body}}</div>
+        </div>
+        {% elif msg.sender_type == 'subscriber' %}
+        <div style="display:flex;justify-content:flex-end">
+          <div class="dm-bubble from-creator">{{msg.body}}</div>
+        </div>
+        {% elif msg.sender_type == 'creator' %}
+        <div style="display:flex;flex-direction:column;align-items:flex-start">
+          {% if msg.lock_price > 0 and not msg.is_unlocked %}
+          <div class="locked-media">
+            <div style="font-size:1.5rem;margin-bottom:.5rem">🔒</div>
+            <div style="color:var(--gold);font-weight:700;margin-bottom:.75rem">
+              Unlock {{msg.media_type or 'content'}} — ${{msg.lock_price}}
+            </div>
+            {% if msg.body %}<div style="color:var(--muted);font-size:.88rem;margin-bottom:.75rem">{{msg.body}}</div>{% endif %}
+            <button class="btn btn-rose btn-sm" onclick="unlockMsg({{msg.id}}, this)">💳 Unlock Now — ${{msg.lock_price}}</button>
+          </div>
+          {% else %}
+          <div class="dm-bubble from-sub">
+            {% if msg.media_url %}
+              {% if msg.media_type == 'photo' %}<img src="{{msg.media_url}}" style="max-width:100%;border-radius:8px;margin-bottom:.5rem"/>
+              {% elif msg.media_type == 'video' %}<video src="{{msg.media_url}}" controls style="max-width:100%;border-radius:8px"></video>
+              {% elif msg.media_type == 'voice' %}<audio src="{{msg.media_url}}" controls></audio>
+              {% endif %}
+            {% endif %}
+            {% if msg.body %}<div>{{msg.body}}</div>{% endif %}
+          </div>
+          {% endif %}
+          <div style="font-size:.72rem;color:var(--muted);margin-top:.2rem;margin-left:.5rem">{{msg.created_at.strftime('%H:%M')}}</div>
+        </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+    <form method="POST" action="/dm/{{profile.username}}/send" style="margin-top:1rem;display:flex;gap:.5rem">
+      <input name="body" placeholder="Type a message…" style="flex:1;background:#1a1a30;border:1px solid #3a3a5a;color:#e8e8f0;border-radius:9px;padding:.65rem 1rem;font-size:.95rem"/>
+      <button class="btn btn-rose" type="submit">Send</button>
+    </form>
+  </div>
+</div>
+<script>
+const box = document.getElementById('dm-box');
+box.scrollTop = box.scrollHeight;
+function unlockMsg(msgId, btn){
+  btn.disabled = true;
+  btn.textContent = 'Processing…';
+  fetch('/dm/unlock/'+msgId,{method:'POST',headers:{'Content-Type':'application/json'}})
+    .then(r=>r.json()).then(d=>{
+      if(d.already_unlocked) { location.reload(); return; }
+      if(d.checkout_url) { window.location.href = d.checkout_url; return; }
+      btn.disabled=false; btn.textContent='Try again';
+    })
+    .catch(()=>{ btn.disabled=false; btn.textContent='Try again'; });
+}
+</script>
+{% endblock %}

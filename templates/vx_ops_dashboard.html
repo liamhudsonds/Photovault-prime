@@ -1,0 +1,144 @@
+{% extends 'vx_base.html' %}
+{% block title %}Operations Manager Dashboard{% endblock %}
+{% block navbar %}
+<div class="navbar">
+  <div class="brand">Vault<span>X</span></div>
+  <nav>
+    <a href="/ops/dashboard" class="active">Operations</a>
+    <a href="/ops/login" style="color:var(--muted)">Logout</a>
+  </nav>
+</div>
+{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="page-header">
+    <h1>🏢 Operations Manager</h1>
+    <p>{{om.name if om else 'Operations Manager'}} — Creator operations only. No revenue access.</p>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card"><div class="val">{{creator_managers|length}}</div><div class="lbl">Junior Creators</div></div>
+    <div class="stat-card"><div class="val">{{all_creators|length}}</div><div class="lbl">Total Creators</div></div>
+    <div class="stat-card">
+      <div class="val" style="color:{{'var(--rose)' if pending_count else 'var(--text)'}}">{{pending_count}}</div>
+      <div class="lbl">Pending Applications</div>
+    </div>
+  </div>
+
+  <!-- ── Quick Actions ── -->
+  <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1.5rem">
+    <a href="/ops/create-junior-creator" style="background:rgba(201,24,74,.15);color:#ff6b97;border:1px solid rgba(201,24,74,.3);border-radius:10px;padding:.55rem 1.1rem;font-size:.85rem;font-weight:700;text-decoration:none">
+      ✨ Create Junior Creator
+    </a>
+    <a href="/ops/applications" style="background:rgba(167,139,250,.12);color:#a78bfa;border:1px solid rgba(167,139,250,.3);border-radius:10px;padding:.55rem 1.1rem;font-size:.85rem;font-weight:700;text-decoration:none">
+      📋 All Applications
+    </a>
+  </div>
+
+  <!-- ── Pending Junior Creator Applications ── -->
+  <div class="card" style="margin-bottom:1.5rem">
+    <div class="card-title" style="display:flex;align-items:center;justify-content:space-between">
+      <span>📋 Junior Creator Applications
+        {% if pending_count %}<span style="background:var(--rose);color:#fff;font-size:.7rem;padding:.15rem .5rem;border-radius:20px;margin-left:.5rem">{{pending_count}} pending</span>{% endif %}
+      </span>
+    </div>
+    {% if not pending_applications %}
+    <div style="text-align:center;color:var(--muted);padding:2rem">No pending applications.</div>
+    {% else %}
+    <div style="display:flex;flex-direction:column;gap:.75rem">
+      {% for a in pending_applications %}
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1rem">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.75rem">
+          <div>
+            <div style="font-weight:700;color:var(--text);font-size:.95rem">{{a.applicant_name}}</div>
+            <div style="color:var(--muted);font-size:.8rem;margin-top:.15rem">{{a.applicant_email}}</div>
+            <div style="display:flex;gap:.5rem;margin-top:.5rem;flex-wrap:wrap">
+              <span style="font-size:.7rem;background:rgba(167,139,250,.15);color:#a78bfa;padding:.15rem .5rem;border-radius:6px">Junior Creator</span>
+              <span style="font-size:.7rem;background:rgba(251,191,36,.12);color:#f59e0b;padding:.15rem .5rem;border-radius:6px">Pending</span>
+              <span style="font-size:.7rem;color:var(--muted)">Applied: {{a.created_at.strftime('%b %d, %Y')}}</span>
+            </div>
+            {% if a.motivation %}
+            <div style="font-size:.82rem;color:var(--text2);margin-top:.5rem">{{a.motivation[:180]}}{% if a.motivation|length > 180 %}…{% endif %}</div>
+            {% endif %}
+          </div>
+          <div style="display:flex;flex-direction:column;gap:.4rem;min-width:160px">
+            <!-- Grant account form -->
+            <form method="POST" action="/ops/application/{{a.id}}/issue-account" style="display:flex;flex-direction:column;gap:.4rem">
+              <input type="email" name="login_email" value="{{a.applicant_email}}"
+                     placeholder="Login email" required
+                     style="background:var(--surface);border:1px solid var(--border);border-radius:8px;
+                            color:var(--text);padding:.4rem .65rem;font-size:.78rem"/>
+              <input type="password" name="temp_password"
+                     placeholder="Set temp password" required minlength="6"
+                     style="background:var(--surface);border:1px solid var(--border);border-radius:8px;
+                            color:var(--text);padding:.4rem .65rem;font-size:.78rem"/>
+              <button type="submit"
+                style="background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.3);
+                       border-radius:8px;padding:.4rem .65rem;font-size:.78rem;cursor:pointer;font-weight:700">
+                ✅ Grant Junior Creator Account
+              </button>
+            </form>
+            <form method="POST" action="/ops/application/{{a.id}}/update">
+              <input type="hidden" name="status" value="rejected">
+              <input type="hidden" name="stage" value="{{a.stage}}">
+              <button type="submit" onclick="return confirm('Reject this application?')"
+                style="background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.25);
+                       border-radius:8px;padding:.4rem .65rem;font-size:.78rem;cursor:pointer;width:100%">
+                ✕ Reject
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ── Junior Creators ── -->
+  <div class="card">
+    <div class="card-title">👥 Junior Creators</div>
+    {% if not creator_managers %}
+    <div style="text-align:center;color:var(--muted);padding:2rem">No junior creators assigned yet.</div>
+    {% else %}
+    <table class="table">
+      <thead><tr><th>Email</th><th>Assigned Creators</th></tr></thead>
+      <tbody>
+      {% for cm in creator_managers %}
+      <tr>
+        <td style="color:var(--muted)">{{cm.email}}</td>
+        <td>{{cm.managed_profiles|length if cm.managed_profiles is defined else '—'}}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </div>
+
+  <!-- ── Creators Performance ── -->
+  <div class="card" style="margin-top:1rem">
+    <div class="card-title">🌟 Creators Performance</div>
+    {% if not creator_data %}
+    <div style="text-align:center;color:var(--muted);padding:2rem">No creators yet.</div>
+    {% else %}
+    <table class="table">
+      <thead><tr><th>Creator</th><th>Username</th><th>Lifetime Revenue</th><th>Status</th></tr></thead>
+      <tbody>
+      {% for item in creator_data %}
+      {% set p = item.profile %}
+      <tr>
+        <td style="font-weight:600">{{p.name}}</td>
+        <td style="color:var(--muted)">@{{p.username}}</td>
+        <td style="color:var(--gold);font-weight:700">${{"%.2f"|format(item.lifetime)}}</td>
+        <td>
+          {% if p.is_active %}<span class="badge badge-green">Active</span>
+          {% else %}<span class="badge badge-red">Inactive</span>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
